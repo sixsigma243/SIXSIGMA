@@ -171,7 +171,7 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
               sur {logs.length}
             </span>
             {hasActiveFilters && (
-              <span className="px-2 py-0.5 rounded text-[10px] bg-purple-950/80 text-purple-300 border border-purple-800">
+              <span className="px-2 py-0.5 rounded text-[10px] bg-[#1C1F23] text-slate-300 border border-[#252932]">
                 Filtres actifs
               </span>
             )}
@@ -180,7 +180,7 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
           {hasActiveFilters && (
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition px-2 py-1 rounded bg-[#14171D] border border-[#252932]"
+              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition px-2.5 py-1 rounded bg-[#14171D] border border-[#252932]"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Réinitialiser les filtres</span>
@@ -217,7 +217,7 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-mono text-xs font-semibold text-purple-300 px-2 py-0.5 rounded bg-purple-950/40 border border-purple-900/50">
+                        <span className="font-mono text-xs font-semibold text-slate-300 px-2 py-0.5 rounded bg-[#1C1F23] border border-[#252932]">
                           {log.table_name}
                         </span>
                       </td>
@@ -229,7 +229,7 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
                               : log.action.includes("UPDATE") || log.action.includes("OVERRIDE")
                               ? "bg-amber-950 text-amber-300 border border-amber-800"
                               : log.action.includes("LOCK")
-                              ? "bg-blue-950 text-blue-300 border border-blue-800"
+                              ? "bg-slate-800 text-slate-200 border border-slate-700"
                               : "bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50"
                           }`}
                         >
@@ -256,7 +256,7 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium text-purple-300 hover:text-white bg-purple-950/40 hover:bg-purple-900/60 border border-purple-800/60 transition"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium text-slate-300 hover:text-white bg-[#1C1F23] hover:bg-[#252932] border border-[#252932] transition"
                         >
                           <Eye className="w-3 h-3" />
                           <span>Payload ({fieldCount})</span>
@@ -271,13 +271,13 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
 
                     {/* Collapsible JSONB Payload Row */}
                     {isExpanded && (
-                      <tr className="bg-[#0E1116]/90 border-t border-b border-purple-900/40">
+                      <tr className="bg-[#0E1116] border-t border-b border-[#252932]">
                         <td colSpan={5} className="p-4">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between text-xs text-slate-400">
                               <span className="font-mono text-[11px]">
                                 Record ID :{" "}
-                                <strong className="text-purple-300">
+                                <strong className="text-slate-200 font-mono">
                                   {log.record_id || "N/A"}
                                 </strong>
                               </span>
@@ -292,20 +292,20 @@ export function AuditLogsClientView({ logs }: AuditLogsClientViewProps) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {log.old_data && (
                                 <div className="space-y-1">
-                                  <span className="text-[11px] font-bold text-[#E58585] uppercase tracking-wider block">
+                                  <span className="text-[11px] font-bold text-[#E58585] uppercase tracking-wider block font-mono">
                                     Données Antérieures (Old Data)
                                   </span>
-                                  <pre className="p-3 rounded-lg bg-slate-950 text-[10px] text-slate-300 overflow-x-auto border border-slate-800 max-h-56 leading-tight font-mono">
+                                  <pre className="p-3 rounded-lg bg-[#14171D] text-[10px] text-slate-300 overflow-x-auto border border-[#252932] max-h-56 leading-tight font-mono">
                                     {JSON.stringify(log.old_data, null, 2)}
                                   </pre>
                                 </div>
                               )}
 
                               <div className="space-y-1 flex-1">
-                                <span className="text-[11px] font-bold text-[#A5CE5B] uppercase tracking-wider block">
+                                <span className="text-[11px] font-bold text-[#A5CE5B] uppercase tracking-wider block font-mono">
                                   Données Nouvelles (New Data)
                                 </span>
-                                <pre className="p-3 rounded-lg bg-slate-950 text-[10px] text-slate-300 overflow-x-auto border border-slate-800 max-h-56 leading-tight font-mono">
+                                <pre className="p-3 rounded-lg bg-[#14171D] text-[10px] text-slate-300 overflow-x-auto border border-[#252932] max-h-56 leading-tight font-mono">
                                   {JSON.stringify(log.new_data || {}, null, 2)}
                                 </pre>
                               </div>

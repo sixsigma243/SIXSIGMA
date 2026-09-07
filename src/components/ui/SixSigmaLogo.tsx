@@ -89,9 +89,6 @@ export function SixSigmaLogo({
             >
               SIX SIGMA
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#8E2424]/25 text-[#E07A7A] border border-[#8E2424]/40">
-              ERP
-            </span>
           </div>
 
           {showSlogan && (

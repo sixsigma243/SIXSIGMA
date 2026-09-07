@@ -12,12 +12,10 @@ import {
   Boxes,
   Truck,
   Coins,
-  ArrowUpRight,
   Clock,
   AlertTriangle,
   CheckCircle2,
   Calendar,
-  Sparkles,
   ClipboardList,
   Scale,
   Plus,
@@ -79,42 +77,35 @@ export default async function DashboardPage() {
     .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-[#14171D] border border-[#252932] p-6 md:p-8 shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="rounded-xl bg-[#14171D] border border-[#252932] p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
-                SIX SIGMA ERP
-              </span>
-              <span className="text-xs text-slate-400">•</span>
-              <span className="text-xs text-slate-400 italic">« La constance dans la qualité »</span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-              Bonjour, {profile?.full_name || "Utilisateur"}
+            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+              Tableau de bord opérationnel
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Poste actif : <span className="font-semibold text-white">{roleConfig.label}</span> • {roleConfig.department}
+              Connecté : <span className="text-slate-200 font-semibold">{profile?.full_name || "Elysée Mudimbi"}</span> • {userRole === "admin" ? "Super-Admin" : roleConfig.label}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {hasRoleAccess(userRole, ["admin", "site_manager", "supervisor"]) && (
               <Link
                 href="/field-reports/new"
-                className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/25 border border-[#8E2424] transition flex items-center gap-2"
+                className="px-3 py-1.5 rounded-lg bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold border border-[#8E2424] transition flex items-center gap-2"
               >
-                <HardHat className="w-4 h-4" />
-                <span>Rédiger Journal Chantier</span>
+                <HardHat className="w-3.5 h-3.5" />
+                <span>Nouveau Journal</span>
               </Link>
             )}
             {hasRoleAccess(userRole, ["admin", "site_manager", "supervisor", "warehouse_keeper"]) && (
               <Link
                 href="/requisitions"
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-700 transition flex items-center gap-2"
+                className="px-3 py-1.5 rounded-lg bg-[#1C1F23] hover:bg-[#252932] text-slate-300 text-xs font-semibold border border-[#252932] transition flex items-center gap-2"
               >
-                <FileCheck2 className="w-4 h-4" />
+                <FileCheck2 className="w-3.5 h-3.5" />
                 <span>Demande DRI</span>
               </Link>
             )}
@@ -124,156 +115,129 @@ export default async function DashboardPage() {
 
       {/* Pending Attendance Reconciliations Alert */}
       {reconciliations && reconciliations.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-3 text-amber-200">
-            <Scale className="w-5 h-5 text-amber-400 flex-shrink-0" />
+        <div className="p-3.5 rounded-xl bg-[#1C1F23] border border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-slate-300">
+            <Scale className="w-4 h-4 text-amber-400 flex-shrink-0" />
             <div>
-              <strong className="font-bold">Écarts de Pointage RH à Arbitrer : </strong>
+              <strong className="font-semibold text-white">Écarts de Pointage RH à Arbitrer : </strong>
               <span>
-                {reconciliations.length} écart(s) entre le pointage du Pointeur et la déclaration du Chef d&apos;Équipe requièrent votre visa d&apos;arbitrage.
+                {reconciliations.length} écart(s) nécessitent votre arbitrage.
               </span>
             </div>
           </div>
           <Link
             href="/attendance"
-            className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap transition"
+            className="px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold whitespace-nowrap transition"
           >
-            Arbitrer Maintenant &rarr;
+            Arbitrer
           </Link>
         </div>
       )}
 
-      {/* KPI Grid */}
+      {/* KPI Grid - Sober Industrial Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Active Projects */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden group">
+        <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Chantiers Actifs
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+              CHANTIERS EN COURS
             </span>
-            <div className="p-2.5 rounded-xl bg-[#8E2424]/15 text-[#E58585] border border-[#8E2424]/30">
-              <HardHat className="w-5 h-5" />
-            </div>
+            <HardHat className="w-4 h-4 text-slate-500" />
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-black text-white tracking-tight">
+            <span className="text-3xl font-bold text-white tracking-tight">
               {activeProjectsCount}
             </span>
-            <span className="text-xs text-slate-400 ml-2">
-              sur {projects?.length || 0} projets
-            </span>
           </div>
-          <div className="mt-2 text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
-            <span>Budget consolidé :</span>
-            <span className="font-bold text-[#7BA238]">{formatUSD(totalBudgetUSD)}</span>
+          <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-[#252932]">
+            {projects?.length || 0} projet(s) • Budget : {formatUSD(totalBudgetUSD)}
           </div>
         </div>
 
         {/* KPI 2: Workforce Today */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden group">
+        <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Effectifs Pointés
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+              EFFECTIFS DU JOUR
             </span>
-            <div className="p-2.5 rounded-xl bg-blue-950/60 text-blue-400 border border-blue-800/40">
-              <Users className="w-5 h-5" />
-            </div>
+            <Users className="w-4 h-4 text-slate-500" />
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-black text-white tracking-tight">
+            <span className="text-3xl font-bold text-white tracking-tight">
               {presentWorkersToday}
             </span>
-            <span className="text-xs text-[#7BA238] ml-2 font-medium">
-              Présents aujourd&apos;hui
-            </span>
           </div>
-          <div className="mt-2 text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
-            <span>Supervision RH :</span>
-            <span className="font-semibold text-slate-300">Pointages en cours</span>
+          <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-[#252932]">
+            {presentWorkersToday} présents pointés aujourd&apos;hui
           </div>
         </div>
 
         {/* KPI 3: Pending DRI Requisitions */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden group">
+        <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Réquisitions DRI
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+              RÉQUISITIONS EN ATTENTE
             </span>
-            <div className="p-2.5 rounded-xl bg-amber-950/60 text-amber-400 border border-amber-800/40">
-              <FileCheck2 className="w-5 h-5" />
-            </div>
+            <FileCheck2 className="w-4 h-4 text-slate-500" />
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-black text-amber-400 tracking-tight">
+            <span className="text-3xl font-bold text-white tracking-tight">
               {pendingRequisitionsCount}
             </span>
-            <span className="text-xs text-slate-400 ml-2">
-              en attente de visa
-            </span>
           </div>
-          <div className="mt-2 text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
-            <span>Validation :</span>
-            <span className="font-semibold text-slate-300">Conducteur de Travaux</span>
+          <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-[#252932]">
+            {pendingRequisitionsCount} demande(s) en attente de visa
           </div>
         </div>
 
         {/* KPI 4: Fleet & Materials Alerts */}
-        <div className="glass-card rounded-2xl p-5 relative overflow-hidden group">
+        <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Flotte & Matériel
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+              MATÉRIEL ACTIF
             </span>
-            <div className="p-2.5 rounded-xl bg-[#7BA238]/15 text-[#7BA238] border border-[#7BA238]/30">
-              <Truck className="w-5 h-5" />
-            </div>
+            <Truck className="w-4 h-4 text-slate-500" />
           </div>
           <div className="mt-3">
-            <span className="text-3xl font-black text-white tracking-tight">
+            <span className="text-3xl font-bold text-white tracking-tight">
               {availableVehiclesCount}
             </span>
-            <span className="text-xs text-slate-400 ml-2">
-              engins disponibles sur {fleetVehicles?.length || 0}
-            </span>
           </div>
-          <div className="mt-2 text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
-            <span>Alertes stock :</span>
-            <span className={lowStockItems.length > 0 ? "text-amber-400 font-bold" : "text-[#7BA238] font-bold"}>
-              {lowStockItems.length} articles critiques
-            </span>
+          <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-[#252932]">
+            {availableVehiclesCount} engin(s) disponible(s) sur {fleetVehicles?.length || 0}
           </div>
         </div>
       </div>
 
       {/* Main Content Grid: Projects & Quick Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Active Chantiers */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                <HardHat className="w-5 h-5 text-[#8E2424]" />
+              <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                <HardHat className="w-4 h-4 text-slate-400" />
                 <span>Chantiers & Projets en Exécution</span>
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Suivi d&apos;avancement, budgets multi-devises et conducteurs de travaux assignés.
               </p>
             </div>
             <Link
               href="/projects"
-              className="text-xs font-semibold text-[#E58585] hover:text-white flex items-center gap-1"
+              className="text-xs font-semibold text-slate-300 hover:text-white transition px-2.5 py-1 rounded-lg bg-[#1C1F23] border border-[#252932]"
             >
-              <span>Voir tout</span>
-              <ArrowUpRight className="w-4 h-4" />
+              Consulter
             </Link>
           </div>
 
           {!projects || projects.length === 0 ? (
-            <div className="bg-[#14171D] border border-[#252932] border-dashed rounded-2xl p-8 text-center space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-[#1C1F23] border border-[#252932] flex items-center justify-center text-slate-400 mx-auto">
-                <HardHat className="w-6 h-6 text-[#8E2424]" />
+            <div className="bg-[#14171D] border border-[#252932] border-dashed rounded-xl p-8 text-center space-y-3">
+              <div className="w-10 h-10 rounded-lg bg-[#1C1F23] border border-[#252932] flex items-center justify-center text-slate-400 mx-auto">
+                <HardHat className="w-5 h-5 text-slate-500" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-white">Aucun chantier actif en cours</p>
+                <p className="text-sm font-semibold text-white">Aucun chantier actif en cours</p>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Initialisez votre premier chantier pour planifier les travaux, affecter un conducteur et suivre les budgets.
                 </p>
@@ -281,7 +245,7 @@ export default async function DashboardPage() {
               <div className="pt-1">
                 <Link
                   href="/projects"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold transition shadow-md shadow-[#8E2424]/20 border border-[#8E2424]"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold transition border border-[#8E2424]"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>+ Créer un Projet</span>
@@ -289,15 +253,15 @@ export default async function DashboardPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {projects.map((prj) => (
                 <div
                   key={prj.id}
-                  className="glass-card rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition"
+                  className="bg-[#14171D] border border-[#252932] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition"
                 >
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-bold text-[#E58585] tracking-wider">
+                      <span className="text-xs font-mono font-bold text-[#E58585] tracking-wider">
                         {prj.code}
                       </span>
                       <StatusBadge status={prj.status} type="project" />
@@ -310,7 +274,7 @@ export default async function DashboardPage() {
                     </p>
                   </div>
 
-                  <div className="flex sm:flex-col items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
+                  <div className="flex sm:flex-col items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-[#252932]">
                     <span className="text-[11px] text-slate-400">Budget engagé</span>
                     <CurrencyBadge amount={Number(prj.budget)} currency={prj.currency} size="sm" />
                   </div>
@@ -325,26 +289,25 @@ export default async function DashboardPage() {
           {/* Daily Site Reports Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                <ClipboardList className="w-5 h-5 text-amber-500" />
+              <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-slate-400" />
                 <span>Journaux de Chantier</span>
               </h2>
               <Link
                 href="/field-reports"
-                className="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1"
+                className="text-xs font-semibold text-slate-300 hover:text-white transition px-2.5 py-1 rounded-lg bg-[#1C1F23] border border-[#252932]"
               >
-                <span>Détails</span>
-                <ArrowUpRight className="w-4 h-4" />
+                Consulter
               </Link>
             </div>
 
             {!siteReports || siteReports.length === 0 ? (
               <div className="bg-[#14171D] border border-[#252932] border-dashed rounded-xl p-6 text-center space-y-2.5">
-                <div className="w-10 h-10 rounded-xl bg-[#1C1F23] border border-[#252932] flex items-center justify-center text-amber-500 mx-auto">
+                <div className="w-10 h-10 rounded-lg bg-[#1C1F23] border border-[#252932] flex items-center justify-center text-slate-500 mx-auto">
                   <ClipboardList className="w-5 h-5" />
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-xs font-bold text-white">Aucun journal rédigé</p>
+                  <p className="text-xs font-semibold text-white">Aucun journal rédigé</p>
                   <p className="text-[11px] text-slate-400">
                     Les rapports d&apos;activités quotidiens apparaîtront ici.
                   </p>
@@ -352,7 +315,7 @@ export default async function DashboardPage() {
                 <div className="pt-1">
                   <Link
                     href="/field-reports/new"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1C1F23] hover:bg-[#252932] text-amber-400 text-xs font-semibold border border-amber-800/40 transition"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1C1F23] hover:bg-[#252932] text-slate-300 text-xs font-semibold border border-[#252932] transition"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>+ Ouvrir un Journal</span>
@@ -360,11 +323,11 @@ export default async function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {siteReports.map((rep) => (
                   <div
                     key={rep.id}
-                    className="glass-card rounded-xl p-4 space-y-2.5 border-l-4 border-l-amber-600"
+                    className="bg-[#14171D] border border-[#252932] rounded-xl p-3.5 space-y-2 border-l-2 border-l-[#8E2424]"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
@@ -376,7 +339,7 @@ export default async function DashboardPage() {
                     <p className="text-xs font-medium text-slate-200 line-clamp-2">
                       {rep.activities_summary}
                     </p>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-[#252932]">
                       <span>Météo : {rep.weather || "Standard"}</span>
                       <span>Effectif : {rep.workforce_count} ouvriers</span>
                     </div>
@@ -388,32 +351,35 @@ export default async function DashboardPage() {
 
           {/* Cashbox & Treasury Summary */}
           {hasRoleAccess(userRole, ["admin", "company_management", "accountant", "site_manager"]) && (
-            <div className="bg-[#14171D] rounded-2xl p-5 border border-[#252932] space-y-3">
+            <div className="bg-[#14171D] rounded-xl p-5 border border-[#252932] space-y-3 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-[#7BA238]" />
+                <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
+                  <Coins className="w-4 h-4 text-slate-400" />
                   <span>Trésorerie & Dépenses Chantiers</span>
                 </h3>
-                <Link href="/finance" className="text-[11px] text-[#7BA238] hover:underline">
-                  Gérer
+                <Link
+                  href="/finance"
+                  className="text-xs font-semibold text-slate-300 hover:text-white transition px-2.5 py-1 rounded-lg bg-[#1C1F23] border border-[#252932]"
+                >
+                  Consulter
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932]">
-                  <span className="text-[10px] text-slate-400 uppercase">Dépenses USD</span>
-                  <div className="text-sm font-bold text-[#7BA238] mt-0.5">
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="p-3 rounded-lg bg-[#0E1116] border border-[#252932]">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono">Dépenses USD</span>
+                  <div className="text-sm font-bold text-white mt-0.5">
                     {formatUSD(totalUSDSpent)}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932]">
-                  <span className="text-[10px] text-slate-400 uppercase">Dépenses CDF</span>
-                  <div className="text-sm font-bold text-amber-400 mt-0.5">
+                <div className="p-3 rounded-lg bg-[#0E1116] border border-[#252932]">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono">Dépenses CDF</span>
+                  <div className="text-sm font-bold text-white mt-0.5">
                     {formatCDF(totalCDFSpent)}
                   </div>
                 </div>
               </div>
               <p className="text-[11px] text-slate-400 pt-1">
-                Alerte automatique active : toute dépense supérieure à <span className="font-bold text-white">5 000 USD</span> requiert le visa de la Direction Générale.
+                Alerte de gestion active : toute dépense supérieure à <span className="font-semibold text-white">5 000 USD</span> requiert l&apos;approbation de la Direction Générale.
               </p>
             </div>
           )}

@@ -15,7 +15,6 @@ import {
   ShieldAlert,
   UserCog,
   LogOut,
-  ChevronRight,
 } from "lucide-react";
 import { Profile } from "@/types/database";
 import { NAVIGATION_ITEMS, ROLES_CONFIG, hasRoleAccess } from "@/lib/rbac";
@@ -36,8 +35,8 @@ const ICONS_MAP: Record<string, React.ReactNode> = {
   Boxes: <Boxes className="w-5 h-5" />,
   Coins: <Coins className="w-5 h-5" />,
   Truck: <Truck className="w-5 h-5" />,
-  ShieldAlert: <ShieldAlert className="w-5 h-5 text-purple-400" />,
-  UserCog: <UserCog className="w-5 h-5 text-[#E07A7A]" />,
+  ShieldAlert: <ShieldAlert className="w-5 h-5" />,
+  UserCog: <UserCog className="w-5 h-5" />,
 };
 
 export function Sidebar({ profile }: SidebarProps) {
@@ -59,38 +58,25 @@ export function Sidebar({ profile }: SidebarProps) {
   );
 
   return (
-    <aside className="w-72 bg-[#14171B] border-r border-[#252932] flex flex-col h-screen sticky top-0 select-none z-30">
+    <aside className="w-64 bg-[#14171B] border-r border-[#252932] flex flex-col h-screen sticky top-0 select-none z-30">
       {/* Brand Header */}
       <div className="p-5 border-b border-[#252932] bg-[#0E1116]">
         <SixSigmaLogo size="md" showText={true} showSlogan={true} />
 
-        {/* Active Role Card */}
-        <div className="mt-4 p-3 rounded-xl bg-[#1C1F23] border border-[#252932]">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider">
-              Rôle Actif
-            </span>
-            <span
-              className={cn(
-                "px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                roleInfo.badgeColor
-              )}
-            >
-              {roleInfo.label}
-            </span>
-          </div>
-          <p className="mt-1 text-xs text-slate-200 font-medium truncate">
-            {profile?.full_name || "Utilisateur connecté"}
+        {/* User Profile Block */}
+        <div className="mt-4 pt-3 border-t border-[#252932]">
+          <p className="text-xs font-semibold text-white truncate">
+            {profile?.full_name || "Elysée Mudimbi"}
           </p>
-          <p className="text-[11px] text-slate-400 truncate mt-0.5">
-            {roleInfo.department}
+          <p className="text-[11px] text-[#94A3B8] truncate mt-0.5">
+            {userRole === "admin" ? "Super-Admin" : roleInfo.label}
           </p>
         </div>
       </div>
 
       {/* Navigation Section */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+      <div className="flex-1 overflow-y-auto px-2.5 py-4 space-y-0.5">
+        <div className="px-3 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">
           Modules Opérationnels
         </div>
 
@@ -104,17 +90,17 @@ export function Sidebar({ profile }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
+                "group flex items-center px-3 py-2 rounded-lg text-xs font-medium transition-colors",
                 isActive
-                  ? "bg-[#8E2424] text-white shadow-md shadow-[#8E2424]/30 border border-[#8E2424]"
-                  : "text-[#94A3B8] hover:text-white hover:bg-[#1C1F23]"
+                  ? "bg-[#1C2129] text-white border-l-2 border-[#8E2424]"
+                  : "text-[#94A3B8] hover:text-white hover:bg-[#1C2129]/60 border-l-2 border-transparent"
               )}
             >
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
                     "transition-colors",
-                    isActive ? "text-white" : "text-[#94A3B8] group-hover:text-slate-200"
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-white"
                   )}
                 >
                   {ICONS_MAP[item.iconName]}
@@ -123,14 +109,6 @@ export function Sidebar({ profile }: SidebarProps) {
                   {item.name}
                 </span>
               </div>
-              <ChevronRight
-                className={cn(
-                  "w-4 h-4 transition-transform",
-                  isActive
-                    ? "text-white/80 translate-x-0.5"
-                    : "text-slate-600 opacity-0 group-hover:opacity-100"
-                )}
-              />
             </Link>
           );
         })}
@@ -140,10 +118,10 @@ export function Sidebar({ profile }: SidebarProps) {
       <div className="p-3 border-t border-[#252932] bg-[#0E1116]">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#E07A7A] hover:text-white bg-[#8E2424]/10 hover:bg-[#8E2424] border border-[#8E2424]/30 transition-all"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-[#1C2129] border border-[#252932] transition"
         >
-          <LogOut className="w-4 h-4" />
-          <span>Déconnexion Sécurisée</span>
+          <LogOut className="w-3.5 h-3.5" />
+          <span>Déconnexion</span>
         </button>
       </div>
     </aside>

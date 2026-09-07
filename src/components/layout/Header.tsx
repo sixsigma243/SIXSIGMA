@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Profile } from "@/types/database";
 import { ROLES_CONFIG } from "@/lib/rbac";
-import { DollarSign, Edit3, X, Check, RefreshCw, Sparkles, AlertCircle } from "lucide-react";
+import { Edit3, X, Check, RefreshCw, AlertCircle } from "lucide-react";
 
 interface HeaderProps {
   profile: Profile | null;
 }
 
 export function Header({ profile }: HeaderProps) {
+  const pathname = usePathname();
   const userRole = profile?.role || "supervisor";
   const roleInfo = ROLES_CONFIG[userRole] || ROLES_CONFIG.supervisor;
   const isAdmin = userRole === "admin";
@@ -38,6 +40,20 @@ export function Header({ profile }: HeaderProps) {
     }
     loadRate();
   }, []);
+
+  const getBreadcrumbTitle = () => {
+    if (!pathname || pathname === "/dashboard") return "Tableau de Bord";
+    if (pathname.startsWith("/projects")) return "Chantiers & Projets";
+    if (pathname.startsWith("/field-reports")) return "Journaux de Chantier";
+    if (pathname.startsWith("/attendance")) return "Pointage & RH";
+    if (pathname.startsWith("/requisitions")) return "Réquisitions DRI";
+    if (pathname.startsWith("/inventory")) return "Stocks & Magasin";
+    if (pathname.startsWith("/finance")) return "Trésorerie & Caisse";
+    if (pathname.startsWith("/fleet")) return "Flotte & Engins";
+    if (pathname.startsWith("/audit")) return "Gouvernance & Audit";
+    if (pathname.startsWith("/admin/users")) return "Administration Employés";
+    return "Système";
+  };
 
   const handleOpenModal = () => {
     if (!isAdmin) return;
@@ -69,7 +85,6 @@ export function Header({ profile }: HeaderProps) {
           type: "success",
           message: `Nouveau taux de référence appliqué : 1 USD = ${parsed.toLocaleString("fr-FR")} CDF`,
         });
-        // Dispatch event for other views that might listen
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("exchange-rate-updated", { detail: parsed }));
         }
@@ -85,19 +100,14 @@ export function Header({ profile }: HeaderProps) {
 
   return (
     <>
-      <header className="h-16 bg-[#1C1F23]/95 backdrop-blur-md border-b border-[#252932] px-6 flex items-center justify-between sticky top-0 z-20">
-        {/* Left Title & Status */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#7BA238] animate-pulse"></span>
-            <span className="text-xs font-semibold text-slate-300">
-              Portail Entreprise
-            </span>
-          </div>
-          <span className="text-slate-600">|</span>
-          <span className="text-xs text-slate-400 hidden md:inline">
-            BTP • Génie Civil • Flotte • Logistique
+      <header className="h-14 bg-[#14171B] border-b border-[#252932] px-6 flex items-center justify-between sticky top-0 z-20 select-none">
+        {/* Left: Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
+          <span className="text-slate-500 font-semibold tracking-wider uppercase text-[11px]">
+            SIX SIGMA
           </span>
+          <span className="text-slate-600">/</span>
+          <span className="text-white font-semibold">{getBreadcrumbTitle()}</span>
         </div>
 
         {/* Right Toolbar */}
@@ -106,38 +116,36 @@ export function Header({ profile }: HeaderProps) {
           {isAdmin ? (
             <button
               onClick={handleOpenModal}
-              title="Ajuster le taux de change de référence (Super-Admin)"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171D] hover:bg-[#1C1F23] border border-[#252932] hover:border-[#8E2424]/60 text-xs font-medium text-slate-300 transition group cursor-pointer shadow-sm active:scale-95"
+              title="Ajuster le taux officiel BCC (Super-Admin)"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0E1116] hover:bg-[#1C1F23] border border-[#252932] hover:border-[#8E2424]/60 text-xs font-mono text-slate-300 transition cursor-pointer shadow-sm active:scale-95"
             >
-              <DollarSign className="w-3.5 h-3.5 text-[#7BA238]" />
-              <span className="text-slate-400">Taux RDC : </span>
-              <span className="font-bold text-amber-300">
+              <span className="text-slate-400 font-sans text-[11px]">Taux BCC :</span>
+              <span className="font-semibold text-white">
                 1 USD = {rate.toLocaleString("fr-FR")} CDF
               </span>
-              <Edit3 className="w-3 h-3 text-slate-500 group-hover:text-[#E58585] ml-0.5 transition" />
+              <Edit3 className="w-3 h-3 text-slate-500 hover:text-white ml-0.5 transition" />
             </button>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171D] border border-[#252932] text-xs font-medium text-slate-300">
-              <DollarSign className="w-3.5 h-3.5 text-[#7BA238]" />
-              <span className="text-slate-400">Taux RDC : </span>
-              <span className="font-bold text-amber-300">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0E1116] border border-[#252932] text-xs font-mono text-slate-300">
+              <span className="text-slate-400 font-sans text-[11px]">Taux BCC :</span>
+              <span className="font-semibold text-white">
                 1 USD = {rate.toLocaleString("fr-FR")} CDF
               </span>
             </div>
           )}
 
           {/* User Info Badge */}
-          <div className="flex items-center gap-3 pl-2 border-l border-[#252932]">
-            <div className="w-8 h-8 rounded-full bg-[#14171D] flex items-center justify-center text-xs font-bold text-[#E58585] border border-[#8E2424]/40">
-              {profile?.first_name?.[0] || "U"}
-              {profile?.last_name?.[0] || ""}
+          <div className="flex items-center gap-3 pl-3 border-l border-[#252932]">
+            <div className="w-8 h-8 rounded-lg bg-[#1C1F23] flex items-center justify-center text-xs font-semibold text-slate-300 border border-[#252932]">
+              {profile?.first_name?.[0] || "E"}
+              {profile?.last_name?.[0] || "M"}
             </div>
             <div className="hidden sm:block text-right">
               <div className="text-xs font-semibold text-slate-200">
-                {profile?.full_name || "Utilisateur"}
+                {profile?.full_name || "Elysée Mudimbi"}
               </div>
-              <div className="text-[10px] text-slate-400">
-                {roleInfo.label}
+              <div className="text-[10px] text-[#94A3B8]">
+                {isAdmin ? "Super-Admin" : roleInfo.label}
               </div>
             </div>
           </div>
@@ -180,26 +188,23 @@ export function Header({ profile }: HeaderProps) {
             </button>
 
             <div className="flex items-center gap-3 border-b border-[#252932] pb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#8E2424]/20 border border-[#8E2424]/40 text-[#E58585] flex items-center justify-center">
-                <DollarSign className="w-5 h-5" />
-              </div>
               <div>
-                <h3 className="text-base font-black text-white uppercase tracking-tight">
-                  Taux de Change de Référence
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Taux de Référence Officiel (BCC)
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Paramètre système officiel • BTP & Comptabilité multi-devises
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Conversion opérationnelle USD / Francs Congolais (CDF)
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleSaveRate} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Valeur de conversion (1 USD en Francs Congolais)
+                <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                  Taux de change (1 USD en CDF)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500">
                     1 USD =
                   </span>
                   <input
@@ -209,9 +214,9 @@ export function Header({ profile }: HeaderProps) {
                     value={rateInput}
                     onChange={(e) => setRateInput(e.target.value)}
                     placeholder="2850"
-                    className="w-full pl-20 pr-14 py-2.5 bg-[#0E1116] border border-[#252932] rounded-xl text-sm font-mono font-bold text-amber-300 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424]"
+                    className="w-full pl-20 pr-14 py-2.5 bg-[#0E1116] border border-[#252932] rounded-xl text-sm font-mono font-bold text-white focus:outline-none focus:border-[#8E2424]"
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
                     CDF
                   </span>
                 </div>
@@ -219,7 +224,7 @@ export function Header({ profile }: HeaderProps) {
 
               {/* Quick Preset Buttons */}
               <div>
-                <span className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase">
+                <span className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
                   Paliers Rapides
                 </span>
                 <div className="flex items-center gap-2">
@@ -228,9 +233,9 @@ export function Header({ profile }: HeaderProps) {
                       key={val}
                       type="button"
                       onClick={() => setRateInput(String(val))}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium border transition ${
                         rateInput === String(val)
-                          ? "bg-[#8E2424]/25 border-[#8E2424] text-white"
+                          ? "bg-[#1C2129] border-[#8E2424] text-white"
                           : "bg-[#0E1116] border-[#252932] text-slate-400 hover:text-white"
                       }`}
                     >
@@ -240,12 +245,12 @@ export function Header({ profile }: HeaderProps) {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932] text-[11px] text-slate-400 space-y-1 leading-relaxed">
+              <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932] text-[11px] text-slate-400 space-y-1">
                 <p>
-                  • Ce taux sera appliqué à toutes les conversions automatiques de l&apos;ERP (dépenses caisse chantier, seuil DG de 5 000 USD, valorisation des stocks).
+                  • Ce taux sera appliqué aux conversions automatiques (dépenses caisse, seuils de validation, valorisation de stocks).
                 </p>
                 <p>
-                  • Toute modification sera tracée avec identifiant dans le journal d&apos;audit légal.
+                  • Chaque modification est consignée dans le registre d&apos;audit.
                 </p>
               </div>
 
@@ -253,21 +258,21 @@ export function Header({ profile }: HeaderProps) {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1C1F23] hover:bg-slate-800 text-slate-300 text-xs font-semibold transition"
+                  className="px-4 py-2 rounded-xl bg-[#1C1F23] hover:bg-[#252932] text-slate-300 text-xs font-medium transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/30 border border-[#8E2424] transition disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold border border-[#8E2424] transition disabled:opacity-50 flex items-center gap-2"
                 >
                   {saving ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <Check className="w-3.5 h-3.5" />
                   )}
-                  <span>Appliquer le Taux de Change</span>
+                  <span>Appliquer le Taux</span>
                 </button>
               </div>
             </form>
