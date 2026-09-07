@@ -17,6 +17,7 @@ import {
   TrendingUp,
   X,
   ShieldAlert,
+  Lock,
 } from "lucide-react";
 
 export default function FinancePage() {
@@ -98,6 +99,24 @@ export default function FinancePage() {
       alert("Erreur lors de l'enregistrement : " + error.message);
     }
     setSaving(false);
+  };
+
+  const handleValidateTransaction = async (txId: string) => {
+    if (!currentUser) return;
+    if (currentUser.role === "admin") {
+      alert("Séparation des pouvoirs (SoD) : L'administrateur système ne valide pas de dépenses financières.");
+      return;
+    }
+    const { error } = await supabase
+      .from("cashbox_transactions")
+      .update({ validated_by: currentUser.id })
+      .eq("id", txId);
+
+    if (error) {
+      alert("Erreur validation : " + error.message);
+    } else {
+      fetchTransactions();
+    }
   };
 
   // Balances
@@ -297,18 +316,30 @@ export default function FinancePage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {tx.requires_management_approval ? (
-                        tx.validated_by ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
-                            Validé DG
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 animate-pulse">
-                            Requis &gt; 5K$
-                          </span>
-                        )
+                      {tx.validated_by ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                          <CheckCircle2 className="w-3 h-3" /> Validé
+                        </span>
+                      ) : currentUser?.role === "admin" ? (
+                        <span
+                          title="Séparation des Pouvoirs : L'administrateur système ne valide pas de dépenses financières"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed select-none"
+                        >
+                          <Lock className="w-3 h-3 text-slate-500" />
+                          SoD Bloqué (Admin)
+                        </span>
+                      ) : currentUser?.role === "company_management" ||
+                        (currentUser?.role === "accountant" && !tx.requires_management_approval) ? (
+                        <button
+                          onClick={() => handleValidateTransaction(tx.id)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 transition"
+                        >
+                          <CheckCircle2 className="w-3 h-3" /> Valider
+                        </button>
                       ) : (
-                        <span className="text-slate-500 text-[11px]">Standard</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 animate-pulse">
+                          {tx.requires_management_approval ? "Requis DG (>5K$)" : "Requis Compta"}
+                        </span>
                       )}
                     </td>
                   </tr>

@@ -244,6 +244,15 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
       "mechanic",
     ],
   },
+  {
+    name: "Gouvernance & Audit Logs",
+    href: "/audit",
+    iconName: "ShieldAlert",
+    allowedRoles: [
+      "admin",
+      "company_management",
+    ],
+  },
 ];
 
 export function hasRoleAccess(userRole: UserRole | undefined | null, allowedRoles: UserRole[]): boolean {

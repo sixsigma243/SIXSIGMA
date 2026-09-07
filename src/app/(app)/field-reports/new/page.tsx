@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   Save,
+  Clock,
 } from "lucide-react";
 
 export default function NewFieldReportPage() {
@@ -106,6 +107,24 @@ export default function NewFieldReportPage() {
             Enregistrement des effectifs, avancement journalier et transmission pour visa au Conducteur de travaux.
           </p>
         </div>
+      </div>
+
+      {/* 19h00 Cutoff Banner */}
+      <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Clock className="w-5 h-5 text-amber-400 flex-shrink-0" />
+          <div>
+            <div className="text-xs font-bold text-amber-200">
+              Règle de Clôture Quotidienne Stricte : Clôture avant 19h00 (Heure RDC UTC+2)
+            </div>
+            <div className="text-[11px] text-amber-300/70 mt-0.5">
+              Passé 19h00, le trigger PostgreSQL <code className="text-amber-200">trg_enforce_daily_report_cutoff</code> bloque automatiquement toute soumission du jour.
+            </div>
+          </div>
+        </div>
+        <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-900/80 text-amber-200 border border-amber-700">
+          Coupe-Circuit 19h00
+        </span>
       </div>
 
       {/* Form Container */}

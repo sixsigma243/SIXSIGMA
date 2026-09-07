@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ROLES_CONFIG } from "@/lib/rbac";
@@ -23,6 +23,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("SixSigma2026!");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("error") === "account_disabled") {
+        setErrorMsg("Accès refusé : Ce compte utilisateur a été désactivé par la Direction SI & Gouvernance (Sécurité SoD).");
+      }
+    }
+  }, []);
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

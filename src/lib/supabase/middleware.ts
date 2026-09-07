@@ -35,6 +35,23 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // Check if active user account is disabled
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && profile.is_active === false) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("error", "account_disabled");
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Protect all dashboard routes
   if (
     !user &&

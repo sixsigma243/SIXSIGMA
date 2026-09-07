@@ -33,6 +33,9 @@ export interface Profile {
   role: UserRole;
   sub_role?: string | null;
   avatar_url?: string | null;
+  is_active?: boolean;
+  contract_end_date?: string | null;
+  id_expiry_date?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -102,6 +105,7 @@ export interface TimeEntry {
   notes: string | null;
   created_at: string;
   project?: Project;
+  profile?: Profile;
 }
 
 export interface InventoryItem {
@@ -204,6 +208,8 @@ export interface DispatchMission {
   id: string;
   vehicle_id: string | null;
   driver_name: string;
+  driver_license_expiry?: string | null;
+  driver_profile_id?: string | null;
   project_id: string | null;
   departure_place: string;
   destination: string;
@@ -215,6 +221,31 @@ export interface DispatchMission {
   created_at: string;
   vehicle?: FleetVehicle;
   project?: Project;
+  driver_profile?: Profile;
+}
+
+export interface AuditLog {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: string;
+  old_data: any;
+  new_data: any;
+  performed_by: string | null;
+  performed_at: string;
+  performer?: Profile | null;
+}
+
+export interface PayrollPeriod {
+  id: string;
+  period_name: string;
+  start_date: string;
+  end_date: string;
+  is_locked: boolean;
+  locked_by: string | null;
+  locked_at: string | null;
+  created_at: string;
+  locker?: Profile | null;
 }
 
 export interface CashboxTransaction {

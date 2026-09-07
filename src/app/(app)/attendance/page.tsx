@@ -66,7 +66,7 @@ export default function AttendancePage() {
 
     const { data } = await supabase
       .from("time_entries")
-      .select("*, project:project_id(*)")
+      .select("*, project:project_id(*), profile:profile_id(*)")
       .eq("entry_date", dateFilter)
       .order("created_at", { ascending: false });
 
@@ -319,7 +319,29 @@ export default function AttendancePage() {
                     {entries.map((entry) => (
                       <tr key={entry.id} className="hover:bg-slate-800/40 transition">
                         <td className="py-3 px-4 font-semibold text-white">
-                          {entry.worker_name}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span>{entry.worker_name}</span>
+                            {entry.profile?.contract_end_date &&
+                              new Date(entry.profile.contract_end_date).getTime() - Date.now() <=
+                                15 * 86400000 && (
+                                <span
+                                  title={`Fin de contrat le ${entry.profile.contract_end_date}`}
+                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-300 bg-rose-950/80 border border-rose-800 px-1.5 py-0.5 rounded-md"
+                                >
+                                  <AlertCircle className="w-2.5 h-2.5 text-rose-400" /> Contrat
+                                </span>
+                              )}
+                            {entry.profile?.id_expiry_date &&
+                              new Date(entry.profile.id_expiry_date).getTime() - Date.now() <=
+                                15 * 86400000 && (
+                                <span
+                                  title={`Pièce d'identité expire le ${entry.profile.id_expiry_date}`}
+                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-300 bg-amber-950/80 border border-amber-800 px-1.5 py-0.5 rounded-md"
+                                >
+                                  <AlertCircle className="w-2.5 h-2.5 text-amber-400" /> ID
+                                </span>
+                              )}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-slate-200">{entry.worker_function || "Polyvalent"}</span>

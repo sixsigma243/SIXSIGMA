@@ -30,6 +30,9 @@ export default function FleetPage() {
   const [showModal, setShowModal] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [driverName, setDriverName] = useState("");
+  const [driverLicenseExpiry, setDriverLicenseExpiry] = useState(
+    new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0]
+  );
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [departurePlace, setDeparturePlace] = useState("Dépôt Central Limete");
   const [destination, setDestination] = useState("");
@@ -80,6 +83,7 @@ export default function FleetPage() {
     const { error } = await supabase.from("dispatch_missions").insert({
       vehicle_id: selectedVehicleId,
       driver_name: driverName.trim(),
+      driver_license_expiry: driverLicenseExpiry,
       project_id: selectedProjectId || null,
       departure_place: departurePlace.trim(),
       destination: destination.trim(),
@@ -255,8 +259,21 @@ export default function FleetPage() {
                         {m.vehicle?.model}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-200 font-medium">
-                      {m.driver_name}
+                    <td className="py-3 px-4 text-slate-200">
+                      <div className="font-semibold text-white">{m.driver_name}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                        <span>Permis :</span>
+                        <span
+                          className={`font-mono font-medium ${
+                            m.driver_license_expiry &&
+                            new Date(m.driver_license_expiry).getTime() < Date.now()
+                              ? "text-rose-400"
+                              : "text-sky-300"
+                          }`}
+                        >
+                          {m.driver_license_expiry ? formatDate(m.driver_license_expiry) : "En règle"}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1.5 text-slate-300">
@@ -346,20 +363,31 @@ export default function FleetPage() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Chantier Lié</label>
-                  <select
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                  <label className="block text-slate-300 font-semibold mb-1">Validité Permis Chauffeur *</label>
+                  <input
+                    type="date"
+                    required
+                    value={driverLicenseExpiry}
+                    onChange={(e) => setDriverLicenseExpiry(e.target.value)}
                     className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
-                  >
-                    <option value="">Hors chantier</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.code}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Chantier Lié</label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                >
+                  <option value="">Hors chantier</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.code} - {p.title}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
