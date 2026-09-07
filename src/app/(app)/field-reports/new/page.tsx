@@ -50,12 +50,12 @@ export default function NewFieldReportPage() {
       const { data: prj } = await supabase
         .from("projects")
         .select("*")
-        .eq("status", "in_progress")
         .order("title");
 
-      if (prj) {
+      if (prj && prj.length > 0) {
         setProjects(prj as Project[]);
-        if (prj.length > 0) setProjectId(prj[0].id);
+        const active = prj.find((p) => p.status === "in_progress");
+        setProjectId(active ? active.id : prj[0].id);
       }
       setLoading(false);
     }

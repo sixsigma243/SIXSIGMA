@@ -144,13 +144,14 @@ export default function RequisitionsPage() {
     const { error } = await supabase
       .from("material_requisitions")
       .update({
-        status: "site_manager_approved",
+        status: "approved",
         site_manager_id: currentUser.id,
         approved_at: new Date().toISOString(),
       })
       .eq("id", id);
 
     if (!error) fetchData();
+    else alert("Erreur d'approbation DRI : " + error.message);
     setActionLoading(null);
   };
 
@@ -167,18 +168,62 @@ export default function RequisitionsPage() {
     setActionLoading(null);
   };
 
-  const handleFulfill = async (id: string) => {
-    setActionLoading(id);
-    const { error } = await supabase
-      .from("material_requisitions")
-      .update({
-        status: "fulfilled",
-        fulfilled_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+  const handleDeliver = async (req: MaterialRequisition) => {
+    if (!currentUser) return;
+    setActionLoading(req.id);
 
-    if (!error) fetchData();
-    setActionLoading(null);
+    try {
+      const { error: reqError } = await supabase
+        .from("material_requisitions")
+        .update({
+          status: "delivered",
+          delivered_by: currentUser.id,
+          delivered_at: new Date().toISOString(),
+          fulfilled_at: new Date().toISOString(),
+        })
+        .eq("id", req.id);
+
+      if (reqError) throw reqError;
+
+      // Decrement inventory and record stock movements
+      if (Array.isArray(req.items)) {
+        for (const item of req.items) {
+          const qty = Number(item.quantity) || 1;
+          const itemName = item.item_name;
+
+          const { data: invItem } = await supabase
+            .from("inventory_items")
+            .select("id, current_stock")
+            .ilike("name", `%${itemName}%`)
+            .limit(1)
+            .maybeSingle();
+
+          if (invItem) {
+            const newStock = Math.max(0, Number(invItem.current_stock) - qty);
+            await supabase
+              .from("inventory_items")
+              .update({ current_stock: newStock, updated_at: new Date().toISOString() })
+              .eq("id", invItem.id);
+
+            await supabase.from("stock_movements").insert({
+              item_id: invItem.id,
+              movement_type: "OUT",
+              quantity: qty,
+              reference_doc: req.requisition_number,
+              project_id: req.project_id,
+              performed_by: currentUser.id,
+              notes: `Sortie DRI ${req.requisition_number} : ${itemName} (${qty} ${item.unit || "unités"})`,
+            });
+          }
+        }
+      }
+
+      fetchData();
+    } catch (err: any) {
+      alert("Erreur lors de la délivrance du matériel : " + err.message);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleDeleteRequisition = async (id: string, reqNumber: string) => {
@@ -201,6 +246,9 @@ export default function RequisitionsPage() {
     setPoSaving(true);
 
     const generatedPoNumber = `PO-2026-${poModalReq.requisition_number.replace("DRI-", "")}`;
+    const selectedSupplierName = selectedSupplierIndex === 1 ? supplier1Name : supplier2Name;
+    const selectedPoAmount = parseFloat(selectedSupplierIndex === 1 ? supplier1Amount : supplier2Amount) || 0;
+
     const quotes: SupplierQuote[] = [
       {
         supplier_name: supplier1Name,
@@ -220,6 +268,8 @@ export default function RequisitionsPage() {
       .from("material_requisitions")
       .update({
         po_number: generatedPoNumber,
+        supplier_name: selectedSupplierName,
+        po_amount: selectedPoAmount,
         supplier_quotes: quotes,
       })
       .eq("id", poModalReq.id);
@@ -230,7 +280,7 @@ export default function RequisitionsPage() {
       setSupplier2Amount("");
       fetchData();
     } else {
-      alert("Erreur d'émission du Bon de Commande (PO) : " + error.message);
+      alert("Erreur d'enregistrement du Bon de Commande : " + error.message);
     }
     setPoSaving(false);
   };
@@ -238,7 +288,7 @@ export default function RequisitionsPage() {
   const userRole = currentUser?.role || "supervisor";
   const canApprove = ["admin", "company_management", "site_manager"].includes(userRole);
   const canFulfill = ["admin", "company_management", "warehouse_keeper"].includes(userRole);
-  const canBuy = ["admin", "company_management", "buyer"].includes(userRole);
+  const canBuy = ["admin", "company_management", "buyer", "site_manager"].includes(userRole);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -326,31 +376,31 @@ export default function RequisitionsPage() {
                         className="px-4 py-1.5 rounded-lg bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#7BA238]/25 border border-[#7BA238] transition"
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Approuver (Site Mgr)</span>
+                        <span>Approuver DRI</span>
                       </button>
                     </>
                   )}
 
-                  {/* Buyer Action : Attach PO & 2 Supplier Quotes */}
-                  {canBuy && req.status === "site_manager_approved" && !req.po_number && (
+                  {/* Buyer / Purchaser Action : Attach PO & Quotes */}
+                  {canBuy && (req.status === "approved" || req.status === "site_manager_approved") && !req.po_number && (
                     <button
                       onClick={() => setPoModalReq(req)}
                       className="px-3.5 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-amber-950 transition"
                     >
                       <ShoppingCart className="w-4 h-4" />
-                      <span>Émettre Bon de Commande (PO)</span>
+                      <span>Saisir Devis & Bon de Commande</span>
                     </button>
                   )}
 
                   {/* Warehouse Fulfillment */}
-                  {canFulfill && req.status === "site_manager_approved" && (
+                  {canFulfill && (req.status === "approved" || req.status === "site_manager_approved") && (
                     <button
-                      onClick={() => handleFulfill(req.id)}
+                      onClick={() => handleDeliver(req)}
                       disabled={actionLoading === req.id}
                       className="px-4 py-1.5 rounded-lg bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#7BA238]/25 border border-[#7BA238] transition"
                     >
                       <PackageCheck className="w-4 h-4" />
-                      <span>Délivrer Matériel (Magasinier)</span>
+                      <span>Délivrer Matériel</span>
                     </button>
                   )}
 

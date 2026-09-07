@@ -40,12 +40,14 @@ export function StatusBadge({ status, type = "project", className }: StatusBadge
       label = "Soumis (En attente)";
       colorClasses = "bg-amber-950/40 text-amber-300 border-amber-800/60";
       break;
+    case "approved":
     case "site_manager_approved":
-      label = "Approuvé Site Mgr";
+      label = "Approuvé";
       colorClasses = "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/50";
       break;
+    case "delivered":
     case "fulfilled":
-      label = "Délivré / Servi";
+      label = "Délivré";
       colorClasses = "bg-[#7BA238]/20 text-[#B2DB68] border-[#7BA238]/70 font-semibold";
       break;
     case "rejected":

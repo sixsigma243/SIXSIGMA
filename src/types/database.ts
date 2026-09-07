@@ -16,7 +16,7 @@ export type UserRole =
 
 export type CurrencyCode = 'USD' | 'CDF';
 export type ProjectStatus = 'draft' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
-export type RequisitionStatus = 'draft' | 'submitted' | 'site_manager_approved' | 'rejected' | 'fulfilled';
+export type RequisitionStatus = 'draft' | 'submitted' | 'approved' | 'site_manager_approved' | 'rejected' | 'delivered' | 'fulfilled';
 export type VehicleStatus = 'available' | 'in_mission' | 'under_maintenance' | 'out_of_service';
 export type PresenceStatus = 'present' | 'late' | 'absent' | 'leave';
 export type ReportStatus = 'draft' | 'submitted' | 'validated' | 'rejected';
@@ -163,8 +163,12 @@ export interface MaterialRequisition {
   supervisor_comment: string | null;
   validation_comment: string | null;
   po_number?: string | null;
+  supplier_name?: string | null;
+  po_amount?: number | null;
   supplier_quotes?: SupplierQuote[] | null;
   approved_at: string | null;
+  delivered_by?: string | null;
+  delivered_at?: string | null;
   fulfilled_at: string | null;
   created_at: string;
   updated_at: string;
@@ -261,6 +265,8 @@ export interface CashboxTransaction {
   receipt_url: string | null;
   created_by: string | null;
   validated_by: string | null;
+  validated_at?: string | null;
+  status?: 'pending' | 'approved' | 'rejected' | string;
   requires_management_approval: boolean;
   created_at: string;
   project?: Project;

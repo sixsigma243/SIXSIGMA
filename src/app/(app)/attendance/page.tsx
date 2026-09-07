@@ -27,6 +27,7 @@ import {
   Check,
   AlertTriangle,
   Trash2,
+  ClipboardCheck,
 } from "lucide-react";
 
 export default function AttendancePage() {
@@ -52,6 +53,63 @@ export default function AttendancePage() {
   const [newOvertime, setNewOvertime] = useState("0");
   const [newNotes, setNewNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Quick Attendance Sheet Modal (Timekeeper / Supervisor)
+  const [showQuickSheet, setShowQuickSheet] = useState(false);
+  const [quickProjectId, setQuickProjectId] = useState("");
+  const [quickDate, setQuickDate] = useState(dateFilter);
+  const [quickWorkers, setQuickWorkers] = useState<
+    Array<{
+      worker_name: string;
+      worker_function: string;
+      status: PresenceStatus;
+      check_in: string;
+      check_out: string;
+      overtime_hours: number;
+    }>
+  >([
+    {
+      worker_name: "Kabamba Jean-Luc",
+      worker_function: "Maçon Coffreur",
+      status: "present",
+      check_in: "07:30",
+      check_out: "16:00",
+      overtime_hours: 0,
+    },
+    {
+      worker_name: "Ilunga Patrick",
+      worker_function: "Ferrailleur",
+      status: "present",
+      check_in: "07:30",
+      check_out: "16:00",
+      overtime_hours: 0,
+    },
+    {
+      worker_name: "Mwamba Serge",
+      worker_function: "Conducteur d'Engin",
+      status: "present",
+      check_in: "07:30",
+      check_out: "16:00",
+      overtime_hours: 1,
+    },
+    {
+      worker_name: "Kalala David",
+      worker_function: "Électricien BTP",
+      status: "late",
+      check_in: "08:15",
+      check_out: "16:00",
+      overtime_hours: 0,
+    },
+    {
+      worker_name: "Tshilombo Eric",
+      worker_function: "Manœuvre Polyvalent",
+      status: "absent",
+      check_in: "",
+      check_out: "",
+      overtime_hours: 0,
+    },
+  ]);
+  const [quickSubmitting, setQuickSubmitting] = useState(false);
 
   const fetchAttendance = async () => {
     setLoading(true);
@@ -83,10 +141,11 @@ export default function AttendancePage() {
     const { data: prj } = await supabase
       .from("projects")
       .select("*")
-      .eq("status", "in_progress");
+      .order("title");
     if (prj) {
       setProjects(prj as Project[]);
       if (prj.length > 0 && !newProjectId) setNewProjectId(prj[0].id);
+      if (prj.length > 0 && !quickProjectId) setQuickProjectId(prj[0].id);
     }
 
     setLoading(false);
@@ -125,9 +184,44 @@ export default function AttendancePage() {
     setSaving(false);
   };
 
+  const handleQuickSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validRows = quickWorkers.filter((w) => w.worker_name.trim() !== "");
+    if (validRows.length === 0) {
+      alert("Veuillez renseigner au moins un ouvrier.");
+      return;
+    }
+    setQuickSubmitting(true);
+
+    const pId = quickProjectId || newProjectId || (projects.length > 0 ? projects[0].id : null);
+    const recordsToInsert = validRows.map((w) => ({
+      worker_name: w.worker_name.trim(),
+      worker_function: w.worker_function.trim() || "Ouvrier",
+      project_id: pId,
+      entry_date: quickDate,
+      status: w.status,
+      check_in: w.status !== "absent" ? w.check_in || "07:30" : null,
+      check_out: w.status !== "absent" ? w.check_out || "16:00" : null,
+      overtime_hours: Number(w.overtime_hours) || 0,
+    }));
+
+    const { error } = await supabase.from("time_entries").insert(recordsToInsert);
+
+    if (!error) {
+      setShowQuickSheet(false);
+      setDateFilter(quickDate);
+      fetchAttendance();
+    } else {
+      alert("Erreur lors de la soumission de la feuille : " + error.message);
+    }
+    setQuickSubmitting(false);
+  };
+
   const handleArbitrate = async (recId: string, decision: PresenceStatus) => {
     if (!currentUser) return;
     setArbitratingId(recId);
+
+    const rec = reconciliations.find((r) => r.id === recId);
 
     const { error } = await supabase
       .from("attendance_reconciliations")
@@ -140,6 +234,32 @@ export default function AttendancePage() {
       .eq("id", recId);
 
     if (!error) {
+      if (rec) {
+        const targetDate = rec.reconciliation_date || dateFilter;
+        const { data: existing } = await supabase
+          .from("time_entries")
+          .select("id")
+          .eq("worker_name", rec.worker_name)
+          .eq("entry_date", targetDate)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("time_entries")
+            .update({ status: decision })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("time_entries").insert({
+            worker_name: rec.worker_name,
+            worker_function: rec.worker_function || "Ouvrier",
+            project_id: rec.project_id,
+            entry_date: targetDate,
+            status: decision,
+            check_in: decision === "present" ? "07:30" : decision === "late" ? "08:15" : null,
+            check_out: decision !== "absent" ? "16:00" : null,
+          });
+        }
+      }
       fetchAttendance();
     } else {
       alert("Erreur lors de l'arbitrage : " + error.message);
@@ -170,6 +290,16 @@ export default function AttendancePage() {
 
   const isSupervisorOrManager =
     currentUser && ["admin", "site_manager", "supervisor"].includes(currentUser.role);
+  const canQuickSubmit =
+    currentUser &&
+    ["admin", "hr_officer", "supervisor", "team_leader", "site_manager"].includes(
+      currentUser.role
+    );
+  const canArbitrate =
+    currentUser &&
+    ["admin", "site_manager", "supervisor", "company_management"].includes(
+      currentUser.role
+    );
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -185,7 +315,7 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <input
               type="date"
@@ -194,6 +324,20 @@ export default function AttendancePage() {
               className="p-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
             />
           </div>
+
+          {canQuickSubmit && (
+            <button
+              onClick={() => {
+                setQuickDate(dateFilter);
+                if (projects.length > 0 && !quickProjectId) setQuickProjectId(projects[0].id);
+                setShowQuickSheet(true);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold shadow-lg shadow-[#7BA238]/20 border border-[#7BA238] transition flex items-center gap-2"
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              <span>Soumission Rapide Feuille de Présence</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowModal(true)}
@@ -474,7 +618,7 @@ export default function AttendancePage() {
                           )}
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
-                          {rec.status === "pending" && isSupervisorOrManager ? (
+                          {rec.status === "pending" && canArbitrate ? (
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handleArbitrate(rec.id, "present")}
@@ -503,10 +647,10 @@ export default function AttendancePage() {
                             </div>
                           ) : rec.status === "resolved" ? (
                             <span className="text-[11px] text-slate-500">
-                              Arbitré par {rec.supervisor?.full_name || "Superviseur"}
+                              Arbitré par {rec.supervisor?.full_name || "Conducteur / Admin"}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-500">Réservé Superviseur</span>
+                            <span className="text-[11px] text-slate-500 italic">Réservé Conducteur / Admin</span>
                           )}
                         </td>
                       </tr>
@@ -650,6 +794,247 @@ export default function AttendancePage() {
                 >
                   {saving ? "Enregistrement..." : "Enregistrer"}
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Attendance Sheet Modal */}
+      {showQuickSheet && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-[#7BA238]/20 border border-[#7BA238]/40 text-[#A5CE5B]">
+                  <ClipboardCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Soumission Rapide de la Feuille de Présence Journalière
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Saisie directe de l&apos;équipe de chantier pour validation du pointage quotidien
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowQuickSheet(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleQuickSubmit} className="space-y-4 text-xs">
+              {/* Project & Date Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Chantier Actif *
+                  </label>
+                  <select
+                    value={quickProjectId}
+                    onChange={(e) => setQuickProjectId(e.target.value)}
+                    required
+                    className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs"
+                  >
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.code} - {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Date de la Feuille *
+                  </label>
+                  <input
+                    type="date"
+                    value={quickDate}
+                    onChange={(e) => setQuickDate(e.target.value)}
+                    required
+                    className="w-full p-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Workers Rows */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                    Liste des Ouvriers & Agents ({quickWorkers.length})
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuickWorkers([
+                          ...quickWorkers,
+                          {
+                            worker_name: "",
+                            worker_function: "Manœuvre",
+                            status: "present",
+                            check_in: "07:30",
+                            check_out: "16:00",
+                            overtime_hours: 0,
+                          },
+                        ])
+                      }
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Ajouter une ligne</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-900 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                      <tr>
+                        <th className="py-2.5 px-3">Nom Ouvrier</th>
+                        <th className="py-2.5 px-3">Fonction</th>
+                        <th className="py-2.5 px-3">Statut Présence</th>
+                        <th className="py-2.5 px-3">Heures (Arrivée / Départ)</th>
+                        <th className="py-2.5 px-3">Heures Sup</th>
+                        <th className="py-2.5 px-2 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {quickWorkers.map((w, idx) => (
+                        <tr key={idx} className="hover:bg-slate-900/40">
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              required
+                              placeholder="ex: Jean-Luc Kalala"
+                              value={w.worker_name}
+                              onChange={(e) => {
+                                const copy = [...quickWorkers];
+                                copy[idx].worker_name = e.target.value;
+                                setQuickWorkers(copy);
+                              }}
+                              className="w-full p-1.5 bg-slate-900 border border-slate-700 rounded text-white text-xs font-semibold"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <input
+                              type="text"
+                              placeholder="ex: Coffreur"
+                              value={w.worker_function}
+                              onChange={(e) => {
+                                const copy = [...quickWorkers];
+                                copy[idx].worker_function = e.target.value;
+                                setQuickWorkers(copy);
+                              }}
+                              className="w-full p-1.5 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs"
+                            />
+                          </td>
+                          <td className="py-2 px-3">
+                            <select
+                              value={w.status}
+                              onChange={(e) => {
+                                const copy = [...quickWorkers];
+                                copy[idx].status = e.target.value as PresenceStatus;
+                                setQuickWorkers(copy);
+                              }}
+                              className="p-1.5 bg-slate-900 border border-slate-700 rounded text-white text-xs font-semibold"
+                            >
+                              <option value="present">Présent</option>
+                              <option value="late">Retard</option>
+                              <option value="absent">Absent</option>
+                              <option value="leave">En Congé</option>
+                            </select>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="time"
+                                value={w.check_in}
+                                disabled={w.status === "absent"}
+                                onChange={(e) => {
+                                  const copy = [...quickWorkers];
+                                  copy[idx].check_in = e.target.value;
+                                  setQuickWorkers(copy);
+                                }}
+                                className="p-1 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs disabled:opacity-30"
+                              />
+                              <span className="text-slate-500">-</span>
+                              <input
+                                type="time"
+                                value={w.check_out}
+                                disabled={w.status === "absent"}
+                                onChange={(e) => {
+                                  const copy = [...quickWorkers];
+                                  copy[idx].check_out = e.target.value;
+                                  setQuickWorkers(copy);
+                                }}
+                                className="p-1 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs disabled:opacity-30"
+                              />
+                            </div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              value={w.overtime_hours}
+                              onChange={(e) => {
+                                const copy = [...quickWorkers];
+                                copy[idx].overtime_hours = parseFloat(e.target.value) || 0;
+                                setQuickWorkers(copy);
+                              }}
+                              className="w-16 p-1.5 bg-slate-900 border border-slate-700 rounded text-amber-300 font-mono text-xs font-bold text-center"
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-right">
+                            {quickWorkers.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const copy = quickWorkers.filter((_, i) => i !== idx);
+                                  setQuickWorkers(copy);
+                                }}
+                                className="p-1 text-slate-500 hover:text-rose-400"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+                <span className="text-[11px] text-slate-400">
+                  {quickWorkers.filter((w) => w.status === "present").length} présents •{" "}
+                  {quickWorkers.filter((w) => w.status === "late").length} retards •{" "}
+                  {quickWorkers.filter((w) => w.status === "absent").length} absents
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickSheet(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={quickSubmitting}
+                    className="px-5 py-2 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-[#7BA238]/20 border border-[#7BA238] disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{quickSubmitting ? "Transmission..." : "Soumettre la Feuille de Présence"}</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

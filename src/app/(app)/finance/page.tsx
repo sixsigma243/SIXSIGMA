@@ -77,6 +77,9 @@ export default function FinancePage() {
     setSaving(true);
 
     const parsedAmount = parseFloat(amount) || 0;
+    const isAboveThreshold =
+      (currency === "USD" && parsedAmount >= 5000) ||
+      (currency === "CDF" && parsedAmount >= 5000 * 2850);
 
     const { error } = await supabase.from("cashbox_transactions").insert({
       cashbox_type: cashboxType,
@@ -87,6 +90,8 @@ export default function FinancePage() {
       exchange_rate: 2850.0,
       category,
       description: description.trim(),
+      requires_management_approval: isAboveThreshold,
+      status: "pending",
       created_by: currentUser.id,
     });
 
@@ -109,7 +114,11 @@ export default function FinancePage() {
     }
     const { error } = await supabase
       .from("cashbox_transactions")
-      .update({ validated_by: currentUser.id })
+      .update({
+        status: "approved",
+        validated_by: currentUser.id,
+        validated_at: new Date().toISOString(),
+      })
       .eq("id", txId);
 
     if (error) {
@@ -316,28 +325,28 @@ export default function FinancePage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {tx.validated_by ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7BA238]/15 text-[#A5CE5B] border border-[#7BA238]/50">
-                          <CheckCircle2 className="w-3 h-3" /> Validé
+                      {tx.validated_by || tx.status === "approved" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold bg-[#7BA238]/20 text-[#A5CE5B] border border-[#7BA238]/50">
+                          <CheckCircle2 className="w-3 h-3" /> Approuvé
                         </span>
                       ) : currentUser?.role === "admin" ? (
                         <span
                           title="Séparation des Pouvoirs : L'administrateur système ne valide pas de dépenses financières"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1C1F23] text-slate-400 border border-[#252932] cursor-not-allowed select-none"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-[#1C1F23] text-slate-400 border border-[#252932] cursor-not-allowed select-none"
                         >
                           <Lock className="w-3 h-3 text-slate-500" />
-                          SoD Bloqué (Admin)
+                          SoD (Admin)
                         </span>
                       ) : currentUser?.role === "company_management" ||
                         (currentUser?.role === "accountant" && !tx.requires_management_approval) ? (
                         <button
                           onClick={() => handleValidateTransaction(tx.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#7BA238] hover:bg-[#6A8D2F] text-white border border-[#7BA238] transition"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#7BA238] hover:bg-[#6A8D2F] text-white border border-[#7BA238] transition shadow-sm"
                         >
-                          <CheckCircle2 className="w-3 h-3" /> Valider
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Approuver la Transaction
                         </button>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 animate-pulse">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-amber-950/60 text-amber-300 border border-amber-800">
                           {tx.requires_management_approval ? "Requis DG (>5K$)" : "Requis Compta"}
                         </span>
                       )}
