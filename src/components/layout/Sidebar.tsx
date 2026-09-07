@@ -13,6 +13,7 @@ import {
   Coins,
   Truck,
   ShieldAlert,
+  UserCog,
   LogOut,
   ChevronRight,
   Sparkles,
@@ -36,6 +37,7 @@ const ICONS_MAP: Record<string, React.ReactNode> = {
   Coins: <Coins className="w-5 h-5" />,
   Truck: <Truck className="w-5 h-5" />,
   ShieldAlert: <ShieldAlert className="w-5 h-5 text-purple-400" />,
+  UserCog: <UserCog className="w-5 h-5 text-rose-400" />,
 };
 
 export function Sidebar({ profile }: SidebarProps) {

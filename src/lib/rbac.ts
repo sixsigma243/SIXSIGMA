@@ -253,6 +253,12 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
       "company_management",
     ],
   },
+  {
+    name: "Gestion Collaborateurs",
+    href: "/admin/users",
+    iconName: "UserCog",
+    allowedRoles: ["admin"],
+  },
 ];
 
 export function hasRoleAccess(userRole: UserRole | undefined | null, allowedRoles: UserRole[]): boolean {
