@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { FleetVehicle, DispatchMission, Project, VehicleStatus } from "@/types/database";
+import { FleetVehicle, DispatchMission, Project, VehicleStatus, Profile } from "@/types/database";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/utils";
 import {
@@ -16,6 +16,9 @@ import {
   Calendar,
   X,
   MapPin,
+  Edit3,
+  Trash2,
+  Check,
 } from "lucide-react";
 
 export default function FleetPage() {
@@ -24,10 +27,11 @@ export default function FleetPage() {
   const [vehicles, setVehicles] = useState<FleetVehicle[]>([]);
   const [missions, setMissions] = useState<DispatchMission[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   // New Mission Modal
-  const [showModal, setShowModal] = useState(false);
+  const [showMissionModal, setShowMissionModal] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [driverName, setDriverName] = useState("");
   const [driverLicenseExpiry, setDriverLicenseExpiry] = useState(
@@ -38,10 +42,41 @@ export default function FleetPage() {
   const [destination, setDestination] = useState("");
   const [cargo, setCargo] = useState("");
   const [fuelLiters, setFuelLiters] = useState("30");
-  const [saving, setSaving] = useState(false);
+  const [savingMission, setSavingMission] = useState(false);
+
+  // New Vehicle Modal State
+  const [showCreateVehicleModal, setShowCreateVehicleModal] = useState(false);
+  const [newPlate, setNewPlate] = useState("");
+  const [newModel, setNewModel] = useState("");
+  const [newType, setNewType] = useState("Camion Benne 20T");
+  const [newStatus, setNewStatus] = useState<VehicleStatus>("available");
+  const [newMileage, setNewMileage] = useState("0");
+  const [newDriver, setNewDriver] = useState("");
+  const [newMaintenanceDate, setNewMaintenanceDate] = useState(new Date().toISOString().split("T")[0]);
+  const [creatingVehicle, setCreatingVehicle] = useState(false);
+
+  // Edit Vehicle Modal State
+  const [editingVehicle, setEditingVehicle] = useState<FleetVehicle | null>(null);
+  const [editPlate, setEditPlate] = useState("");
+  const [editModel, setEditModel] = useState("");
+  const [editType, setEditType] = useState("");
+  const [editMileage, setEditMileage] = useState("");
+  const [editDriver, setEditDriver] = useState("");
+  const [editMaintenanceDate, setEditMaintenanceDate] = useState("");
+  const [updatingVehicle, setUpdatingVehicle] = useState(false);
 
   const fetchFleetData = async () => {
     setLoading(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", u.user.id)
+        .single();
+      if (p) setCurrentUser(p as Profile);
+    }
+
     const { data: vData } = await supabase
       .from("fleet_vehicles")
       .select("*")
@@ -76,9 +111,91 @@ export default function FleetPage() {
     fetchFleetData();
   }, []);
 
+  // CREATE VEHICLE
+  const handleCreateVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreatingVehicle(true);
+
+    const { error } = await supabase.from("fleet_vehicles").insert({
+      plate_number: newPlate.trim().toUpperCase(),
+      model: newModel.trim(),
+      vehicle_type: newType.trim(),
+      status: newStatus,
+      current_mileage: parseInt(newMileage, 10) || 0,
+      assigned_driver: newDriver.trim() || null,
+      last_maintenance_date: newMaintenanceDate || null,
+    });
+
+    if (!error) {
+      setShowCreateVehicleModal(false);
+      setNewPlate("");
+      setNewModel("");
+      setNewMileage("0");
+      setNewDriver("");
+      fetchFleetData();
+    } else {
+      alert("Erreur lors de la création de l'engin : " + error.message);
+    }
+    setCreatingVehicle(false);
+  };
+
+  // OPEN EDIT VEHICLE
+  const handleOpenEditVehicle = (v: FleetVehicle) => {
+    setEditingVehicle(v);
+    setEditPlate(v.plate_number);
+    setEditModel(v.model);
+    setEditType(v.vehicle_type);
+    setEditMileage(String(v.current_mileage));
+    setEditDriver(v.assigned_driver || "");
+    setEditMaintenanceDate(v.last_maintenance_date ? v.last_maintenance_date.split("T")[0] : "");
+  };
+
+  // UPDATE VEHICLE
+  const handleUpdateVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVehicle) return;
+    setUpdatingVehicle(true);
+
+    const { error } = await supabase
+      .from("fleet_vehicles")
+      .update({
+        plate_number: editPlate.trim().toUpperCase(),
+        model: editModel.trim(),
+        vehicle_type: editType.trim(),
+        current_mileage: parseInt(editMileage, 10) || 0,
+        assigned_driver: editDriver.trim() || null,
+        last_maintenance_date: editMaintenanceDate || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingVehicle.id);
+
+    if (!error) {
+      setEditingVehicle(null);
+      fetchFleetData();
+    } else {
+      alert("Erreur lors de la mise à jour de l'engin : " + error.message);
+    }
+    setUpdatingVehicle(false);
+  };
+
+  // DELETE VEHICLE
+  const handleDeleteVehicle = async (vehicleId: string, plateNumber: string) => {
+    if (!window.confirm(`Confirmez-vous la suppression de l'engin/véhicule immatriculé "${plateNumber}" ?`)) {
+      return;
+    }
+
+    const { error } = await supabase.from("fleet_vehicles").delete().eq("id", vehicleId);
+    if (!error) {
+      fetchFleetData();
+    } else {
+      alert("Erreur lors de la suppression de l'engin : " + error.message);
+    }
+  };
+
+  // CREATE MISSION
   const handleCreateMission = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    setSavingMission(true);
 
     const { error } = await supabase.from("dispatch_missions").insert({
       vehicle_id: selectedVehicleId,
@@ -100,7 +217,7 @@ export default function FleetPage() {
         .update({ status: "in_mission" })
         .eq("id", selectedVehicleId);
 
-      setShowModal(false);
+      setShowMissionModal(false);
       setDestination("");
       setCargo("");
       setDriverName("");
@@ -108,7 +225,7 @@ export default function FleetPage() {
     } else {
       alert("Erreur lors de l'affectation de mission : " + error.message);
     }
-    setSaving(false);
+    setSavingMission(false);
   };
 
   const handleUpdateVehicleStatus = async (vehicleId: string, newStatus: VehicleStatus) => {
@@ -119,6 +236,8 @@ export default function FleetPage() {
 
     if (!error) fetchFleetData();
   };
+
+  const canManageFleet = currentUser && ["admin", "company_management", "workshop_manager"].includes(currentUser.role);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -134,27 +253,48 @@ export default function FleetPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nouvel Ordre de Mission</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          {canManageFleet && (
+            <button
+              onClick={() => setShowCreateVehicleModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4 text-sky-400" />
+              <span>+ Nouvel Engin</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowMissionModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
+          >
+            <Navigation className="w-4 h-4" />
+            <span>Ordre de Mission</span>
+          </button>
+        </div>
       </div>
 
       {/* Vehicles Grid */}
       <div>
-        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">
-          État du Parc & Disponibilité des Engins
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+            État du Parc & Disponibilité des Engins
+          </h2>
+          <span className="text-xs text-slate-400">
+            {vehicles.length} engin(s) inventorié(s)
+          </span>
+        </div>
 
         {loading ? (
           <div className="text-center py-8 text-slate-500 text-xs">
             Chargement des engins...
           </div>
+        ) : vehicles.length === 0 ? (
+          <div className="glass-card rounded-2xl p-10 text-center text-slate-400 text-xs">
+            Aucun engin dans la flotte. Cliquez sur &ldquo;+ Nouvel Engin&rdquo; pour ajouter un véhicule.
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {vehicles.map((v) => (
               <div
                 key={v.id}
@@ -165,7 +305,27 @@ export default function FleetPage() {
                     <span className="text-xs font-mono font-bold text-red-400">
                       {v.plate_number}
                     </span>
-                    <StatusBadge status={v.status} type="vehicle" />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={v.status} type="vehicle" />
+                      {canManageFleet && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleOpenEditVehicle(v)}
+                            title="Modifier l'engin"
+                            className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteVehicle(v.id, v.plate_number)}
+                            title="Supprimer l'engin"
+                            className="p-1 rounded bg-rose-950 hover:bg-rose-900 text-rose-300 hover:text-rose-100 transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <h3 className="text-sm font-bold text-white">
@@ -181,7 +341,7 @@ export default function FleetPage() {
                         <Gauge className="w-3.5 h-3.5 text-slate-500" />
                         <span>Compteur :</span>
                       </span>
-                      <strong className="font-mono">{v.current_mileage.toLocaleString()} km</strong>
+                      <strong className="font-mono">{v.current_mileage.toLocaleString()} km / h</strong>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -315,8 +475,245 @@ export default function FleetPage() {
         )}
       </div>
 
-      {/* New Mission Modal */}
-      {showModal && (
+      {/* CREATE VEHICLE MODAL */}
+      {showCreateVehicleModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Truck className="w-4 h-4 text-sky-400" />
+                <span>Ajouter un Nouvel Engin / Véhicule</span>
+              </h3>
+              <button
+                onClick={() => setShowCreateVehicleModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateVehicle} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Immatriculation / N° Parc *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ex: KN-8921-BG"
+                    value={newPlate}
+                    onChange={(e) => setNewPlate(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Type d&apos;Engin *</label>
+                  <select
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  >
+                    <option value="Camion Benne 20T">Camion Benne 20T</option>
+                    <option value="Pelle Mécanique CAT">Pelle Mécanique Chenille</option>
+                    <option value="Bétonnière Toupie">Bétonnière Toupie 8m³</option>
+                    <option value="Bulldozer / Chargeur">Bulldozer / Chargeur</option>
+                    <option value="Grue Mobile BTP">Grue Mobile BTP</option>
+                    <option value="Compacteur / Rouleau">Compacteur / Rouleau</option>
+                    <option value="Véhicule Liaison 4x4">Véhicule Liaison 4x4</option>
+                    <option value="Groupe Électrogène 250kVA">Groupe Électrogène Mobile</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Modèle & Marque *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: Mercedes Actros 3340 6x4"
+                  value={newModel}
+                  onChange={(e) => setNewModel(e.target.value)}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Statut Initial *</label>
+                  <select
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value as VehicleStatus)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  >
+                    <option value="available">Disponible</option>
+                    <option value="in_mission">En Mission</option>
+                    <option value="under_maintenance">En Atelier</option>
+                    <option value="out_of_service">Hors Service</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Compteur Initial (km/h) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={newMileage}
+                    onChange={(e) => setNewMileage(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Chauffeur / Opérateur</label>
+                  <input
+                    type="text"
+                    placeholder="ex: André Lukoki"
+                    value={newDriver}
+                    onChange={(e) => setNewDriver(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Dernier Entretien</label>
+                  <input
+                    type="date"
+                    value={newMaintenanceDate}
+                    onChange={(e) => setNewMaintenanceDate(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateVehicleModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingVehicle}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50"
+                >
+                  {creatingVehicle ? "Enregistrement..." : "Ajouter au Parc"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT VEHICLE MODAL */}
+      {editingVehicle && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-sky-400" />
+                <span>Modifier l&apos;Engin : {editingVehicle.plate_number}</span>
+              </h3>
+              <button
+                onClick={() => setEditingVehicle(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateVehicle} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Immatriculation / N° Parc *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editPlate}
+                    onChange={(e) => setEditPlate(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Type d&apos;Engin *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Modèle & Marque *</label>
+                <input
+                  type="text"
+                  required
+                  value={editModel}
+                  onChange={(e) => setEditModel(e.target.value)}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Compteur Relevé (km/h) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editMileage}
+                    onChange={(e) => setEditMileage(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Dernier Entretien</label>
+                  <input
+                    type="date"
+                    value={editMaintenanceDate}
+                    onChange={(e) => setEditMaintenanceDate(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Chauffeur / Opérateur Attitré</label>
+                <input
+                  type="text"
+                  value={editDriver}
+                  onChange={(e) => setEditDriver(e.target.value)}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingVehicle(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingVehicle}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50"
+                >
+                  {updatingVehicle ? "Enregistrement..." : "Mettre à jour"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* NEW MISSION MODAL */}
+      {showMissionModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -325,7 +722,7 @@ export default function FleetPage() {
                 <span>Créer un Ordre de Mission (Dispatch)</span>
               </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowMissionModal(false)}
                 className="text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -381,7 +778,7 @@ export default function FleetPage() {
                   onChange={(e) => setSelectedProjectId(e.target.value)}
                   className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
                 >
-                  <option value="">Hors chantier</option>
+                  <option value="">Hors chantier (Transport Général)</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.code} - {p.title}
@@ -434,7 +831,7 @@ export default function FleetPage() {
                     min="1"
                     value={fuelLiters}
                     onChange={(e) => setFuelLiters(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
                   />
                 </div>
               </div>
@@ -442,17 +839,17 @@ export default function FleetPage() {
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300"
+                  onClick={() => setShowMissionModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={savingMission}
                   className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
                 >
-                  {saving ? "Affectation..." : "Lancer la Mission"}
+                  {savingMission ? "Affectation..." : "Lancer la Mission"}
                 </button>
               </div>
             </form>

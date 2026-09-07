@@ -181,6 +181,20 @@ export default function RequisitionsPage() {
     setActionLoading(null);
   };
 
+  const handleDeleteRequisition = async (id: string, reqNumber: string) => {
+    if (!window.confirm(`Confirmez-vous la suppression de la demande de réquisition ${reqNumber} ?`)) {
+      return;
+    }
+    setActionLoading(id);
+    const { error } = await supabase.from("material_requisitions").delete().eq("id", id);
+    if (!error) {
+      fetchData();
+    } else {
+      alert("Erreur lors de la suppression : " + error.message);
+    }
+    setActionLoading(null);
+  };
+
   const handleCreatePO = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!poModalReq) return;
@@ -337,6 +351,18 @@ export default function RequisitionsPage() {
                     >
                       <PackageCheck className="w-4 h-4" />
                       <span>Délivrer Matériel (Magasinier)</span>
+                    </button>
+                  )}
+
+                  {/* Admin Delete Action */}
+                  {currentUser?.role === "admin" && (
+                    <button
+                      onClick={() => handleDeleteRequisition(req.id, req.requisition_number)}
+                      disabled={actionLoading === req.id}
+                      title="Supprimer cette réquisition (Admin)"
+                      className="p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-rose-100 border border-rose-800/60 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </div>

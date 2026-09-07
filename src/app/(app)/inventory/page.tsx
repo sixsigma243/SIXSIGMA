@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { InventoryItem, StockMovement, Project, Profile } from "@/types/database";
+import { InventoryItem, StockMovement, Project, Profile, CurrencyCode } from "@/types/database";
 import { formatUSD, formatDate } from "@/lib/utils";
 import {
   Boxes,
@@ -15,6 +15,10 @@ import {
   Search,
   X,
   RefreshCw,
+  Edit3,
+  Trash2,
+  Check,
+  PackagePlus,
 } from "lucide-react";
 
 export default function InventoryPage() {
@@ -27,15 +31,38 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Stock Movement Modal
-  const [showModal, setShowModal] = useState(false);
+  // Stock Movement Modal State
+  const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [movementType, setMovementType] = useState<"IN" | "OUT" | "ADJUSTMENT">("OUT");
   const [quantity, setQuantity] = useState("10");
   const [referenceDoc, setReferenceDoc] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [savingMovement, setSavingMovement] = useState(false);
+
+  // New Item Modal State
+  const [showCreateItemModal, setShowCreateItemModal] = useState(false);
+  const [newSku, setNewSku] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState("Liants & Ciments");
+  const [newUnit, setNewUnit] = useState("Sac 50kg");
+  const [newCurrentStock, setNewCurrentStock] = useState("100");
+  const [newMinThreshold, setNewMinThreshold] = useState("20");
+  const [newUnitCost, setNewUnitCost] = useState("12");
+  const [newCurrency, setNewCurrency] = useState<CurrencyCode>("USD");
+  const [creatingItem, setCreatingItem] = useState(false);
+
+  // Edit Item Modal State
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [editSku, setEditSku] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editCurrentStock, setEditCurrentStock] = useState("");
+  const [editMinThreshold, setEditMinThreshold] = useState("");
+  const [editUnitCost, setEditUnitCost] = useState("");
+  const [updatingItem, setUpdatingItem] = useState(false);
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -77,10 +104,96 @@ export default function InventoryPage() {
     fetchInventory();
   }, []);
 
+  // CREATE ITEM
+  const handleCreateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreatingItem(true);
+
+    const { error } = await supabase.from("inventory_items").insert({
+      sku: newSku.trim().toUpperCase(),
+      name: newName.trim(),
+      category: newCategory.trim(),
+      unit: newUnit.trim(),
+      current_stock: parseFloat(newCurrentStock) || 0,
+      min_threshold: parseFloat(newMinThreshold) || 0,
+      unit_cost: parseFloat(newUnitCost) || 0,
+      currency: newCurrency,
+    });
+
+    if (!error) {
+      setShowCreateItemModal(false);
+      setNewSku("");
+      setNewName("");
+      setNewCurrentStock("100");
+      setNewMinThreshold("20");
+      setNewUnitCost("12");
+      fetchInventory();
+    } else {
+      alert("Erreur lors de la création de l'article : " + error.message);
+    }
+    setCreatingItem(false);
+  };
+
+  // OPEN EDIT MODAL
+  const handleOpenEdit = (item: InventoryItem) => {
+    setEditingItem(item);
+    setEditSku(item.sku);
+    setEditName(item.name);
+    setEditCategory(item.category);
+    setEditUnit(item.unit);
+    setEditCurrentStock(String(item.current_stock));
+    setEditMinThreshold(String(item.min_threshold));
+    setEditUnitCost(String(item.unit_cost));
+  };
+
+  // UPDATE ITEM
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    setUpdatingItem(true);
+
+    const { error } = await supabase
+      .from("inventory_items")
+      .update({
+        sku: editSku.trim().toUpperCase(),
+        name: editName.trim(),
+        category: editCategory.trim(),
+        unit: editUnit.trim(),
+        current_stock: parseFloat(editCurrentStock) || 0,
+        min_threshold: parseFloat(editMinThreshold) || 0,
+        unit_cost: parseFloat(editUnitCost) || 0,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", editingItem.id);
+
+    if (!error) {
+      setEditingItem(null);
+      fetchInventory();
+    } else {
+      alert("Erreur lors de la modification de l'article : " + error.message);
+    }
+    setUpdatingItem(false);
+  };
+
+  // DELETE ITEM
+  const handleDeleteItem = async (itemId: string, itemName: string) => {
+    if (!window.confirm(`Confirmez-vous la suppression définitive de l'article "${itemName}" ?`)) {
+      return;
+    }
+
+    const { error } = await supabase.from("inventory_items").delete().eq("id", itemId);
+    if (!error) {
+      fetchInventory();
+    } else {
+      alert("Erreur lors de la suppression de l'article : " + error.message);
+    }
+  };
+
+  // SAVE MOVEMENT
   const handleSaveMovement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
-    setSaving(true);
+    setSavingMovement(true);
 
     const { error } = await supabase.from("stock_movements").insert({
       item_id: selectedItemId,
@@ -93,14 +206,14 @@ export default function InventoryPage() {
     });
 
     if (!error) {
-      setShowModal(false);
+      setShowMovementModal(false);
       setReferenceDoc("");
       setNotes("");
       fetchInventory();
     } else {
       alert("Erreur lors de l'enregistrement du mouvement : " + error.message);
     }
-    setSaving(false);
+    setSavingMovement(false);
   };
 
   const filteredItems = items.filter(
@@ -111,6 +224,7 @@ export default function InventoryPage() {
   );
 
   const lowStockCount = items.filter((i) => Number(i.current_stock) <= Number(i.min_threshold)).length;
+  const canManageInventory = currentUser && ["admin", "company_management", "warehouse_keeper"].includes(currentUser.role);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -126,13 +240,25 @@ export default function InventoryPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nouveau Mouvement de Stock</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          {canManageInventory && (
+            <button
+              onClick={() => setShowCreateItemModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center gap-2"
+            >
+              <PackagePlus className="w-4 h-4 text-teal-400" />
+              <span>+ Nouvel Article</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowMovementModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Mouvement de Stock</span>
+          </button>
+        </div>
       </div>
 
       {/* Critical Stock Alert */}
@@ -180,7 +306,8 @@ export default function InventoryPage() {
                   <th className="py-3 px-4">Stock Disponible</th>
                   <th className="py-3 px-4">Seuil Critique</th>
                   <th className="py-3 px-4">Coût Unitaire Ref</th>
-                  <th className="py-3 px-4 text-right">Statut</th>
+                  <th className="py-3 px-4">Statut</th>
+                  {canManageInventory && <th className="py-3 px-4 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -209,7 +336,7 @@ export default function InventoryPage() {
                       <td className="py-3 px-4 text-slate-300">
                         {formatUSD(Number(it.unit_cost))}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-3 px-4">
                         {isLow ? (
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">
                             Stock Bas
@@ -220,6 +347,26 @@ export default function InventoryPage() {
                           </span>
                         )}
                       </td>
+                      {canManageInventory && (
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleOpenEdit(it)}
+                              title="Modifier l'article"
+                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition border border-slate-700"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteItem(it.id, it.name)}
+                              title="Supprimer l'article"
+                              className="p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-rose-100 transition border border-rose-800/60"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -285,8 +432,274 @@ export default function InventoryPage() {
         )}
       </div>
 
-      {/* Movement Modal */}
-      {showModal && (
+      {/* CREATE ITEM MODAL */}
+      {showCreateItemModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <PackagePlus className="w-4 h-4 text-teal-400" />
+                <span>Ajouter un Nouvel Article en Stock</span>
+              </h3>
+              <button
+                onClick={() => setShowCreateItemModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateItem} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Code SKU / Référence *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="ex: CIM-001, FER-012"
+                    value={newSku}
+                    onChange={(e) => setNewSku(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Catégorie *</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  >
+                    <option value="Liants & Ciments">Liants & Ciments</option>
+                    <option value="Aciers & Armatures">Aciers & Armatures</option>
+                    <option value="Agrégats & Remblais">Agrégats & Remblais</option>
+                    <option value="Hydrocarbures & Carburant">Hydrocarbures & Carburant</option>
+                    <option value="Quincaillerie & Outillage">Quincaillerie & Outillage</option>
+                    <option value="EPI & Sécurité">EPI & Sécurité</option>
+                    <option value="Plomberie & Sanitaire">Plomberie & Sanitaire</option>
+                    <option value="Électricité BTP">Électricité BTP</option>
+                    <option value="Matériaux Divers">Matériaux Divers</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Désignation du Matériau *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="ex: Ciment Gris CPJ 42.5 (Sac 50kg)"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Unité de Mesure *</label>
+                  <select
+                    value={newUnit}
+                    onChange={(e) => setNewUnit(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  >
+                    <option value="Sac 50kg">Sac 50kg</option>
+                    <option value="Tonne">Tonne</option>
+                    <option value="Litre">Litre</option>
+                    <option value="m³">m³ (Mètre cube)</option>
+                    <option value="Barre 12m">Barre 12m</option>
+                    <option value="Unité / Pièce">Unité / Pièce</option>
+                    <option value="Boîte / Cartouche">Boîte / Cartouche</option>
+                    <option value="Rouleau">Rouleau</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Coût Unitaire Ref (USD) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={newUnitCost}
+                    onChange={(e) => setNewUnitCost(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Stock Initial *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    required
+                    value={newCurrentStock}
+                    onChange={(e) => setNewCurrentStock(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Seuil Critique d&apos;Alerte *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    required
+                    value={newMinThreshold}
+                    onChange={(e) => setNewMinThreshold(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateItemModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingItem}
+                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition disabled:opacity-50"
+                >
+                  {creatingItem ? "Création..." : "Enregistrer l'Article"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT ITEM MODAL */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-sky-400" />
+                <span>Modifier l&apos;Article : {editingItem.sku}</span>
+              </h3>
+              <button
+                onClick={() => setEditingItem(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateItem} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Code SKU / Référence *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editSku}
+                    onChange={(e) => setEditSku(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Catégorie *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Désignation du Matériau *</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Unité de Mesure *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editUnit}
+                    onChange={(e) => setEditUnit(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Coût Unitaire Ref (USD) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={editUnitCost}
+                    onChange={(e) => setEditUnitCost(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Stock Actuel Réel *</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    value={editCurrentStock}
+                    onChange={(e) => setEditCurrentStock(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Seuil Critique d&apos;Alerte *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    required
+                    value={editMinThreshold}
+                    onChange={(e) => setEditMinThreshold(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingItem}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50"
+                >
+                  {updatingItem ? "Mise à jour..." : "Enregistrer Modifications"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MOVEMENT MODAL */}
+      {showMovementModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -295,7 +708,7 @@ export default function InventoryPage() {
                 <span>Enregistrer un Mouvement de Stock</span>
               </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => setShowMovementModal(false)}
                 className="text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -342,7 +755,7 @@ export default function InventoryPage() {
                     required
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
                   />
                 </div>
               </div>
@@ -388,17 +801,17 @@ export default function InventoryPage() {
               <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300"
+                  onClick={() => setShowMovementModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={savingMovement}
                   className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
                 >
-                  {saving ? "Enregistrement..." : "Valider Mouvement"}
+                  {savingMovement ? "Enregistrement..." : "Valider Mouvement"}
                 </button>
               </div>
             </form>

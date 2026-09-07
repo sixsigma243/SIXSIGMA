@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Check,
   AlertTriangle,
+  Trash2,
 } from "lucide-react";
 
 export default function AttendancePage() {
@@ -144,6 +145,18 @@ export default function AttendancePage() {
       alert("Erreur lors de l'arbitrage : " + error.message);
     }
     setArbitratingId(null);
+  };
+
+  const handleDeleteEntry = async (entryId: string, workerName: string) => {
+    if (!window.confirm(`Confirmez-vous la suppression du pointage de "${workerName}" ?`)) {
+      return;
+    }
+    const { error } = await supabase.from("time_entries").delete().eq("id", entryId);
+    if (!error) {
+      fetchAttendance();
+    } else {
+      alert("Erreur lors de la suppression : " + error.message);
+    }
   };
 
   // Metrics
@@ -313,6 +326,7 @@ export default function AttendancePage() {
                       <th className="py-3 px-4">Arrivée - Départ</th>
                       <th className="py-3 px-4">Heures Sup</th>
                       <th className="py-3 px-4">Remarques</th>
+                      {isSupervisorOrManager && <th className="py-3 px-4 text-right">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
@@ -367,6 +381,17 @@ export default function AttendancePage() {
                         <td className="py-3 px-4 text-slate-400 max-w-xs truncate">
                           {entry.notes || "-"}
                         </td>
+                        {isSupervisorOrManager && (
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              onClick={() => handleDeleteEntry(entry.id, entry.worker_name)}
+                              title="Supprimer ce pointage"
+                              className="p-1 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-rose-100 transition border border-rose-800/60"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

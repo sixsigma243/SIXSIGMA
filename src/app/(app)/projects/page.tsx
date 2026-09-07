@@ -17,6 +17,8 @@ import {
   DollarSign,
   Check,
   X,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 
 export default function ProjectsPage() {
@@ -93,6 +95,48 @@ export default function ProjectsPage() {
       alert("Erreur lors de la création : " + error?.message);
     }
     setSaving(false);
+  };
+
+  // Edit Project State & Handlers
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  const handleUpdateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectToEdit) return;
+    setEditSaving(true);
+
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        title: projectToEdit.title,
+        client_name: projectToEdit.client_name,
+        location: projectToEdit.location,
+        budget: Number(projectToEdit.budget),
+        currency: projectToEdit.currency,
+        status: projectToEdit.status,
+        site_manager_id: projectToEdit.site_manager_id || null,
+        description: projectToEdit.description,
+      })
+      .eq("id", projectToEdit.id);
+
+    if (!error) {
+      setProjectToEdit(null);
+      fetchProjects();
+    } else {
+      alert("Erreur de mise à jour : " + error.message);
+    }
+    setEditSaving(false);
+  };
+
+  const handleDeleteProject = async (prjId: string, title: string) => {
+    if (!confirm(`Confirmer la suppression définitive du chantier "${title}" ?`)) return;
+    const { error } = await supabase.from("projects").delete().eq("id", prjId);
+    if (!error) {
+      fetchProjects();
+    } else {
+      alert("Erreur lors de la suppression : " + error.message);
+    }
   };
 
   const filteredProjects = projects.filter((p) => {
@@ -232,8 +276,163 @@ export default function ProjectsPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Admin Actions */}
+              <div className="pt-3 border-t border-slate-800/60 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setProjectToEdit(prj)}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700 transition flex items-center gap-1.5"
+                >
+                  <Edit3 className="w-3 h-3 text-amber-400" />
+                  <span>Modifier</span>
+                </button>
+                <button
+                  onClick={() => handleDeleteProject(prj.id, prj.title)}
+                  className="px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-[11px] font-semibold border border-rose-800/50 transition flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3 h-3 text-rose-400" />
+                  <span>Supprimer</span>
+                </button>
+              </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Edit Project Modal */}
+      {projectToEdit && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-amber-400" />
+                <span>Modifier le Chantier : {projectToEdit.code}</span>
+              </h3>
+              <button
+                onClick={() => setProjectToEdit(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProject} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Titre de l&apos;Ouvrage</label>
+                <input
+                  type="text"
+                  required
+                  value={projectToEdit.title}
+                  onChange={(e) => setProjectToEdit({ ...projectToEdit, title: e.target.value })}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Maître d&apos;Ouvrage / Client</label>
+                  <input
+                    type="text"
+                    required
+                    value={projectToEdit.client_name}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, client_name: e.target.value })}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Localisation / Ville</label>
+                  <input
+                    type="text"
+                    required
+                    value={projectToEdit.location}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, location: e.target.value })}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Budget</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={projectToEdit.budget}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, budget: parseFloat(e.target.value) || 0 })}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Devise</label>
+                  <select
+                    value={projectToEdit.currency}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, currency: e.target.value as CurrencyCode })}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="CDF">CDF</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Statut</label>
+                  <select
+                    value={projectToEdit.status}
+                    onChange={(e) => setProjectToEdit({ ...projectToEdit, status: e.target.value as ProjectStatus })}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-bold"
+                  >
+                    <option value="in_progress">En Cours</option>
+                    <option value="on_hold">En Attente</option>
+                    <option value="completed">Terminé</option>
+                    <option value="cancelled">Annulé</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Conducteur de Travaux Assigné</label>
+                <select
+                  value={projectToEdit.site_manager_id || ""}
+                  onChange={(e) => setProjectToEdit({ ...projectToEdit, site_manager_id: e.target.value || null })}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                >
+                  <option value="">Non assigné</option>
+                  {siteManagers.map((sm) => (
+                    <option key={sm.id} value={sm.id}>
+                      {sm.full_name} ({sm.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Description</label>
+                <textarea
+                  rows={3}
+                  value={projectToEdit.description || ""}
+                  onChange={(e) => setProjectToEdit({ ...projectToEdit, description: e.target.value })}
+                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setProjectToEdit(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition disabled:opacity-50"
+                >
+                  {editSaving ? "Enregistrement..." : "Mettre à Jour"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
