@@ -177,7 +177,7 @@ export default function AttendancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-blue-500" />
+            <Users className="w-7 h-7 text-[#7BA238]" />
             <span>Pointage & Ressources Humaines (Terrain)</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -197,7 +197,7 @@ export default function AttendancePage() {
 
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Nouveau Pointage</span>
@@ -211,7 +211,7 @@ export default function AttendancePage() {
           onClick={() => setActiveTab("daily")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
             activeTab === "daily"
-              ? "bg-red-950 text-red-200 border border-red-800"
+              ? "bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/60"
               : "text-slate-400 hover:text-white hover:bg-slate-800"
           }`}
         >
@@ -247,12 +247,12 @@ export default function AttendancePage() {
             <div className="glass-card p-4 rounded-2xl">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-400 uppercase">Présents Aujourd&apos;hui</span>
-                <UserCheck className="w-4 h-4 text-emerald-400" />
+                <UserCheck className="w-4 h-4 text-[#7BA238]" />
               </div>
               <div className="mt-2 text-2xl font-black text-white">
                 {presentCount} <span className="text-xs text-slate-400 font-normal">/ {totalEntries} inscrits</span>
               </div>
-              <div className="mt-1 text-xs text-emerald-400 font-semibold">
+              <div className="mt-1 text-xs text-[#7BA238] font-semibold">
                 Taux de présence : {attendanceRate}%
               </div>
             </div>
@@ -273,9 +273,9 @@ export default function AttendancePage() {
             <div className="glass-card p-4 rounded-2xl">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-400 uppercase">Absences Injustifiées</span>
-                <UserX className="w-4 h-4 text-rose-400" />
+                <UserX className="w-4 h-4 text-[#E58585]" />
               </div>
-              <div className="mt-2 text-2xl font-black text-rose-400">
+              <div className="mt-2 text-2xl font-black text-[#E58585]">
                 {absentCount}
               </div>
               <div className="mt-1 text-xs text-slate-400">
@@ -340,9 +340,9 @@ export default function AttendancePage() {
                                 15 * 86400000 && (
                                 <span
                                   title={`Fin de contrat le ${entry.profile.contract_end_date}`}
-                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-rose-300 bg-rose-950/80 border border-rose-800 px-1.5 py-0.5 rounded-md"
+                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-[#E58585] bg-[#8E2424]/20 border border-[#8E2424]/50 px-1.5 py-0.5 rounded-md"
                                 >
-                                  <AlertCircle className="w-2.5 h-2.5 text-rose-400" /> Contrat
+                                  <AlertCircle className="w-2.5 h-2.5 text-[#E58585]" /> Contrat
                                 </span>
                               )}
                             {entry.profile?.id_expiry_date &&
@@ -386,7 +386,7 @@ export default function AttendancePage() {
                             <button
                               onClick={() => handleDeleteEntry(entry.id, entry.worker_name)}
                               title="Supprimer ce pointage"
-                              className="p-1 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-rose-100 transition border border-rose-800/60"
+                              className="p-1 rounded bg-[#8E2424]/20 hover:bg-[#8E2424]/35 text-[#E58585] hover:text-white transition border border-[#8E2424]/50"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -463,7 +463,7 @@ export default function AttendancePage() {
                         </td>
                         <td className="py-3 px-4">
                           {rec.status === "resolved" ? (
-                            <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                            <div className="flex items-center gap-1.5 text-[#7BA238] font-semibold">
                               <CheckCircle2 className="w-4 h-4" />
                               <span>Tranché : <StatusBadge status={rec.arbitrated_status!} type="presence" /></span>
                             </div>
@@ -479,7 +479,7 @@ export default function AttendancePage() {
                               <button
                                 onClick={() => handleArbitrate(rec.id, "present")}
                                 disabled={arbitratingId === rec.id}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 text-[11px] font-bold transition"
+                                className="px-2.5 py-1 rounded-lg bg-[#7BA238]/20 hover:bg-[#7BA238]/35 text-[#A5CE5B] border border-[#7BA238]/50 text-[11px] font-bold transition"
                                 title="Reconnaître l'ouvrier comme présent"
                               >
                                 Présent
@@ -495,7 +495,7 @@ export default function AttendancePage() {
                               <button
                                 onClick={() => handleArbitrate(rec.id, "absent")}
                                 disabled={arbitratingId === rec.id}
-                                className="px-2.5 py-1 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-[11px] font-bold transition"
+                                className="px-2.5 py-1 rounded-lg bg-[#8E2424]/20 hover:bg-[#8E2424]/35 text-[#E58585] border border-[#8E2424]/50 text-[11px] font-bold transition"
                                 title="Statuer en absence injustifiée"
                               >
                                 Absent
@@ -646,7 +646,7 @@ export default function AttendancePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
                 >
                   {saving ? "Enregistrement..." : "Enregistrer"}
                 </button>

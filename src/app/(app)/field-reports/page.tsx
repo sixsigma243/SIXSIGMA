@@ -95,7 +95,7 @@ export default function FieldReportsPage() {
 
         <Link
           href="/field-reports/new"
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center justify-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Rédiger un Journal</span>
@@ -227,7 +227,7 @@ export default function FieldReportsPage() {
                     <button
                       onClick={() => handleValidation(rep.id, "rejected")}
                       disabled={actionLoading === rep.id}
-                      className="px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-semibold flex items-center gap-1.5 transition"
+                      className="px-3 py-1.5 rounded-lg bg-[#8E2424]/20 hover:bg-[#8E2424]/40 text-[#E58585] border border-[#8E2424]/60 text-xs font-semibold flex items-center gap-1.5 transition"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       <span>Demander Révision</span>
@@ -235,7 +235,7 @@ export default function FieldReportsPage() {
                     <button
                       onClick={() => handleValidation(rep.id, "validated")}
                       disabled={actionLoading === rep.id}
-                      className="px-4 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-950 transition"
+                      className="px-4 py-1.5 rounded-lg bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-[#7BA238]/25 border border-[#7BA238] transition"
                     >
                       <CheckCircle className="w-3.5 h-3.5" />
                       <span>Valider & Approuver</span>

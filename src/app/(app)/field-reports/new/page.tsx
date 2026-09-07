@@ -254,7 +254,7 @@ export default function NewFieldReportPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white font-bold shadow-lg shadow-red-950/50 border border-red-600/30 flex items-center gap-2 transition disabled:opacity-50"
+              className="px-6 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] flex items-center gap-2 transition disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               <span>{submitting ? "Envoi en cours..." : "Soumettre pour Visa"}</span>

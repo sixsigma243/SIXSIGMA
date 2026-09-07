@@ -152,7 +152,7 @@ export default function FinancePage() {
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Enregistrer une Dépense / Recette</span>
@@ -179,14 +179,14 @@ export default function FinancePage() {
 
       {/* Treasury Cards (USD & CDF) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-600">
+        <div className="glass-card p-5 rounded-2xl border-l-4 border-l-[#7BA238]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Solde Net Caisses (USD)
             </span>
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <DollarSign className="w-4 h-4 text-[#7BA238]" />
           </div>
-          <div className="mt-2 text-2xl font-black text-emerald-400">
+          <div className="mt-2 text-2xl font-black text-[#A5CE5B]">
             {formatUSD(netUSD)}
           </div>
           <div className="mt-1 text-xs text-slate-400 flex items-center justify-between">
@@ -317,13 +317,13 @@ export default function FinancePage() {
                     </td>
                     <td className="py-3 px-4 text-right">
                       {tx.validated_by ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7BA238]/15 text-[#A5CE5B] border border-[#7BA238]/50">
                           <CheckCircle2 className="w-3 h-3" /> Validé
                         </span>
                       ) : currentUser?.role === "admin" ? (
                         <span
                           title="Séparation des Pouvoirs : L'administrateur système ne valide pas de dépenses financières"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed select-none"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#1C1F23] text-slate-400 border border-[#252932] cursor-not-allowed select-none"
                         >
                           <Lock className="w-3 h-3 text-slate-500" />
                           SoD Bloqué (Admin)
@@ -332,7 +332,7 @@ export default function FinancePage() {
                         (currentUser?.role === "accountant" && !tx.requires_management_approval) ? (
                         <button
                           onClick={() => handleValidateTransaction(tx.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-900/80 hover:bg-emerald-800 text-emerald-200 border border-emerald-700 transition"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-[#7BA238] hover:bg-[#6A8D2F] text-white border border-[#7BA238] transition"
                         >
                           <CheckCircle2 className="w-3 h-3" /> Valider
                         </button>
@@ -487,7 +487,7 @@ export default function FinancePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
                 >
                   {saving ? "Enregistrement..." : "Valider l'Opération"}
                 </button>

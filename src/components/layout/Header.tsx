@@ -14,11 +14,11 @@ export function Header({ profile }: HeaderProps) {
   const roleInfo = ROLES_CONFIG[userRole] || ROLES_CONFIG.supervisor;
 
   return (
-    <header className="h-16 bg-[#0F172A]/90 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-20">
+    <header className="h-16 bg-[#1C1F23]/95 backdrop-blur-md border-b border-[#252932] px-6 flex items-center justify-between sticky top-0 z-20">
       {/* Left Title & Status */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-[#7BA238] animate-pulse"></span>
           <span className="text-xs font-semibold text-slate-300">
             Portail Entreprise
           </span>
@@ -32,15 +32,15 @@ export function Header({ profile }: HeaderProps) {
       {/* Right Toolbar */}
       <div className="flex items-center gap-4">
         {/* Currency Exchange Rate Ticker */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-xs font-medium text-slate-300">
-          <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14171D] border border-[#252932] text-xs font-medium text-slate-300">
+          <DollarSign className="w-3.5 h-3.5 text-[#7BA238]" />
           <span>Taux Fixe : </span>
           <span className="font-bold text-amber-300">1 USD = 2 850 CDF</span>
         </div>
 
         {/* User Info Badge */}
-        <div className="flex items-center gap-3 pl-2 border-l border-slate-800">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 flex items-center justify-center text-xs font-bold text-white border border-slate-600">
+        <div className="flex items-center gap-3 pl-2 border-l border-[#252932]">
+          <div className="w-8 h-8 rounded-full bg-[#14171D] flex items-center justify-center text-xs font-bold text-[#E58585] border border-[#8E2424]/40">
             {profile?.first_name?.[0] || "U"}
             {profile?.last_name?.[0] || ""}
           </div>

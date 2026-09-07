@@ -80,11 +80,11 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#182234] via-[#1E293B] to-[#131B2A] border border-slate-800 p-6 md:p-8 shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-[#14171D] border border-[#252932] p-6 md:p-8 shadow-xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-950/80 text-red-300 border border-red-800/60">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
                 SIX SIGMA ERP
               </span>
               <span className="text-xs text-slate-400">•</span>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
             {hasRoleAccess(userRole, ["admin", "site_manager", "supervisor"]) && (
               <Link
                 href="/field-reports/new"
-                className="px-4 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white text-xs font-bold shadow-lg shadow-red-950/50 transition flex items-center gap-2"
+                className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/25 border border-[#8E2424] transition flex items-center gap-2"
               >
                 <HardHat className="w-4 h-4" />
                 <span>Rédiger Journal Chantier</span>
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Chantiers Actifs
             </span>
-            <div className="p-2.5 rounded-xl bg-red-950/60 text-red-400 border border-red-800/40">
+            <div className="p-2.5 rounded-xl bg-[#8E2424]/15 text-[#E58585] border border-[#8E2424]/30">
               <HardHat className="w-5 h-5" />
             </div>
           </div>
@@ -165,7 +165,7 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
             <span>Budget consolidé :</span>
-            <span className="font-bold text-emerald-400">{formatUSD(totalBudgetUSD)}</span>
+            <span className="font-bold text-[#7BA238]">{formatUSD(totalBudgetUSD)}</span>
           </div>
         </div>
 
@@ -183,7 +183,7 @@ export default async function DashboardPage() {
             <span className="text-3xl font-black text-white tracking-tight">
               {presentWorkersToday > 0 ? presentWorkersToday : 38}
             </span>
-            <span className="text-xs text-emerald-400 ml-2 font-medium">
+            <span className="text-xs text-[#7BA238] ml-2 font-medium">
               Présents aujourd&apos;hui
             </span>
           </div>
@@ -223,7 +223,7 @@ export default async function DashboardPage() {
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
               Flotte & Matériel
             </span>
-            <div className="p-2.5 rounded-xl bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+            <div className="p-2.5 rounded-xl bg-[#7BA238]/15 text-[#7BA238] border border-[#7BA238]/30">
               <Truck className="w-5 h-5" />
             </div>
           </div>
@@ -237,7 +237,7 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-2 text-xs text-slate-400 flex items-center justify-between pt-2 border-t border-slate-800/60">
             <span>Alertes stock :</span>
-            <span className={lowStockItems.length > 0 ? "text-amber-400 font-bold" : "text-emerald-400 font-bold"}>
+            <span className={lowStockItems.length > 0 ? "text-amber-400 font-bold" : "text-[#7BA238] font-bold"}>
               {lowStockItems.length} articles critiques
             </span>
           </div>
@@ -251,7 +251,7 @@ export default async function DashboardPage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                <HardHat className="w-5 h-5 text-red-500" />
+                <HardHat className="w-5 h-5 text-[#8E2424]" />
                 <span>Chantiers & Projets en Exécution</span>
               </h2>
               <p className="text-xs text-slate-400">
@@ -260,7 +260,7 @@ export default async function DashboardPage() {
             </div>
             <Link
               href="/projects"
-              className="text-xs font-semibold text-red-400 hover:text-red-300 flex items-center gap-1"
+              className="text-xs font-semibold text-[#E58585] hover:text-white flex items-center gap-1"
             >
               <span>Voir tout</span>
               <ArrowUpRight className="w-4 h-4" />
@@ -275,7 +275,7 @@ export default async function DashboardPage() {
               >
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-bold text-red-400 tracking-wider">
+                    <span className="text-xs font-bold text-[#E58585] tracking-wider">
                       {prj.code}
                     </span>
                     <StatusBadge status={prj.status} type="project" />
@@ -342,24 +342,24 @@ export default async function DashboardPage() {
 
           {/* Cashbox & Treasury Summary */}
           {hasRoleAccess(userRole, ["admin", "company_management", "accountant", "site_manager"]) && (
-            <div className="glass-panel rounded-2xl p-5 border border-slate-800 space-y-3">
+            <div className="bg-[#14171D] rounded-2xl p-5 border border-[#252932] space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-emerald-400" />
+                  <Coins className="w-4 h-4 text-[#7BA238]" />
                   <span>Trésorerie & Dépenses Chantiers</span>
                 </h3>
-                <Link href="/finance" className="text-[11px] text-emerald-400 hover:underline">
+                <Link href="/finance" className="text-[11px] text-[#7BA238] hover:underline">
                   Gérer
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-2">
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932]">
                   <span className="text-[10px] text-slate-400 uppercase">Dépenses USD</span>
-                  <div className="text-sm font-bold text-emerald-400 mt-0.5">
+                  <div className="text-sm font-bold text-[#7BA238] mt-0.5">
                     {formatUSD(totalUSDSpent)}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932]">
                   <span className="text-[10px] text-slate-400 uppercase">Dépenses CDF</span>
                   <div className="text-sm font-bold text-amber-400 mt-0.5">
                     {formatCDF(totalCDFSpent)}

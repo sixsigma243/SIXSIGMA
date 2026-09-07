@@ -9,89 +9,90 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status, type = "project", className }: StatusBadgeProps) {
   let label = status;
-  let colorClasses = "bg-slate-800 text-slate-300 border-slate-700";
+  // Default Neutral
+  let colorClasses = "bg-[#1C1F23] text-slate-300 border-[#252932]";
 
   switch (status) {
     // Project statuses
     case "in_progress":
       label = "En Cours";
-      colorClasses = "bg-blue-950/80 text-blue-300 border-blue-800";
+      colorClasses = "bg-sky-950/40 text-sky-300 border-sky-800/60";
       break;
     case "completed":
       label = "Achevé";
-      colorClasses = "bg-emerald-950/80 text-emerald-300 border-emerald-800";
+      colorClasses = "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/50";
       break;
     case "on_hold":
       label = "En Attente";
-      colorClasses = "bg-amber-950/80 text-amber-300 border-amber-800";
+      colorClasses = "bg-amber-950/40 text-amber-300 border-amber-800/60";
       break;
     case "cancelled":
       label = "Annulé";
-      colorClasses = "bg-red-950/80 text-red-300 border-red-800";
+      colorClasses = "bg-[#8E2424]/20 text-[#E58585] border-[#8E2424]/60";
       break;
     case "draft":
       label = "Brouillon";
-      colorClasses = "bg-slate-800/80 text-slate-400 border-slate-700";
+      colorClasses = "bg-slate-900/60 text-slate-400 border-slate-700/60";
       break;
 
     // Requisition / DRI statuses
     case "submitted":
       label = "Soumis (En attente)";
-      colorClasses = "bg-amber-950/80 text-amber-300 border-amber-800";
+      colorClasses = "bg-amber-950/40 text-amber-300 border-amber-800/60";
       break;
     case "site_manager_approved":
       label = "Approuvé Site Mgr";
-      colorClasses = "bg-indigo-950/80 text-indigo-300 border-indigo-800";
+      colorClasses = "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/50";
       break;
     case "fulfilled":
       label = "Délivré / Servi";
-      colorClasses = "bg-emerald-950/80 text-emerald-300 border-emerald-800";
+      colorClasses = "bg-[#7BA238]/20 text-[#B2DB68] border-[#7BA238]/70 font-semibold";
       break;
     case "rejected":
       label = "Rejeté";
-      colorClasses = "bg-rose-950/80 text-rose-300 border-rose-800";
+      colorClasses = "bg-[#8E2424]/20 text-[#E58585] border-[#8E2424]/60";
       break;
 
     // Daily report statuses
     case "validated":
       label = "Validé";
-      colorClasses = "bg-emerald-950/80 text-emerald-300 border-emerald-800";
+      colorClasses = "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/50";
       break;
 
     // Presence statuses
     case "present":
       label = "Présent";
-      colorClasses = "bg-emerald-950/80 text-emerald-300 border-emerald-800";
+      colorClasses = "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/50";
       break;
     case "late":
       label = "En Retard";
-      colorClasses = "bg-amber-950/80 text-amber-300 border-amber-800";
+      colorClasses = "bg-amber-950/40 text-amber-300 border-amber-800/60";
       break;
     case "absent":
       label = "Absent";
-      colorClasses = "bg-rose-950/80 text-rose-300 border-rose-800";
+      colorClasses = "bg-[#8E2424]/20 text-[#E58585] border-[#8E2424]/60";
       break;
     case "leave":
       label = "En Congé";
-      colorClasses = "bg-cyan-950/80 text-cyan-300 border-cyan-800";
+      colorClasses = "bg-slate-800/60 text-slate-300 border-slate-700/60";
       break;
 
     // Vehicle statuses
     case "available":
       label = "Disponible";
-      colorClasses = "bg-emerald-950/80 text-emerald-300 border-emerald-800";
+      colorClasses = "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/50";
       break;
     case "in_mission":
       label = "En Mission";
-      colorClasses = "bg-blue-950/80 text-blue-300 border-blue-800";
+      colorClasses = "bg-sky-950/40 text-sky-300 border-sky-800/60";
       break;
     case "under_maintenance":
       label = "En Atelier";
-      colorClasses = "bg-amber-950/80 text-amber-300 border-amber-800";
+      colorClasses = "bg-amber-950/40 text-amber-300 border-amber-800/60";
       break;
     case "out_of_service":
       label = "Hors Service";
-      colorClasses = "bg-rose-950/80 text-rose-300 border-rose-800";
+      colorClasses = "bg-[#8E2424]/20 text-[#E58585] border-[#8E2424]/60";
       break;
 
     default:
@@ -102,12 +103,12 @@ export function StatusBadge({ status, type = "project", className }: StatusBadge
   return (
     <span
       className={cn(
-        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border tracking-wide",
+        "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border tracking-wide select-none",
         colorClasses,
         className
       )}
     >
-      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-80"></span>
+      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-90"></span>
       {label}
     </span>
   );

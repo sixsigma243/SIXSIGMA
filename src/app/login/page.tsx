@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { SixSigmaLogo } from "@/components/ui/SixSigmaLogo";
 import {
   Lock,
   Mail,
@@ -65,9 +66,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#0B0F17] text-slate-200 select-none">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#0E1116] text-slate-200 select-none">
       {/* 1. LEFT PANEL: Industrial Branding & Enterprise Pillars (Split-Screen 55%) */}
-      <div className="relative lg:w-[55%] flex flex-col justify-between p-8 sm:p-12 lg:p-16 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800">
+      <div className="relative lg:w-[55%] flex flex-col justify-between p-8 sm:p-12 lg:p-16 overflow-hidden border-b lg:border-b-0 lg:border-r border-[#252932]">
         {/* Real Engineering Site Background */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -77,11 +78,11 @@ export default function LoginPage() {
             priority
             className="object-cover object-center"
           />
-          {/* Elegant Dark Industrial Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-950/85 to-slate-900/80" />
+          {/* Elegant Dark Industrial Overlay in #0E1116 */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#0E1116] via-[#0E1116]/90 to-[#14171D]/80" />
           {/* Subtle Grid Texture */}
           <div
-            className="absolute inset-0 opacity-[0.04] pointer-events-none"
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
               backgroundImage:
                 "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
@@ -90,28 +91,16 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Top: Header Identity */}
+        {/* Top: Header Identity with Official Logo */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-rose-900 border border-rose-700/80 flex items-center justify-center font-black text-white text-xl tracking-tight shadow-md">
-              6Σ
-            </div>
-            <div>
-              <span className="text-base font-black tracking-wider uppercase text-white font-mono">
-                SIX SIGMA
-              </span>
-              <span className="block text-[10px] uppercase font-bold tracking-widest text-slate-400">
-                Génie Civil • Mines • Équipements
-              </span>
-            </div>
-          </div>
+          <SixSigmaLogo size="lg" showText={true} showSlogan={false} />
         </div>
 
         {/* Center: Mission & Official Slogan */}
         <div className="relative z-10 my-10 lg:my-auto max-w-xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-900/90 border border-slate-700/80 text-rose-400 text-xs font-mono font-medium">
-            <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />
-            <span>ERP Opérationnel • RDC</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#1C1F23] border border-[#252932] text-[#E58585] text-xs font-mono font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#8E2424] inline-block" />
+            <span>ERP Opérationnel BTP & Mines • RDC</span>
           </div>
 
           <div className="space-y-3">
@@ -119,73 +108,76 @@ export default function LoginPage() {
               « La constance dans la qualité »
             </h1>
             <p className="text-slate-300 text-sm leading-relaxed font-normal">
-              Système unifié de gestion des chantiers de génie civil, de la logistique d&apos;engins lourds, du négoce technique et de la gouvernance d&apos;entreprise.
+              Système intégré de gestion opérationnelle des chantiers de génie civil, charpentes métalliques, charroi automobile lourd et gouvernance d&apos;entreprise.
             </p>
           </div>
 
-          {/* 4 Pillars Grid (Compact & Human-Made) */}
+          {/* 4 Pillars Grid (Compact, Solid Industrial Style) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800/90 flex items-start gap-3">
-              <Building2 className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-[#14171D]/90 border border-[#252932] flex items-start gap-3 shadow-md">
+              <Building2 className="w-5 h-5 text-[#8E2424] flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wide">Génie Civil</h4>
-                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Ouvrages d&apos;art, voiries et plateformes industrielles.</p>
+                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Ouvrages d&apos;art, terrassements et voiries lourdes.</p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800/90 flex items-start gap-3">
-              <HardHat className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-[#14171D]/90 border border-[#252932] flex items-start gap-3 shadow-md">
+              <HardHat className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wide">Mines & Métal</h4>
-                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Charpentes métalliques et installations minières.</p>
+                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Charpentes métalliques et sites miniers du Katanga.</p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800/90 flex items-start gap-3">
+            <div className="p-3.5 rounded-xl bg-[#14171D]/90 border border-[#252932] flex items-start gap-3 shadow-md">
               <Truck className="w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wide">Parc d&apos;Engins</h4>
-                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Charroi lourd, dispatching et maintenance atelier.</p>
+                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Charroi lourd, dispatching et maintenance préventive.</p>
               </div>
             </div>
 
-            <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800/90 flex items-start gap-3">
-              <Users className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-[#14171D]/90 border border-[#252932] flex items-start gap-3 shadow-md">
+              <Users className="w-5 h-5 text-[#7BA238] flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wide">Ressources & RH</h4>
-                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Pointage rigoureux et gestion des compétences.</p>
+                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">Pointage rigoureux, conformité légale et compétences.</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom: Legal & System Info */}
-        <div className="relative z-10 pt-4 text-slate-400 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-slate-800/60">
+        <div className="relative z-10 pt-4 text-slate-400 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-[#252932]">
           <span>© 2026 SIX SIGMA • Système Intégré de Gestion Opérationnelle</span>
-          <span className="font-mono text-[11px] text-slate-500">v4.2.0 • Production</span>
+          <span className="font-mono text-[11px] text-slate-400">v4.3.0 • Production</span>
         </div>
       </div>
 
-      {/* 2. RIGHT PANEL: Clean, Solid Login Form (Split-Screen 45%) */}
-      <div className="lg:w-[45%] flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 bg-[#0B0F17]">
+      {/* 2. RIGHT PANEL: Solid Industrial Login Form (#0E1116) */}
+      <div className="lg:w-[45%] flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 bg-[#0E1116]">
         <div className="w-full max-w-md space-y-8">
           {/* Header of the Form */}
           <div>
-            <span className="text-[11px] font-mono uppercase tracking-widest text-slate-500 font-semibold">
-              Portail Collaborateurs
-            </span>
-            <h2 className="text-2xl font-bold text-white tracking-tight mt-1">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238]" />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold">
+                Portail Collaborateurs & Dirigeants
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">
               Connexion à l&apos;Espace de Gestion
             </h2>
             <p className="text-xs text-slate-400 mt-1.5">
-              Saisissez votre adresse email professionnelle et votre mot de passe pour accéder à vos modules autorisés.
+              Saisissez vos identifiants d&apos;entreprise pour accéder à vos modules et tableaux de bord autorisés.
             </p>
           </div>
 
           {/* Error Banner */}
           {errorMsg && (
-            <div className="p-3.5 rounded-lg bg-rose-950/70 border border-rose-800/80 text-rose-200 text-xs flex items-start gap-3 animate-in fade-in">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-[#8E2424]/20 border border-[#8E2424]/60 text-[#E58585] text-xs flex items-start gap-3 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-[#E58585] mt-0.5" />
               <span className="leading-relaxed">{errorMsg}</span>
             </div>
           )}
@@ -193,7 +185,7 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 font-mono">
                 Identifiant Professionnel
               </label>
               <div className="relative">
@@ -207,14 +199,14 @@ export default function LoginPage() {
                   required
                   placeholder="nom@sixsigma.cd"
                   autoComplete="email"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-800 focus:ring-1 focus:ring-rose-800 transition font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#14171D] border border-[#252932] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition font-mono"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider font-mono">
                   Mot de Passe
                 </label>
               </div>
@@ -229,16 +221,16 @@ export default function LoginPage() {
                   required
                   placeholder="••••••••••••"
                   autoComplete="current-password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-800 focus:ring-1 focus:ring-rose-800 transition font-mono"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#14171D] border border-[#252932] rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition font-mono"
                 />
               </div>
             </div>
 
-            {/* Flat Solid Burgundy Button (No Gradient, Solid Industrial Style) */}
+            {/* Official Brick Red Solid Button (#8E2424 / Hover: #751D1D) */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-semibold text-white bg-rose-900 hover:bg-rose-950 active:bg-rose-950 border border-rose-800 transition duration-150 disabled:opacity-50"
+              className="w-full mt-2 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-[#8E2424] hover:bg-[#751D1D] active:bg-[#5A1616] border border-[#8E2424] shadow-lg shadow-[#8E2424]/25 transition duration-150 disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -252,12 +244,12 @@ export default function LoginPage() {
           </form>
 
           {/* Security Standards & Governance */}
-          <div className="pt-6 border-t border-slate-800/80 space-y-2">
+          <div className="pt-6 border-t border-[#252932] space-y-2">
             <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
-              <ShieldCheck className="w-4 h-4 text-rose-500 flex-shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#7BA238] flex-shrink-0" />
               <span>Contrôle d&apos;accès RBAC & Séparation des Pouvoirs (SoD)</span>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed pl-6">
+            <p className="text-[11px] text-slate-400 leading-relaxed pl-6">
               Toutes les sessions et transactions sont soumises à la traçabilité intégrale par journal d&apos;audit centralisé.
             </p>
           </div>

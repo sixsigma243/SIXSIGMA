@@ -157,7 +157,7 @@ export default function ProjectsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <HardHat className="w-7 h-7 text-red-500" />
+            <HardHat className="w-7 h-7 text-[#8E2424]" />
             <span>Gestion des Chantiers & Projets BTP</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -167,7 +167,7 @@ export default function ProjectsPage() {
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center justify-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Nouveau Chantier</span>
@@ -175,7 +175,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between">
+      <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between border border-[#252932]">
         <div className="relative w-full md:w-96">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -183,7 +183,7 @@ export default function ProjectsPage() {
             placeholder="Rechercher par code, nom de projet, client, ville..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition"
+            className="w-full pl-10 pr-4 py-2 bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition"
           />
         </div>
 
@@ -195,8 +195,8 @@ export default function ProjectsPage() {
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
                 statusFilter === st
-                  ? "bg-red-950 text-red-300 border border-red-800"
-                  : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                  ? "bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/60"
+                  : "bg-[#14171D] text-slate-400 hover:text-slate-200 border border-[#252932]"
               }`}
             >
               {st === "all"
@@ -225,17 +225,17 @@ export default function ProjectsPage() {
           {filteredProjects.map((prj) => (
             <div
               key={prj.id}
-              className="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-slate-800 hover:border-red-900/60 transition group"
+              className="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-[#252932] hover:border-[#8E2424]/60 transition group"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-red-400 tracking-wider">
+                  <span className="text-xs font-black text-[#E58585] tracking-wider">
                     {prj.code}
                   </span>
                   <StatusBadge status={prj.status} type="project" />
                 </div>
 
-                <h3 className="text-base font-bold text-white group-hover:text-red-200 transition">
+                <h3 className="text-base font-bold text-white group-hover:text-[#F3B3B3] transition">
                   {prj.title}
                 </h3>
 
@@ -243,7 +243,7 @@ export default function ProjectsPage() {
                   {prj.description || "Aucune description détaillée."}
                 </p>
 
-                <div className="space-y-1.5 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
+                <div className="space-y-1.5 pt-2 border-t border-[#252932] text-xs text-slate-300">
                   <div className="flex items-center gap-2 text-slate-400">
                     <Building2 className="w-3.5 h-3.5 text-slate-500" />
                     <span>Client : <strong className="text-slate-200">{prj.client_name}</strong></span>
@@ -259,7 +259,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <div className="pt-3 border-t border-[#252932] flex items-center justify-between">
                 <div>
                   <span className="text-[10px] uppercase text-slate-500 font-semibold block">
                     Budget Alloué
@@ -278,19 +278,19 @@ export default function ProjectsPage() {
               </div>
 
               {/* Admin Actions */}
-              <div className="pt-3 border-t border-slate-800/60 flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#252932] flex items-center justify-end gap-2">
                 <button
                   onClick={() => setProjectToEdit(prj)}
-                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold border border-slate-700 transition flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-lg bg-[#1C1F23] hover:bg-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold border border-[#252932] transition flex items-center gap-1.5"
                 >
                   <Edit3 className="w-3 h-3 text-amber-400" />
                   <span>Modifier</span>
                 </button>
                 <button
                   onClick={() => handleDeleteProject(prj.id, prj.title)}
-                  className="px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-[11px] font-semibold border border-rose-800/50 transition flex items-center gap-1.5"
+                  className="px-2.5 py-1 rounded-lg bg-[#8E2424]/20 hover:bg-[#8E2424]/35 text-[#E58585] text-[11px] font-semibold border border-[#8E2424]/50 transition flex items-center gap-1.5"
                 >
-                  <Trash2 className="w-3 h-3 text-rose-400" />
+                  <Trash2 className="w-3 h-3 text-[#E58585]" />
                   <span>Supprimer</span>
                 </button>
               </div>
@@ -302,8 +302,8 @@ export default function ProjectsPage() {
       {/* Edit Project Modal */}
       {projectToEdit && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="bg-[#14171D] rounded-2xl border border-[#252932] max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#252932] pb-3">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-amber-400" />
                 <span>Modifier le Chantier : {projectToEdit.code}</span>
@@ -439,10 +439,10 @@ export default function ProjectsPage() {
       {/* New Project Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="bg-[#14171D] rounded-2xl border border-[#252932] max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#252932] pb-3">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <HardHat className="w-5 h-5 text-red-500" />
+                <HardHat className="w-5 h-5 text-[#8E2424]" />
                 <span>Nouveau Chantier BTP</span>
               </h3>
               <button
@@ -568,7 +568,7 @@ export default function ProjectsPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
                 >
                   {saving ? "Enregistrement..." : "Créer le Projet"}
                 </button>

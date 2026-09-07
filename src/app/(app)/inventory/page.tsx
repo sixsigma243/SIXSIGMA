@@ -244,16 +244,16 @@ export default function InventoryPage() {
           {canManageInventory && (
             <button
               onClick={() => setShowCreateItemModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#1C1F23] hover:bg-[#252932] text-slate-200 hover:text-white text-xs font-bold border border-[#252932] transition flex items-center gap-2"
             >
-              <PackagePlus className="w-4 h-4 text-teal-400" />
+              <PackagePlus className="w-4 h-4 text-[#7BA238]" />
               <span>+ Nouvel Article</span>
             </button>
           )}
 
           <button
             onClick={() => setShowMovementModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Mouvement de Stock</span>
@@ -315,7 +315,7 @@ export default function InventoryPage() {
                   const isLow = Number(it.current_stock) <= Number(it.min_threshold);
                   return (
                     <tr key={it.id} className="hover:bg-slate-800/40 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-red-400">
+                      <td className="py-3 px-4 font-mono font-bold text-[#E58585]">
                         {it.sku}
                       </td>
                       <td className="py-3 px-4 font-semibold text-white">
@@ -338,11 +338,11 @@ export default function InventoryPage() {
                       </td>
                       <td className="py-3 px-4">
                         {isLow ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/60">
                             Stock Bas
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7BA238]/15 text-[#A5CE5B] border border-[#7BA238]/50">
                             Optimal
                           </span>
                         )}
@@ -564,7 +564,7 @@ export default function InventoryPage() {
                 <button
                   type="submit"
                   disabled={creatingItem}
-                  className="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white font-bold transition disabled:opacity-50 border border-[#7BA238]"
                 >
                   {creatingItem ? "Création..." : "Enregistrer l'Article"}
                 </button>
@@ -809,7 +809,7 @@ export default function InventoryPage() {
                 <button
                   type="submit"
                   disabled={savingMovement}
-                  className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
                 >
                   {savingMovement ? "Enregistrement..." : "Valider Mouvement"}
                 </button>

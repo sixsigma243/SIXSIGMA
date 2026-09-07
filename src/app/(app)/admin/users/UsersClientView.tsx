@@ -304,32 +304,32 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
         <div
           className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl flex items-center gap-3 border transition-all animate-in fade-in slide-in-from-top-4 ${
             notification.type === "success"
-              ? "bg-emerald-950/90 border-emerald-700 text-emerald-200"
-              : "bg-rose-950/90 border-rose-700 text-rose-200"
+              ? "bg-[#14171D] border-[#7BA238] text-[#A5CE5B]"
+              : "bg-[#14171D] border-[#8E2424] text-[#E58585]"
           }`}
         >
           {notification.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <CheckCircle2 className="w-5 h-5 text-[#7BA238] flex-shrink-0" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-[#E58585] flex-shrink-0" />
           )}
           <span className="text-sm font-medium">{notification.message}</span>
         </div>
       )}
 
       {/* Header Banner */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-900/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#8E2424]/5 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-900/50 text-purple-300 border border-purple-700">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
                 Direction SI & Gouvernance
               </span>
               <span className="text-xs text-slate-500">• Administration Supabase</span>
             </div>
             <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
-              <UserCog className="w-7 h-7 text-rose-500" />
+              <UserCog className="w-7 h-7 text-[#8E2424]" />
               Gestion des Collaborateurs & Rôles Métier
             </h1>
             <p className="text-sm text-slate-400 mt-1">
@@ -339,7 +339,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white font-semibold text-sm shadow-lg shadow-red-950/40 border border-red-600/30 transition transform active:scale-95"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-sm shadow-lg shadow-[#8E2424]/25 border border-[#8E2424] transition transform active:scale-95"
           >
             <UserPlus className="w-4 h-4" />
             <span>Nouvel Employé</span>
@@ -349,40 +349,40 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
       {/* Metrics KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Collaborateurs</p>
             <p className="text-2xl font-black text-white mt-1">{totalEmployees}</p>
             <p className="text-[11px] text-slate-500 mt-0.5">Comptes enregistrés</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-300">
+          <div className="w-12 h-12 rounded-xl bg-[#1C1F23] border border-[#252932] flex items-center justify-center text-slate-300">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Comptes Actifs</p>
-            <p className="text-2xl font-black text-emerald-400 mt-1">{activeCount}</p>
+            <p className="text-xs font-semibold text-[#7BA238] uppercase tracking-wider">Comptes Actifs</p>
+            <p className="text-2xl font-black text-[#7BA238] mt-1">{activeCount}</p>
             <p className="text-[11px] text-slate-500 mt-0.5">Sessions autorisées</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-950/50 border border-emerald-800 flex items-center justify-center text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-[#7BA238]/15 border border-[#7BA238]/40 flex items-center justify-center text-[#7BA238]">
             <CheckCircle2 className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Comptes Désactivés</p>
-            <p className="text-2xl font-black text-rose-400 mt-1">{inactiveCount}</p>
+            <p className="text-xs font-semibold text-[#E58585] uppercase tracking-wider">Comptes Désactivés</p>
+            <p className="text-2xl font-black text-[#E58585] mt-1">{inactiveCount}</p>
             <p className="text-[11px] text-slate-500 mt-0.5">Accès coupé par middleware</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-rose-950/50 border border-rose-800 flex items-center justify-center text-rose-400">
+          <div className="w-12 h-12 rounded-xl bg-[#8E2424]/15 border border-[#8E2424]/40 flex items-center justify-center text-[#E58585]">
             <XCircle className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-5 shadow-lg flex items-center justify-between">
+        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Rôles Attribués</p>
             <p className="text-2xl font-black text-purple-400 mt-1">{distinctRolesCount} <span className="text-xs text-slate-500 font-normal">/ 14</span></p>
@@ -395,7 +395,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -403,7 +403,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Rechercher par nom, email (@sixsigma.cd) ou téléphone..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600 transition"
+            className="w-full pl-10 pr-4 py-2 bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition"
           />
         </div>
 
@@ -412,7 +412,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
+            className="bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:border-[#8E2424]"
           >
             <option value="all">Tous les Rôles (14)</option>
             {(Object.keys(ROLES_CONFIG) as UserRole[]).map((rKey) => (
@@ -426,7 +426,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
+            className="bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:border-[#8E2424]"
           >
             <option value="all">Tous Statuts</option>
             <option value="active">Actifs Uniquement</option>
@@ -437,7 +437,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <select
             value={complianceFilter}
             onChange={(e) => setComplianceFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
+            className="bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:border-[#8E2424]"
           >
             <option value="all">Conformité RH (Tous)</option>
             <option value="warning">Échéance &lt; 15 jours</option>
@@ -447,10 +447,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
       </div>
 
       {/* Employees Table */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[#14171D] border border-[#252932] rounded-2xl shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-900/80 border-b border-slate-800 text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
+            <thead className="bg-[#0E1116] border-b border-[#252932] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
               <tr>
                 <th className="px-5 py-4">Collaborateur</th>
                 <th className="px-4 py-4">Rôle & Département</th>
@@ -526,13 +526,13 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                           title={isRoot ? "Compte racine protégé" : "Cliquer pour basculer le statut"}
                           className={`px-3 py-1 rounded-full text-[11px] font-bold border transition flex items-center gap-1.5 ${
                             user.is_active !== false
-                              ? "bg-emerald-950/60 text-emerald-300 border-emerald-700 hover:bg-emerald-900/60"
-                              : "bg-rose-950/60 text-rose-300 border-rose-700 hover:bg-rose-900/60"
+                              ? "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/40 hover:bg-[#7BA238]/25"
+                              : "bg-[#8E2424]/15 text-[#E58585] border-[#8E2424]/40 hover:bg-[#8E2424]/25"
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                           <span
                             className={`w-2 h-2 rounded-full ${
-                              user.is_active !== false ? "bg-emerald-400 animate-pulse" : "bg-rose-500"
+                              user.is_active !== false ? "bg-[#7BA238] animate-pulse" : "bg-[#8E2424]"
                             }`}
                           />
                           <span>{user.is_active !== false ? "Actif" : "Désactivé"}</span>
@@ -546,7 +546,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                             {user.contract_end_date ? new Date(user.contract_end_date).toLocaleDateString("fr-FR") : "—"}
                           </span>
                           {contractStat.status === "expired" && (
-                            <span className="px-1.5 py-0.5 rounded bg-rose-950 border border-rose-700 text-rose-400 text-[9px] font-black uppercase">
+                            <span className="px-1.5 py-0.5 rounded bg-[#8E2424]/20 border border-[#8E2424]/50 text-[#E58585] text-[9px] font-black uppercase">
                               Expiré
                             </span>
                           )}
@@ -565,7 +565,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                             {user.id_expiry_date ? new Date(user.id_expiry_date).toLocaleDateString("fr-FR") : "—"}
                           </span>
                           {idStat.status === "expired" && (
-                            <span className="px-1.5 py-0.5 rounded bg-rose-950 border border-rose-700 text-rose-400 text-[9px] font-black uppercase">
+                            <span className="px-1.5 py-0.5 rounded bg-[#8E2424]/20 border border-[#8E2424]/50 text-[#E58585] text-[9px] font-black uppercase">
                               Expirée
                             </span>
                           )}
@@ -633,7 +633,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
       {/* MODAL 1: CREATE EMPLOYEE */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
+          <div className="bg-[#14171D] border border-[#252932] rounded-2xl w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
             <button
               onClick={() => setShowCreateModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
@@ -641,8 +641,8 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3 mb-5 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-950/60 border border-red-800 text-red-400 flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-5 border-b border-[#252932] pb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#8E2424]/15 border border-[#8E2424]/40 text-[#E58585] flex items-center justify-center">
                 <UserPlus className="w-5 h-5" />
               </div>
               <div>
@@ -744,18 +744,18 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-[#252932] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+                  className="px-4 py-2 rounded-xl bg-[#1C1F23] hover:bg-slate-800 text-slate-300 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/40 border border-red-600/30 transition disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/30 border border-[#8E2424] transition disabled:opacity-50 flex items-center gap-2"
                 >
                   {loading ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -910,7 +910,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
       {/* MODAL 4: RESET PASSWORD */}
       {selectedUserForPassword && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
+          <div className="bg-[#14171D] border border-[#252932] rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
             <button
               onClick={() => setSelectedUserForPassword(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
@@ -919,7 +919,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             </button>
 
             <h3 className="text-base font-black text-white uppercase tracking-tight mb-1 flex items-center gap-2">
-              <Key className="w-4 h-4 text-red-500" />
+              <Key className="w-4 h-4 text-[#8E2424]" />
               Réinitialiser le Mot de Passe
             </h3>
             <p className="text-xs text-slate-400 mb-4">
@@ -937,22 +937,22 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Nouveau mot de passe fort"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-600 font-mono"
+                  className="w-full px-3 py-2 bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] font-mono"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-[#252932] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedUserForPassword(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-[#1C1F23] text-slate-300 text-xs font-semibold"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading || newPassword.length < 6}
-                  className="px-4 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50 border border-[#8E2424]"
                 >
                   {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   <span>Appliquer le Nouveau Mot de Passe</span>

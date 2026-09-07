@@ -16,11 +16,11 @@ import {
   UserCog,
   LogOut,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import { Profile } from "@/types/database";
 import { NAVIGATION_ITEMS, ROLES_CONFIG, hasRoleAccess } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/client";
+import { SixSigmaLogo } from "@/components/ui/SixSigmaLogo";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -37,7 +37,7 @@ const ICONS_MAP: Record<string, React.ReactNode> = {
   Coins: <Coins className="w-5 h-5" />,
   Truck: <Truck className="w-5 h-5" />,
   ShieldAlert: <ShieldAlert className="w-5 h-5 text-purple-400" />,
-  UserCog: <UserCog className="w-5 h-5 text-rose-400" />,
+  UserCog: <UserCog className="w-5 h-5 text-[#E07A7A]" />,
 };
 
 export function Sidebar({ profile }: SidebarProps) {
@@ -59,32 +59,15 @@ export function Sidebar({ profile }: SidebarProps) {
   );
 
   return (
-    <aside className="w-72 bg-[#0F172A] border-r border-slate-800 flex flex-col h-screen sticky top-0 select-none z-30">
+    <aside className="w-72 bg-[#14171B] border-r border-[#252932] flex flex-col h-screen sticky top-0 select-none z-30">
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-800 bg-[#0B1120]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-700 to-rose-900 flex items-center justify-center shadow-lg shadow-red-950/50 border border-red-600/30">
-            <span className="font-black text-white text-lg tracking-tighter">6Σ</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-black text-white text-base tracking-wider uppercase">
-                SIX SIGMA
-              </h1>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-950/80 text-red-400 border border-red-800/50">
-                ERP
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 italic font-medium">
-              « La constance dans la qualité »
-            </p>
-          </div>
-        </div>
+      <div className="p-5 border-b border-[#252932] bg-[#0E1116]">
+        <SixSigmaLogo size="md" showText={true} showSlogan={true} />
 
         {/* Active Role Card */}
-        <div className="mt-4 p-3 rounded-xl bg-slate-900/90 border border-slate-800/80">
+        <div className="mt-4 p-3 rounded-xl bg-[#1C1F23] border border-[#252932]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-[10px] font-mono font-semibold text-slate-400 uppercase tracking-wider">
               Rôle Actif
             </span>
             <span
@@ -96,10 +79,10 @@ export function Sidebar({ profile }: SidebarProps) {
               {roleInfo.label}
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-300 truncate">
+          <p className="mt-1 text-xs text-slate-200 font-medium truncate">
             {profile?.full_name || "Utilisateur connecté"}
           </p>
-          <p className="text-[11px] text-slate-500 truncate">
+          <p className="text-[11px] text-slate-400 truncate mt-0.5">
             {roleInfo.department}
           </p>
         </div>
@@ -107,8 +90,8 @@ export function Sidebar({ profile }: SidebarProps) {
 
       {/* Navigation Section */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        <div className="px-3 pb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-          Modules Principaux
+        <div className="px-3 pb-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+          Modules Opérationnels
         </div>
 
         {allowedNavItems.map((item) => {
@@ -123,26 +106,28 @@ export function Sidebar({ profile }: SidebarProps) {
               className={cn(
                 "group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-red-950/70 text-white border border-red-800/60 shadow-md shadow-red-950/30"
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"
+                  ? "bg-[#8E2424] text-white shadow-md shadow-[#8E2424]/30 border border-[#8E2424]"
+                  : "text-[#94A3B8] hover:text-white hover:bg-[#1C1F23]"
               )}
             >
               <div className="flex items-center gap-3">
                 <span
                   className={cn(
                     "transition-colors",
-                    isActive ? "text-red-400" : "text-slate-400 group-hover:text-slate-200"
+                    isActive ? "text-white" : "text-[#94A3B8] group-hover:text-slate-200"
                   )}
                 >
                   {ICONS_MAP[item.iconName]}
                 </span>
-                <span>{item.name}</span>
+                <span className={isActive ? "font-semibold" : "font-normal"}>
+                  {item.name}
+                </span>
               </div>
               <ChevronRight
                 className={cn(
                   "w-4 h-4 transition-transform",
                   isActive
-                    ? "text-red-400 translate-x-0.5"
+                    ? "text-white/80 translate-x-0.5"
                     : "text-slate-600 opacity-0 group-hover:opacity-100"
                 )}
               />
@@ -152,13 +137,13 @@ export function Sidebar({ profile }: SidebarProps) {
       </div>
 
       {/* Footer Profile & Logout */}
-      <div className="p-3 border-t border-slate-800 bg-[#0B1120]/80">
+      <div className="p-3 border-t border-[#252932] bg-[#0E1116]">
         <button
           onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-900/60 border border-rose-900/40 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#E07A7A] hover:text-white bg-[#8E2424]/10 hover:bg-[#8E2424] border border-[#8E2424]/30 transition-all"
         >
           <LogOut className="w-4 h-4" />
-          <span>Déconnexion</span>
+          <span>Déconnexion Sécurisée</span>
         </button>
       </div>
     </aside>

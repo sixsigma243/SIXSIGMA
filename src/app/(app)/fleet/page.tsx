@@ -257,16 +257,16 @@ export default function FleetPage() {
           {canManageFleet && (
             <button
               onClick={() => setShowCreateVehicleModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold border border-slate-700 transition flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#1C1F23] hover:bg-[#252932] text-slate-200 hover:text-white text-xs font-bold border border-[#252932] transition flex items-center gap-2"
             >
-              <Plus className="w-4 h-4 text-sky-400" />
+              <Plus className="w-4 h-4 text-[#7BA238]" />
               <span>+ Nouvel Engin</span>
             </button>
           )}
 
           <button
             onClick={() => setShowMissionModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-rose-800 hover:from-red-600 hover:to-rose-700 text-white text-xs font-bold shadow-lg shadow-red-950/50 border border-red-600/30 transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center gap-2"
           >
             <Navigation className="w-4 h-4" />
             <span>Ordre de Mission</span>
@@ -302,7 +302,7 @@ export default function FleetPage() {
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-red-400">
+                    <span className="text-xs font-mono font-bold text-[#E58585]">
                       {v.plate_number}
                     </span>
                     <div className="flex items-center gap-2">
@@ -847,7 +847,7 @@ export default function FleetPage() {
                 <button
                   type="submit"
                   disabled={savingMission}
-                  className="px-5 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
                 >
                   {savingMission ? "Affectation..." : "Lancer la Mission"}
                 </button>

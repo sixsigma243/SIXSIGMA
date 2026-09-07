@@ -131,7 +131,7 @@ export default async function AuditGovernancePage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-lg">
+        <div className="p-5 rounded-2xl bg-[#14171D] border border-[#252932] shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Événements Tracés</span>
             <History className="w-4 h-4 text-purple-400" />
@@ -140,25 +140,25 @@ export default async function AuditGovernancePage() {
           <div className="text-[11px] text-slate-500 mt-1">Modifications sensibles capturées</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-lg">
+        <div className="p-5 rounded-2xl bg-[#14171D] border border-[#252932] shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Périodes de Paie Clôturées</span>
-            <Lock className="w-4 h-4 text-rose-400" />
+            <Lock className="w-4 h-4 text-[#8E2424]" />
           </div>
-          <div className="text-2xl font-black text-rose-300 mt-2">{lockedPeriodsCount}</div>
+          <div className="text-2xl font-black text-[#E58585] mt-2">{lockedPeriodsCount}</div>
           <div className="text-[11px] text-slate-500 mt-1">Verrouillage anti-modification rétroactif</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-lg">
+        <div className="p-5 rounded-2xl bg-[#14171D] border border-[#252932] shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Collaborateurs Actifs</span>
-            <UserCheck className="w-4 h-4 text-emerald-400" />
+            <UserCheck className="w-4 h-4 text-[#7BA238]" />
           </div>
-          <div className="text-2xl font-black text-emerald-300 mt-2">{activeUsersCount}</div>
+          <div className="text-2xl font-black text-[#7BA238] mt-2">{activeUsersCount}</div>
           <div className="text-[11px] text-slate-500 mt-1">Sur 14 rôles opérationnels</div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0F172A] border border-slate-800 shadow-lg">
+        <div className="p-5 rounded-2xl bg-[#14171D] border border-[#252932] shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Triggers SoD Actifs</span>
             <ShieldCheck className="w-4 h-4 text-amber-400" />
@@ -169,10 +169,10 @@ export default async function AuditGovernancePage() {
       </div>
 
       {/* Section 1: Périodes de Paie (Payroll Lock) */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-rose-400" />
+            <Lock className="w-5 h-5 text-[#8E2424]" />
             <h2 className="text-lg font-bold text-white">
               Gestion des Périodes de Paie & Verrous Rétroactifs
             </h2>
@@ -184,7 +184,7 @@ export default async function AuditGovernancePage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <thead className="bg-[#0E1116] text-xs uppercase text-slate-400 border-b border-[#252932]">
               <tr>
                 <th className="py-3 px-4">Période</th>
                 <th className="py-3 px-4">Date Début</th>
@@ -194,20 +194,20 @@ export default async function AuditGovernancePage() {
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#252932]">
               {payrollPeriods && payrollPeriods.length > 0 ? (
                 payrollPeriods.map((period) => (
-                  <tr key={period.id} className="hover:bg-slate-900/40 transition">
+                  <tr key={period.id} className="hover:bg-[#1C1F23]/50 transition">
                     <td className="py-3.5 px-4 font-bold text-white">{period.period_name}</td>
                     <td className="py-3.5 px-4 font-mono text-xs">{formatDate(period.start_date)}</td>
                     <td className="py-3.5 px-4 font-mono text-xs">{formatDate(period.end_date)}</td>
                     <td className="py-3.5 px-4">
                       {period.is_locked ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-950 text-rose-300 border border-rose-800">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
                           <Lock className="w-3 h-3" /> Verrouillée
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#7BA238]/20 text-[#A5CE5B] border border-[#7BA238]/50">
                           <Unlock className="w-3 h-3" /> Ouverte
                         </span>
                       )}
@@ -239,7 +239,7 @@ export default async function AuditGovernancePage() {
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                             period.is_locked
                               ? "bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700"
-                              : "bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700"
+                              : "bg-[#8E2424] hover:bg-[#751D1D] text-white border border-[#8E2424]"
                           }`}
                         >
                           {period.is_locked ? (
@@ -269,7 +269,7 @@ export default async function AuditGovernancePage() {
       </div>
 
       {/* Section 2: Journaux d'Audit Système (Piste Inaltérable) */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-purple-400" />
@@ -284,7 +284,7 @@ export default async function AuditGovernancePage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-slate-800">
+            <thead className="bg-[#0E1116] text-xs uppercase text-slate-400 border-b border-[#252932]">
               <tr>
                 <th className="py-3 px-4">Date & Heure</th>
                 <th className="py-3 px-4">Table / Module</th>
@@ -293,10 +293,10 @@ export default async function AuditGovernancePage() {
                 <th className="py-3 px-4">Détails JSONB</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#252932]">
               {auditLogs && auditLogs.length > 0 ? (
                 auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-900/40 transition">
+                  <tr key={log.id} className="hover:bg-[#1C1F23]/40 transition">
                     <td className="py-3 px-4 font-mono text-xs text-slate-400 whitespace-nowrap">
                       {new Date(log.performed_at).toLocaleString("fr-FR")}
                     </td>
@@ -307,10 +307,10 @@ export default async function AuditGovernancePage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${
                           log.action.includes("INSERT") || log.action.includes("INIT")
-                            ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                            ? "bg-[#7BA238]/20 text-[#A5CE5B] border border-[#7BA238]/50"
                             : log.action.includes("UPDATE") || log.action.includes("OVERRIDE")
                             ? "bg-amber-950 text-amber-300 border border-amber-800"
-                            : "bg-rose-950 text-rose-300 border border-rose-800"
+                            : "bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50"
                         }`}
                       >
                         {log.action}
