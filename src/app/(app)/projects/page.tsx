@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Project, Profile, CurrencyCode, ProjectStatus } from "@/types/database";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CurrencyBadge } from "@/components/ui/CurrencyBadge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCDF } from "@/lib/utils";
 import {
   HardHat,
   Plus,
@@ -37,6 +37,7 @@ export default function ProjectsPage() {
   const [newClient, setNewClient] = useState("");
   const [newLocation, setNewLocation] = useState("");
   const [newBudget, setNewBudget] = useState("");
+  const [newBudgetCdf, setNewBudgetCdf] = useState("");
   const [newCurrency, setNewCurrency] = useState<CurrencyCode>("USD");
   const [newSiteManagerId, setNewSiteManagerId] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -69,12 +70,17 @@ export default function ProjectsPage() {
     e.preventDefault();
     setSaving(true);
 
+    const allocatedUSD = parseFloat(newBudget) || 0;
+    const allocatedCDF = parseFloat(newBudgetCdf) || 0;
+
     const { data, error } = await supabase.from("projects").insert({
       code: newCode.trim() || `PRJ-2026-00${projects.length + 1}`,
       title: newTitle.trim(),
       client_name: newClient.trim(),
       location: newLocation.trim(),
-      budget: parseFloat(newBudget) || 0,
+      budget: allocatedUSD,
+      budget_allocated_usd: allocatedUSD,
+      budget_allocated_cdf: allocatedCDF,
       currency: newCurrency,
       site_manager_id: newSiteManagerId || null,
       description: newDescription.trim(),
@@ -89,6 +95,7 @@ export default function ProjectsPage() {
       setNewClient("");
       setNewLocation("");
       setNewBudget("");
+      setNewBudgetCdf("");
       setNewDescription("");
       fetchProjects();
     } else {
@@ -112,7 +119,9 @@ export default function ProjectsPage() {
         title: projectToEdit.title,
         client_name: projectToEdit.client_name,
         location: projectToEdit.location,
-        budget: Number(projectToEdit.budget),
+        budget: Number(projectToEdit.budget_allocated_usd ?? projectToEdit.budget),
+        budget_allocated_usd: Number(projectToEdit.budget_allocated_usd ?? projectToEdit.budget),
+        budget_allocated_cdf: Number(projectToEdit.budget_allocated_cdf || 0),
         currency: projectToEdit.currency,
         status: projectToEdit.status,
         site_manager_id: projectToEdit.site_manager_id || null,
@@ -264,7 +273,12 @@ export default function ProjectsPage() {
                   <span className="text-[10px] uppercase text-slate-500 font-semibold block">
                     Budget Alloué
                   </span>
-                  <CurrencyBadge amount={Number(prj.budget)} currency={prj.currency} size="sm" />
+                  <CurrencyBadge amount={Number(prj.budget_allocated_usd || prj.budget)} currency="USD" size="sm" />
+                  {Number(prj.budget_allocated_cdf) > 0 && (
+                    <span className="text-[10px] font-mono text-amber-300 block mt-0.5">
+                      + {formatCDF(Number(prj.budget_allocated_cdf))}
+                    </span>
+                  )}
                 </div>
 
                 <div className="text-right">
@@ -351,28 +365,39 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Budget</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Budget Alloué USD ($)</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="100"
                     required
-                    value={projectToEdit.budget}
-                    onChange={(e) => setProjectToEdit({ ...projectToEdit, budget: parseFloat(e.target.value) || 0 })}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    value={projectToEdit.budget_allocated_usd ?? projectToEdit.budget}
+                    onChange={(e) =>
+                      setProjectToEdit({
+                        ...projectToEdit,
+                        budget_allocated_usd: parseFloat(e.target.value) || 0,
+                        budget: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Devise</label>
-                  <select
-                    value={projectToEdit.currency}
-                    onChange={(e) => setProjectToEdit({ ...projectToEdit, currency: e.target.value as CurrencyCode })}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="CDF">CDF</option>
-                  </select>
+                  <label className="block text-slate-300 font-semibold mb-1">Budget Alloué CDF (FC)</label>
+                  <input
+                    type="number"
+                    step="10000"
+                    placeholder="ex: 50000000"
+                    value={projectToEdit.budget_allocated_cdf ?? 0}
+                    onChange={(e) =>
+                      setProjectToEdit({
+                        ...projectToEdit,
+                        budget_allocated_cdf: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
+                  />
                 </div>
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">Statut</label>
@@ -516,17 +541,28 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Budget Total</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Budget USD ($) *</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="100"
                     required
                     placeholder="ex: 750000"
                     value={newBudget}
                     onChange={(e) => setNewBudget(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Budget CDF (Optionnel)</label>
+                  <input
+                    type="number"
+                    step="10000"
+                    placeholder="ex: 50000000"
+                    value={newBudgetCdf}
+                    onChange={(e) => setNewBudgetCdf(e.target.value)}
+                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
                   />
                 </div>
                 <div>

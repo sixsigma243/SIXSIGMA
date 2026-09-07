@@ -47,6 +47,8 @@ export interface Project {
   client_name: string;
   location: string;
   budget: number;
+  budget_allocated_usd?: number;
+  budget_allocated_cdf?: number;
   currency: CurrencyCode;
   site_manager_id: string | null;
   status: ProjectStatus;
@@ -262,6 +264,8 @@ export interface CashboxTransaction {
   exchange_rate: number;
   category: string;
   description: string;
+  beneficiary?: string | null;
+  payment_method?: 'cash' | 'check' | 'wire' | 'airtel_money' | 'm_pesa' | string;
   receipt_url: string | null;
   created_by: string | null;
   validated_by: string | null;

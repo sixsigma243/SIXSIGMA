@@ -21,6 +21,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Profile, Project, DailySiteReport, MaterialRequisition, CashboxTransaction, AttendanceReconciliation } from "@/types/database";
+import { TreasuryRealtimeWidget } from "@/components/dashboard/TreasuryRealtimeWidget";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -72,8 +73,14 @@ export default async function DashboardPage() {
   const totalUSDSpent = transactions
     ?.filter((t) => t.currency === "USD" && t.transaction_type === "EXPENSE")
     .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
+  const totalUSDIncome = transactions
+    ?.filter((t) => t.currency === "USD" && t.transaction_type === "INCOME")
+    .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
   const totalCDFSpent = transactions
     ?.filter((t) => t.currency === "CDF" && t.transaction_type === "EXPENSE")
+    .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
+  const totalCDFIncome = transactions
+    ?.filter((t) => t.currency === "CDF" && t.transaction_type === "INCOME")
     .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
 
   return (
@@ -349,39 +356,14 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* Cashbox & Treasury Summary */}
+          {/* Cashbox & Treasury Summary (Supabase Realtime Connected) */}
           {hasRoleAccess(userRole, ["admin", "company_management", "accountant", "site_manager"]) && (
-            <div className="bg-[#14171D] rounded-xl p-5 border border-[#252932] space-y-3 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
-                  <Coins className="w-4 h-4 text-slate-400" />
-                  <span>Trésorerie & Dépenses Chantiers</span>
-                </h3>
-                <Link
-                  href="/finance"
-                  className="text-xs font-semibold text-slate-300 hover:text-white transition px-2.5 py-1 rounded-lg bg-[#1C1F23] border border-[#252932]"
-                >
-                  Consulter
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="p-3 rounded-lg bg-[#0E1116] border border-[#252932]">
-                  <span className="text-[10px] text-slate-400 uppercase font-mono">Dépenses USD</span>
-                  <div className="text-sm font-bold text-white mt-0.5">
-                    {formatUSD(totalUSDSpent)}
-                  </div>
-                </div>
-                <div className="p-3 rounded-lg bg-[#0E1116] border border-[#252932]">
-                  <span className="text-[10px] text-slate-400 uppercase font-mono">Dépenses CDF</span>
-                  <div className="text-sm font-bold text-white mt-0.5">
-                    {formatCDF(totalCDFSpent)}
-                  </div>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400 pt-1">
-                Alerte de gestion active : toute dépense supérieure à <span className="font-semibold text-white">5 000 USD</span> requiert l&apos;approbation de la Direction Générale.
-              </p>
-            </div>
+            <TreasuryRealtimeWidget
+              initialUSDSpent={totalUSDSpent}
+              initialCDFSpent={totalCDFSpent}
+              initialUSDIncome={totalUSDIncome}
+              initialCDFIncome={totalCDFIncome}
+            />
           )}
         </div>
       </div>

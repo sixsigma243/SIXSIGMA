@@ -1,0 +1,32 @@
+
+  <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <!-- Dark Industrial Slate Background -->
+    <rect width="512" height="512" rx="104" fill="#0E1116" />
+    <rect width="504" height="504" x="4" y="4" rx="100" fill="none" stroke="#252932" stroke-width="4" />
+    
+    <!-- Central Emblem Container -->
+    <g transform="translate(56, 40)">
+      <!-- Roof Gable (Rouge Brique #8E2424) -->
+      <path d="M 40 180 L 200 45 L 360 180" fill="none" stroke="#8E2424" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" />
+      
+      <!-- Trowel Structure / Steel Body (#1C1F23 & Slate Details) -->
+      <polygon points="120,205 280,205 250,305 150,305" fill="#1C1F23" stroke="#333842" stroke-width="6" />
+      
+      <!-- Precision Drop / Quality Element (#7BA238) -->
+      <path d="M 200 195 C 170 240, 155 265, 155 290 C 155 320, 175 345, 200 345 C 225 345, 245 320, 245 290 C 245 265, 230 240, 200 195 Z" fill="#7BA238" stroke="#6A8D2F" stroke-width="4" />
+      
+      <!-- Six Sigma Core Symbol Σ -->
+      <path d="M 175 255 L 225 255 L 195 285 L 225 315 L 175 315" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- Industrial Typography: SIX SIGMA -->
+    <text x="256" y="425" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" letter-spacing="6">
+      SIX SIGMA
+    </text>
+
+    <!-- Subtitle: BTP & MINES -->
+    <text x="256" y="462" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="19" fill="#7BA238" letter-spacing="8">
+      OPERATIONS ERP
+    </text>
+  </svg>
+  
