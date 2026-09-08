@@ -60,11 +60,13 @@ export function Sidebar({ profile }: SidebarProps) {
   return (
     <aside className="w-64 bg-[#14171B] border-r border-[#252932] flex flex-col h-screen sticky top-0 select-none z-30">
       {/* Brand Header */}
-      <div className="p-5 border-b border-[#252932] bg-[#0E1116]">
-        <SixSigmaLogo size="md" showText={true} showSlogan={true} />
+      <div className="p-4 border-b border-[#252932] bg-[#0E1116] flex flex-col items-center">
+        <Link href="/dashboard" className="block py-0.5 transition hover:opacity-90">
+          <SixSigmaLogo size="md" />
+        </Link>
 
         {/* User Profile Block */}
-        <div className="mt-4 pt-3 border-t border-[#252932]">
+        <div className="mt-3 pt-3 border-t border-[#252932] w-full">
           <p className="text-xs font-semibold text-white truncate">
             {profile?.full_name || "Elysée Mudimbi"}
           </p>

@@ -9,87 +9,82 @@ interface SixSigmaLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   showText?: boolean;
   showSlogan?: boolean;
-  variant?: "badge" | "transparent" | "full";
+  variant?: "full" | "horizontal" | "badge";
 }
 
 export function SixSigmaLogo({
   className,
   size = "md",
   showText = true,
-  showSlogan = false,
-  variant = "badge",
+  showSlogan = true,
+  variant = "full",
 }: SixSigmaLogoProps) {
-  const sizeMap = {
-    sm: { icon: "w-8 h-8", px: 32, text: "text-sm", slogan: "text-[9px]" },
-    md: { icon: "w-10 h-10", px: 40, text: "text-base", slogan: "text-[10px]" },
-    lg: { icon: "w-12 h-12", px: 48, text: "text-xl", slogan: "text-xs" },
-    xl: { icon: "w-16 h-16", px: 64, text: "text-2xl", slogan: "text-xs" },
+  // Height scale for the official logo graphic
+  const heightMap = {
+    sm: "h-12",
+    md: "h-16",
+    lg: "h-20",
+    xl: "h-24",
   };
 
-  const currentSize = sizeMap[size];
-
-  if (variant === "full") {
+  if (variant === "badge") {
     return (
-      <div className={cn("relative flex items-center select-none", className)}>
+      <div
+        className={cn(
+          "inline-flex items-center justify-center p-2.5 rounded-xl bg-white shadow-sm border border-slate-200",
+          className
+        )}
+      >
         <Image
-          src="/images/logo-dark-mode.png"
+          src="/logo.jpg"
           alt="SIX SIGMA - La constance dans la qualité"
-          width={280}
-          height={198}
-          className="w-auto h-12 object-contain"
+          width={220}
+          height={156}
+          className={cn(heightMap[size], "w-auto object-contain")}
           priority
         />
       </div>
     );
   }
 
-  return (
-    <div className={cn("flex items-center gap-3 select-none", className)}>
-      {/* Official Physical Emblem from Downloads */}
-      <div
-        className={cn(
-          currentSize.icon,
-          variant === "transparent"
-            ? "relative flex-shrink-0 flex items-center justify-center p-0.5"
-            : "relative flex-shrink-0 rounded-xl bg-white border border-[#252932] flex items-center justify-center shadow-md p-1 overflow-hidden transition-transform group-hover:scale-105"
-        )}
-      >
+  if (variant === "horizontal") {
+    return (
+      <div className={cn("flex items-center gap-3 select-none", className)}>
         <Image
-          src={variant === "transparent" ? "/icons/emblem-transparent.png" : "/icons/icon-512x512.png"}
-          alt="SIX SIGMA"
-          width={currentSize.px}
-          height={currentSize.px}
-          className="w-full h-full object-contain"
+          src="/icons/emblem-transparent.png"
+          alt="SIX SIGMA Emblem"
+          width={56}
+          height={38}
+          className="h-10 w-auto object-contain flex-shrink-0"
           priority
         />
-      </div>
-
-      {/* Brand Typographic Block */}
-      {showText && (
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                currentSize.text,
-                "font-black tracking-wider uppercase text-white font-sans"
-              )}
-            >
+        {showText && (
+          <div className="flex flex-col">
+            <span className="font-black tracking-wider uppercase text-white font-sans text-base leading-tight">
               SIX SIGMA
             </span>
+            {showSlogan && (
+              <span className="text-slate-400 italic font-medium tracking-tight text-[10px] mt-0.5">
+                « La constance dans la qualité »
+              </span>
+            )}
           </div>
+        )}
+      </div>
+    );
+  }
 
-          {showSlogan && (
-            <span
-              className={cn(
-                currentSize.slogan,
-                "text-slate-400 italic font-medium tracking-tight mt-0.5"
-              )}
-            >
-              « La constance dans la qualité »
-            </span>
-          )}
-        </div>
-      )}
+  // Default: Full authentic official logo graphic (seamless on dark mode)
+  return (
+    <div className={cn("relative flex items-center justify-center select-none", className)}>
+      <Image
+        src="/images/logo-dark-mode.png"
+        alt="SIX SIGMA - La constance dans la qualité"
+        width={220}
+        height={156}
+        className={cn(heightMap[size], "w-auto object-contain")}
+        priority
+      />
     </div>
   );
 }
