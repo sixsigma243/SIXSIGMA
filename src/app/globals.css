@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #0E1116;
-  --foreground: #f8fafc;
+  --background: #F8FAFC;
+  --foreground: #1C1F23;
   --brand-brick: #8E2424;
   --brand-brick-hover: #751D1D;
   --brand-steel: #1C1F23;
   --brand-green: #7BA238;
-  --brand-card: #14171D;
-  --brand-border: #252932;
+  --brand-card: #FFFFFF;
+  --brand-border: #F1F5F9;
 }
 
 body {
@@ -21,18 +21,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar in SIX SIGMA Palette */
+/* Custom Scrollbar in Clean SaaS Light Palette */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0E1116;
+  background: #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #252932;
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 
@@ -40,31 +40,23 @@ body {
   background: #8E2424;
 }
 
-/* BTP Glassmorphism - Official Slate & Steel Palette */
-.glass-panel {
-  background: rgba(28, 31, 35, 0.9);
-  backdrop-filter: blur(12px);
-  border: 1px solid #252932;
-}
-
+/* Clean SaaS Floating Card Utilities */
+.saas-card,
+.glass-panel,
 .glass-card {
-  background: rgba(20, 23, 29, 0.95);
-  backdrop-filter: blur(8px);
-  border: 1px solid #252932;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  background: #FFFFFF;
+  border-radius: 1rem;
+  border: 1px solid #F1F5F9;
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.05);
 }
 
+.saas-card:hover,
+.glass-panel:hover,
 .glass-card:hover {
-  border-color: rgba(142, 36, 36, 0.4);
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.07);
 }
 
-/* Striped Construction Pattern */
-.btp-stripe {
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(142, 36, 36, 0.12),
-    rgba(142, 36, 36, 0.12) 10px,
-    transparent 10px,
-    transparent 20px
-  );
+/* Soft Zebra Striping for Tables */
+.table-zebra tbody tr:nth-child(even) {
+  background-color: #F8FAFC;
 }

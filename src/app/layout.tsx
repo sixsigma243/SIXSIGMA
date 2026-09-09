@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="dark">
+    <html lang="fr">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -47,7 +47,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="SIX SIGMA ERP" />
       </head>
-      <body className="min-h-screen bg-[#0E1116] text-slate-100 antialiased selection:bg-[#8E2424] selection:text-white">
+      <body className="min-h-screen bg-[#F8FAFC] text-[#1C1F23] antialiased selection:bg-[#8E2424] selection:text-white">
         <PWARegister />
         {children}
       </body>

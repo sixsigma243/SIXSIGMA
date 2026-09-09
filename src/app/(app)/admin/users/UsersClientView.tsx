@@ -186,37 +186,29 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
     router.refresh();
   };
 
-  const handleToggleStatus = async (user: Profile) => {
-    if (user.email === ROOT_EMAIL) {
-      showToast("error", "Le compte Super-Administrateur racine ne peut pas être désactivé.");
+  const handleToggleStatus = async (userToToggle: Profile) => {
+    if (userToToggle.email === ROOT_EMAIL) {
+      showToast("error", "Action interdite : Le compte racine ne peut être désactivé.");
       return;
     }
 
-    const newStatus = user.is_active === false;
-    const confirmMsg = newStatus
-      ? `Réactiver l'accès pour ${user.full_name} ?`
-      : `Désactiver le compte de ${user.full_name} ? Sa session active sera immédiatement détruite.`;
-
-    if (!confirm(confirmMsg)) return;
-
+    const nextState = userToToggle.is_active === false;
     setLoading(true);
-    const res = await toggleEmployeeStatus(user.id, newStatus);
 
+    const res = await toggleEmployeeStatus(userToToggle.id, nextState);
     if (!res.success) {
-      showToast("error", res.error || "Erreur de modification du statut");
+      showToast("error", res.error || "Erreur lors de la mise à jour");
       setLoading(false);
       return;
     }
 
     setProfiles((prev) =>
-      prev.map((p) => (p.id === user.id ? { ...p, is_active: newStatus } : p))
+      prev.map((p) => (p.id === userToToggle.id ? { ...p, is_active: nextState } : p))
     );
 
     showToast(
       "success",
-      newStatus
-        ? `Compte de ${user.full_name} réactivé avec succès.`
-        : `Compte de ${user.full_name} désactivé. Session immédiatement verrouillée.`
+      `Statut mis à jour : ${userToToggle.full_name} est désormais ${nextState ? "Actif" : "Désactivé"}.`
     );
     setLoading(false);
     router.refresh();
@@ -225,11 +217,16 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   const handleRoleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForRole) return;
-    setLoading(true);
+    if (selectedUserForRole.email === ROOT_EMAIL) {
+      showToast("error", "Le rôle du compte racine est immuable.");
+      return;
+    }
 
+    setLoading(true);
     const res = await updateEmployeeRole(selectedUserForRole.id, newRole);
+
     if (!res.success) {
-      showToast("error", res.error || "Erreur de changement de rôle");
+      showToast("error", res.error || "Erreur lors de la modification de rôle");
       setLoading(false);
       return;
     }
@@ -238,7 +235,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
       prev.map((p) => (p.id === selectedUserForRole.id ? { ...p, role: newRole } : p))
     );
 
-    showToast("success", `Rôle de ${selectedUserForRole.full_name} mis à jour : ${ROLES_CONFIG[newRole].label}.`);
+    showToast(
+      "success",
+      `Rôle mis à jour pour ${selectedUserForRole.full_name} -> ${ROLES_CONFIG[newRole].label}.`
+    );
     setSelectedUserForRole(null);
     setLoading(false);
     router.refresh();
@@ -298,48 +298,47 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Toast Notification */}
       {notification && (
         <div
-          className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl flex items-center gap-3 border transition-all animate-in fade-in slide-in-from-top-4 ${
+          className={`fixed top-4 right-4 z-50 p-4 rounded-2xl shadow-xl flex items-center gap-3 border transition-all animate-in fade-in slide-in-from-top-4 ${
             notification.type === "success"
-              ? "bg-[#14171D] border-[#7BA238] text-[#A5CE5B]"
-              : "bg-[#14171D] border-[#8E2424] text-[#E58585]"
+              ? "bg-white border-emerald-200 text-emerald-900"
+              : "bg-white border-rose-200 text-rose-900"
           }`}
         >
           {notification.type === "success" ? (
             <CheckCircle2 className="w-5 h-5 text-[#7BA238] flex-shrink-0" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-[#E58585] flex-shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-[#8E2424] flex-shrink-0" />
           )}
-          <span className="text-sm font-medium">{notification.message}</span>
+          <span className="text-xs font-semibold">{notification.message}</span>
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#8E2424]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+      {/* Header Banner - Clean Modern SaaS Card */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
-                Direction SI & Gouvernance
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#8E2424]/10 text-[#8E2424]">
+                Administration Supabase
               </span>
-              <span className="text-xs text-slate-500">• Administration Supabase</span>
+              <span className="text-xs text-slate-400">• Gouvernance RH & Sécurité</span>
             </div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-2">
-              <UserCog className="w-7 h-7 text-[#8E2424]" />
-              Gestion des Collaborateurs & Rôles Métier
+            <h1 className="text-xl md:text-2xl font-bold text-[#1C1F23] tracking-tight flex items-center gap-2.5">
+              <UserCog className="w-6 h-6 text-[#8E2424]" />
+              <span>Gestion des Collaborateurs & Rôles Métier</span>
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Création des comptes d&apos;accès, affectation des 14 rôles opérationnels, coupure de session instantanée et conformité RH.
             </p>
           </div>
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-sm shadow-lg shadow-[#8E2424]/25 border border-[#8E2424] transition transform active:scale-95"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-xs shadow-sm transition active:scale-95"
           >
             <UserPlus className="w-4 h-4" />
             <span>Nouvel Employé</span>
@@ -347,63 +346,65 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
         </div>
       </div>
 
-      {/* Metrics KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
+      {/* Metrics KPIs (Slide 02 style) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Collaborateurs</p>
-            <p className="text-2xl font-black text-white mt-1">{totalEmployees}</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Comptes enregistrés</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Collaborateurs</p>
+            <p className="text-2xl lg:text-3xl font-bold text-[#1C1F23] mt-1">{totalEmployees}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Comptes enregistrés</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-[#1C1F23] border border-[#252932] flex items-center justify-center text-slate-300">
-            <Users className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <Users className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
+        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold text-[#7BA238] uppercase tracking-wider">Comptes Actifs</p>
-            <p className="text-2xl font-black text-[#7BA238] mt-1">{activeCount}</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Sessions autorisées</p>
+            <p className="text-2xl lg:text-3xl font-bold text-[#7BA238] mt-1">{activeCount}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Sessions autorisées</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-[#7BA238]/15 border border-[#7BA238]/40 flex items-center justify-center text-[#7BA238]">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-[#E58585] uppercase tracking-wider">Comptes Désactivés</p>
-            <p className="text-2xl font-black text-[#E58585] mt-1">{inactiveCount}</p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Accès coupé par middleware</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-[#8E2424]/15 border border-[#8E2424]/40 flex items-center justify-center text-[#E58585]">
-            <XCircle className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-full bg-[#7BA238]/10 text-[#7BA238] flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-5 shadow-lg flex items-center justify-between">
+        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Rôles Attribués</p>
-            <p className="text-2xl font-black text-purple-400 mt-1">{distinctRolesCount} <span className="text-xs text-slate-500 font-normal">/ 14</span></p>
-            <p className="text-[11px] text-slate-500 mt-0.5">Matrice SoD BTP</p>
+            <p className="text-xs font-semibold text-[#8E2424] uppercase tracking-wider">Comptes Désactivés</p>
+            <p className="text-2xl lg:text-3xl font-bold text-[#8E2424] mt-1">{inactiveCount}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Accès coupé instantanément</p>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-950/50 border border-purple-800 flex items-center justify-center text-purple-400">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-full bg-[#8E2424]/10 text-[#8E2424] flex items-center justify-center">
+            <XCircle className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Rôles Attribués</p>
+            <p className="text-2xl lg:text-3xl font-bold text-slate-800 mt-1">
+              {distinctRolesCount} <span className="text-xs text-slate-400 font-normal">/ 14</span>
+            </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Matrice SoD BTP</p>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-[#14171D] border border-[#252932] rounded-2xl p-4 shadow-lg flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Rechercher par nom, email (@sixsigma.cd) ou téléphone..."
-            className="w-full pl-10 pr-4 py-2 bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition"
           />
         </div>
 
@@ -412,7 +413,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:border-[#8E2424]"
+            className="bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 px-3 py-2 focus:bg-white focus:outline-none focus:border-[#8E2424] transition"
           >
             <option value="all">Tous les Rôles (14)</option>
             {(Object.keys(ROLES_CONFIG) as UserRole[]).map((rKey) => (
@@ -426,7 +427,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:border-[#8E2424]"
+            className="bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 px-3 py-2 focus:bg-white focus:outline-none focus:border-[#8E2424] transition"
           >
             <option value="all">Tous Statuts</option>
             <option value="active">Actifs Uniquement</option>
@@ -437,7 +438,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <select
             value={complianceFilter}
             onChange={(e) => setComplianceFilter(e.target.value)}
-            className="bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-slate-300 px-3 py-2 focus:outline-none focus:border-[#8E2424]"
+            className="bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 px-3 py-2 focus:bg-white focus:outline-none focus:border-[#8E2424] transition"
           >
             <option value="all">Conformité RH (Tous)</option>
             <option value="warning">Échéance &lt; 15 jours</option>
@@ -446,11 +447,11 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
         </div>
       </div>
 
-      {/* Employees Table */}
-      <div className="bg-[#14171D] border border-[#252932] rounded-2xl shadow-xl overflow-hidden">
+      {/* Employees Table (Slide 03 Data Table) */}
+      <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-[#0E1116] border-b border-[#252932] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
               <tr>
                 <th className="px-5 py-4">Collaborateur</th>
                 <th className="px-4 py-4">Rôle & Département</th>
@@ -460,10 +461,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {filteredProfiles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-500">
+                  <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
                     Aucun collaborateur ne correspond aux critères de recherche.
                   </td>
                 </tr>
@@ -475,29 +476,29 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                   const isRoot = user.email === ROOT_EMAIL;
 
                   return (
-                    <tr key={user.id} className="hover:bg-slate-800/40 transition">
-                      {/* Name & Email */}
+                    <tr key={user.id} className="hover:bg-slate-50/60 transition">
+                      {/* Name & Email with Circular Avatar */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600 flex items-center justify-center font-bold text-white shadow">
+                          <div className="w-10 h-10 rounded-full bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/20 flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
                             {user.first_name ? user.first_name[0] : ""}
                             {user.last_name ? user.last_name[0] : ""}
                           </div>
                           <div>
-                            <div className="font-bold text-white flex items-center gap-1.5">
+                            <div className="font-bold text-[#1C1F23] flex items-center gap-1.5">
                               <span>{user.full_name || `${user.first_name} ${user.last_name}`}</span>
                               {isRoot && (
-                                <span className="px-1.5 py-0.2 rounded bg-purple-950 border border-purple-700 text-purple-300 text-[9px] font-black uppercase">
+                                <span className="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[9px] font-bold uppercase">
                                   Racine
                                 </span>
                               )}
                             </div>
-                            <div className="text-slate-400 text-[11px] font-mono flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-slate-500" />
+                            <div className="text-slate-500 text-[11px] font-mono flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-slate-400" />
                               <span>{user.email}</span>
                             </div>
                             {user.phone && (
-                              <div className="text-slate-500 text-[10px] flex items-center gap-1 mt-0.5">
+                              <div className="text-slate-400 text-[10px] flex items-center gap-1 mt-0.5">
                                 <Phone className="w-2.5 h-2.5" />
                                 <span>{user.phone}</span>
                               </div>
@@ -506,11 +507,9 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                         </div>
                       </td>
 
-                      {/* Role & Dept */}
+                      {/* Role & Dept Pastel Pill */}
                       <td className="px-4 py-4">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-lg text-[11px] font-bold border ${roleCfg.badgeColor}`}
-                        >
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
                           {roleCfg.label}
                         </span>
                         <div className="text-[10px] text-slate-400 mt-1 font-medium">
@@ -518,21 +517,21 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                         </div>
                       </td>
 
-                      {/* Status Toggle */}
+                      {/* Status Toggle Pastel Badge */}
                       <td className="px-4 py-4">
                         <button
                           onClick={() => handleToggleStatus(user)}
                           disabled={isRoot || loading}
                           title={isRoot ? "Compte racine protégé" : "Cliquer pour basculer le statut"}
-                          className={`px-3 py-1 rounded-full text-[11px] font-bold border transition flex items-center gap-1.5 ${
+                          className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition flex items-center gap-1.5 ${
                             user.is_active !== false
-                              ? "bg-[#7BA238]/15 text-[#A5CE5B] border-[#7BA238]/40 hover:bg-[#7BA238]/25"
-                              : "bg-[#8E2424]/15 text-[#E58585] border-[#8E2424]/40 hover:bg-[#8E2424]/25"
+                              ? "bg-emerald-50 text-[#7BA238] border-emerald-200/60 hover:bg-emerald-100"
+                              : "bg-rose-50 text-[#8E2424] border-rose-200/60 hover:bg-rose-100"
                           } disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                           <span
                             className={`w-2 h-2 rounded-full ${
-                              user.is_active !== false ? "bg-[#7BA238] animate-pulse" : "bg-[#8E2424]"
+                              user.is_active !== false ? "bg-[#7BA238]" : "bg-[#8E2424]"
                             }`}
                           />
                           <span>{user.is_active !== false ? "Actif" : "Désactivé"}</span>
@@ -542,16 +541,16 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                       {/* Contract End Date */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-slate-200">
+                          <span className="font-mono text-slate-700 text-xs">
                             {user.contract_end_date ? new Date(user.contract_end_date).toLocaleDateString("fr-FR") : "—"}
                           </span>
                           {contractStat.status === "expired" && (
-                            <span className="px-1.5 py-0.5 rounded bg-[#8E2424]/20 border border-[#8E2424]/50 text-[#E58585] text-[9px] font-black uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-[#8E2424] text-[9px] font-bold uppercase">
                               Expiré
                             </span>
                           )}
                           {contractStat.status === "warning" && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-950 border border-amber-700 text-amber-400 text-[9px] font-black uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-bold uppercase">
                               {contractStat.days}j
                             </span>
                           )}
@@ -561,16 +560,16 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                       {/* ID Expiry Date */}
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-slate-200">
+                          <span className="font-mono text-slate-700 text-xs">
                             {user.id_expiry_date ? new Date(user.id_expiry_date).toLocaleDateString("fr-FR") : "—"}
                           </span>
                           {idStat.status === "expired" && (
-                            <span className="px-1.5 py-0.5 rounded bg-[#8E2424]/20 border border-[#8E2424]/50 text-[#E58585] text-[9px] font-black uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-[#8E2424] text-[9px] font-bold uppercase">
                               Expirée
                             </span>
                           )}
                           {idStat.status === "warning" && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-950 border border-amber-700 text-amber-400 text-[9px] font-black uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-bold uppercase">
                               {idStat.days}j
                             </span>
                           )}
@@ -588,7 +587,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                             }}
                             disabled={isRoot}
                             title={isRoot ? "Rôle racine protégé" : "Changer de rôle métier"}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition disabled:opacity-40"
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition disabled:opacity-40"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -603,7 +602,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                               });
                             }}
                             title="Modifier les échéances RH"
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition"
                           >
                             <Calendar className="w-3.5 h-3.5" />
                           </button>
@@ -615,7 +614,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                               setNewPassword("");
                             }}
                             title="Réinitialiser le mot de passe"
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition"
                           >
                             <Key className="w-3.5 h-3.5" />
                           </button>
@@ -628,28 +627,38 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             </tbody>
           </table>
         </div>
+
+        {/* Table Footer / Summary */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/40 flex items-center justify-between text-xs text-slate-500">
+          <span>
+            Affichage de <strong className="text-slate-700 font-semibold">{filteredProfiles.length}</strong> collaborateur(s) sur {profiles.length}
+          </span>
+          <span className="text-[11px] text-slate-400 font-mono">
+            Règlement SoD v2.6 • Conforme
+          </span>
+        </div>
       </div>
 
       {/* MODAL 1: CREATE EMPLOYEE */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#14171D] border border-[#252932] rounded-2xl w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-xl shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
             <button
               onClick={() => setShowCreateModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3 mb-5 border-b border-[#252932] pb-4">
-              <div className="w-10 h-10 rounded-xl bg-[#8E2424]/15 border border-[#8E2424]/40 text-[#E58585] flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-4">
+              <div className="w-10 h-10 rounded-full bg-[#8E2424]/10 text-[#8E2424] flex items-center justify-center">
                 <UserPlus className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">
+                <h3 className="text-base font-bold text-[#1C1F23] tracking-tight">
                   Création d&apos;un Nouveau Collaborateur
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Le compte sera créé dans Supabase Auth et synchronisé dans le répertoire RH.
                 </p>
               </div>
@@ -658,59 +667,59 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Prénom *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Prénom *</label>
                   <input
                     type="text"
                     required
                     value={createForm.first_name}
                     onChange={(e) => setCreateForm({ ...createForm, first_name: e.target.value })}
                     placeholder="ex: Patrick"
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Nom *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Nom *</label>
                   <input
                     type="text"
                     required
                     value={createForm.last_name}
                     onChange={(e) => setCreateForm({ ...createForm, last_name: e.target.value })}
                     placeholder="ex: Kalala"
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Email Professionnel *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Email Professionnel *</label>
                   <input
                     type="email"
                     required
                     value={createForm.email}
                     onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
                     placeholder="p.kalala@sixsigma.cd"
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600 font-mono"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Mot de Passe Initial *</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mot de Passe Initial *</label>
                   <input
                     type="text"
                     required
                     value={createForm.password}
                     onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-red-600 font-mono"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Rôle Métier (Matrice SoD) *</label>
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Rôle Métier (Matrice SoD) *</label>
                 <select
                   value={createForm.role}
                   onChange={(e) => setCreateForm({ ...createForm, role: e.target.value as UserRole })}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424]"
                 >
                   {(Object.keys(ROLES_CONFIG) as UserRole[]).map((rKey) => (
                     <option key={rKey} value={rKey}>
@@ -718,44 +727,44 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                     </option>
                   ))}
                 </select>
-                <p className="text-[10px] text-slate-400 mt-1 italic">
+                <p className="text-[10px] text-slate-500 mt-1 italic">
                   {ROLES_CONFIG[createForm.role]?.description}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Fin de Contrat RH</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Fin de Contrat RH</label>
                   <input
                     type="date"
                     value={createForm.contract_end_date}
                     onChange={(e) => setCreateForm({ ...createForm, contract_end_date: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Expiration Pièce ID</label>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Expiration Pièce ID</label>
                   <input
                     type="date"
                     value={createForm.id_expiry_date}
                     onChange={(e) => setCreateForm({ ...createForm, id_expiry_date: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#252932] flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1C1F23] hover:bg-slate-800 text-slate-300 text-xs font-semibold transition"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/30 border border-[#8E2424] transition disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 flex items-center gap-2"
                 >
                   {loading ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -772,65 +781,66 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
       {/* MODAL 2: CHANGE ROLE */}
       {selectedUserForRole && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
             <button
               onClick={() => setSelectedUserForRole(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-base font-black text-white uppercase tracking-tight mb-1 flex items-center gap-2">
-              <Edit3 className="w-4 h-4 text-purple-400" />
+            <h3 className="text-base font-bold text-[#1C1F23] tracking-tight mb-1 flex items-center gap-2">
+              <Edit3 className="w-4 h-4 text-[#8E2424]" />
               Modifier le Rôle Métier
             </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Collaborateur : <span className="font-bold text-white">{selectedUserForRole.full_name}</span>
+            <p className="text-xs text-slate-500 mb-4">
+              Collaborateur : <span className="font-bold text-slate-800">{selectedUserForRole.full_name}</span>
             </p>
 
             <form onSubmit={handleRoleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-2">
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-2">
                   Sélectionnez le nouveau rôle (14 rôles disponibles)
                 </label>
                 <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
                   {(Object.keys(ROLES_CONFIG) as UserRole[]).map((rKey) => {
                     const item = ROLES_CONFIG[rKey];
                     const isSelected = newRole === rKey;
+
                     return (
                       <div
                         key={rKey}
                         onClick={() => setNewRole(rKey)}
                         className={`p-2.5 rounded-xl border cursor-pointer transition flex items-center justify-between ${
                           isSelected
-                            ? "bg-purple-950/60 border-purple-600 text-white shadow"
-                            : "bg-slate-900/80 border-slate-800 text-slate-400 hover:border-slate-700"
+                            ? "bg-[#8E2424]/10 border-[#8E2424] text-[#8E2424] font-semibold"
+                            : "bg-slate-50 border-slate-200/80 text-slate-700 hover:bg-slate-100"
                         }`}
                       >
                         <div>
-                          <div className="font-bold text-xs">{item.label}</div>
+                          <div className="text-xs font-bold">{item.label}</div>
                           <div className="text-[10px] text-slate-500">{item.department}</div>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 text-purple-400" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#8E2424]" />}
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setSelectedUserForRole(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold transition flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
                 >
                   {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   <span>Confirmer le Changement</span>
@@ -843,60 +853,60 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
       {/* MODAL 3: COMPLIANCE DATES */}
       {selectedUserForCompliance && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
             <button
               onClick={() => setSelectedUserForCompliance(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-base font-black text-white uppercase tracking-tight mb-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-amber-400" />
+            <h3 className="text-base font-bold text-[#1C1F23] tracking-tight mb-1 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-amber-600" />
               Dates de Conformité RH
             </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Pour : <span className="font-bold text-white">{selectedUserForCompliance.full_name}</span>
+            <p className="text-xs text-slate-500 mb-4">
+              Pour : <span className="font-bold text-slate-800">{selectedUserForCompliance.full_name}</span>
             </p>
 
             <form onSubmit={handleComplianceSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
                   Date de Fin de Contrat de Travail
                 </label>
                 <input
                   type="date"
                   value={complianceForm.contract_end_date}
                   onChange={(e) => setComplianceForm({ ...complianceForm, contract_end_date: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
                   Date d&apos;Expiration de la Pièce d&apos;Identité
                 </label>
                 <input
                   type="date"
                   value={complianceForm.id_expiry_date}
                   onChange={(e) => setComplianceForm({ ...complianceForm, id_expiry_date: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setSelectedUserForCompliance(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
                 >
                   {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                   <span>Mettre à Jour</span>
@@ -909,26 +919,26 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
       {/* MODAL 4: RESET PASSWORD */}
       {selectedUserForPassword && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#14171D] border border-[#252932] rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
             <button
               onClick={() => setSelectedUserForPassword(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-base font-black text-white uppercase tracking-tight mb-1 flex items-center gap-2">
+            <h3 className="text-base font-bold text-[#1C1F23] tracking-tight mb-1 flex items-center gap-2">
               <Key className="w-4 h-4 text-[#8E2424]" />
               Réinitialiser le Mot de Passe
             </h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Pour : <span className="font-bold text-white">{selectedUserForPassword.full_name}</span> ({selectedUserForPassword.email})
+            <p className="text-xs text-slate-500 mb-4">
+              Pour : <span className="font-bold text-slate-800">{selectedUserForPassword.full_name}</span> ({selectedUserForPassword.email})
             </p>
 
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
                   Nouveau Mot de Passe (min. 6 caractères)
                 </label>
                 <input
@@ -937,25 +947,25 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Nouveau mot de passe fort"
-                  className="w-full px-3 py-2 bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] font-mono"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] font-mono"
                 />
               </div>
 
-              <div className="pt-4 border-t border-[#252932] flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setSelectedUserForPassword(null)}
-                  className="px-4 py-2 rounded-xl bg-[#1C1F23] text-slate-300 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading || newPassword.length < 6}
-                  className="px-4 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50 border border-[#8E2424]"
+                  className="px-4 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold transition flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
                 >
                   {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Appliquer le Nouveau Mot de Passe</span>
+                  <span>Appliquer le Mot de Passe</span>
                 </button>
               </div>
             </form>

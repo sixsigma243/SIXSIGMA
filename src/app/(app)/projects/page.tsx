@@ -43,6 +43,10 @@ export default function ProjectsPage() {
   const [newDescription, setNewDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Edit Project State
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
   const fetchProjects = async () => {
     setLoading(true);
     const { data: prjData } = await supabase
@@ -99,14 +103,10 @@ export default function ProjectsPage() {
       setNewDescription("");
       fetchProjects();
     } else {
-      alert("Erreur lors de la création : " + error?.message);
+      alert("Erreur de création : " + (error?.message || "Inconnue"));
     }
     setSaving(false);
   };
-
-  // Edit Project State & Handlers
-  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
-  const [editSaving, setEditSaving] = useState(false);
 
   const handleUpdateProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,10 +119,9 @@ export default function ProjectsPage() {
         title: projectToEdit.title,
         client_name: projectToEdit.client_name,
         location: projectToEdit.location,
-        budget: Number(projectToEdit.budget_allocated_usd ?? projectToEdit.budget),
-        budget_allocated_usd: Number(projectToEdit.budget_allocated_usd ?? projectToEdit.budget),
-        budget_allocated_cdf: Number(projectToEdit.budget_allocated_cdf || 0),
-        currency: projectToEdit.currency,
+        budget: projectToEdit.budget,
+        budget_allocated_usd: projectToEdit.budget_allocated_usd,
+        budget_allocated_cdf: projectToEdit.budget_allocated_cdf,
         status: projectToEdit.status,
         site_manager_id: projectToEdit.site_manager_id || null,
         description: projectToEdit.description,
@@ -161,22 +160,22 @@ export default function ProjectsPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Header & Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <HardHat className="w-7 h-7 text-[#8E2424]" />
+          <h1 className="text-xl md:text-2xl font-bold text-[#1C1F23] tracking-tight flex items-center gap-2.5">
+            <HardHat className="w-6 h-6 text-[#8E2424]" />
             <span>Gestion des Chantiers & Projets BTP</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Supervision technique, affectation des conducteurs de travaux et suivi financier multi-devises.
           </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center justify-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-sm transition flex items-center justify-center gap-2 active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>Nouveau Chantier</span>
@@ -184,28 +183,28 @@ export default function ProjectsPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="glass-panel p-4 rounded-2xl flex flex-col md:flex-row gap-3 items-center justify-between border border-[#252932]">
+      <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-96">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Rechercher par code, nom de projet, client, ville..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#0E1116] border border-[#252932] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-          <Filter className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />
           {["all", "in_progress", "completed", "on_hold"].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
                 statusFilter === st
-                  ? "bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/60"
-                  : "bg-[#14171D] text-slate-400 hover:text-slate-200 border border-[#252932]"
+                  ? "bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/30"
+                  : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/60"
               }`}
             >
               {st === "all"
@@ -222,11 +221,11 @@ export default function ProjectsPage() {
 
       {/* Projects Grid */}
       {loading ? (
-        <div className="text-center py-12 text-slate-500 text-sm">
+        <div className="text-center py-12 text-slate-400 text-sm">
           Chargement des chantiers...
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="glass-card rounded-2xl p-12 text-center text-slate-400">
+        <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center text-slate-400 shadow-sm">
           Aucun projet correspondant trouvé.
         </div>
       ) : (
@@ -234,77 +233,77 @@ export default function ProjectsPage() {
           {filteredProjects.map((prj) => (
             <div
               key={prj.id}
-              className="glass-card rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-[#252932] hover:border-[#8E2424]/60 transition group"
+              className="bg-white rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition group"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-[#E58585] tracking-wider">
+                  <span className="text-xs font-mono font-bold text-[#8E2424] bg-[#8E2424]/10 px-2.5 py-0.5 rounded-lg tracking-wider">
                     {prj.code}
                   </span>
                   <StatusBadge status={prj.status} type="project" />
                 </div>
 
-                <h3 className="text-base font-bold text-white group-hover:text-[#F3B3B3] transition">
+                <h3 className="text-base font-bold text-[#1C1F23] group-hover:text-[#8E2424] transition">
                   {prj.title}
                 </h3>
 
-                <p className="text-xs text-slate-400 line-clamp-2">
+                <p className="text-xs text-slate-500 line-clamp-2">
                   {prj.description || "Aucune description détaillée."}
                 </p>
 
-                <div className="space-y-1.5 pt-2 border-t border-[#252932] text-xs text-slate-300">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Building2 className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Client : <strong className="text-slate-200">{prj.client_name}</strong></span>
+                <div className="space-y-1.5 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Client : <strong className="text-slate-700 font-semibold">{prj.client_name}</strong></span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Lieu : <strong className="text-slate-200">{prj.location}</strong></span>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Lieu : <strong className="text-slate-700 font-semibold">{prj.location}</strong></span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     <span>Démarrage : {formatDate(prj.start_date)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#252932] flex items-center justify-between">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] uppercase text-slate-500 font-semibold block">
+                  <span className="text-[10px] uppercase text-slate-400 font-semibold block">
                     Budget Alloué
                   </span>
                   <CurrencyBadge amount={Number(prj.budget_allocated_usd || prj.budget)} currency="USD" size="sm" />
                   {Number(prj.budget_allocated_cdf) > 0 && (
-                    <span className="text-[10px] font-mono text-amber-300 block mt-0.5">
+                    <span className="text-[10px] font-mono text-emerald-600 font-semibold block mt-0.5">
                       + {formatCDF(Number(prj.budget_allocated_cdf))}
                     </span>
                   )}
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] uppercase text-slate-500 font-semibold block">
-                    Directeur Travaux
+                  <span className="text-[10px] uppercase text-slate-400 font-semibold block">
+                    Conducteur Travaux
                   </span>
-                  <span className="text-xs font-medium text-slate-300">
+                  <span className="text-xs font-semibold text-slate-700">
                     {prj.site_manager?.full_name || "Non assigné"}
                   </span>
                 </div>
               </div>
 
-              {/* Admin Actions */}
-              <div className="pt-3 border-t border-[#252932] flex items-center justify-end gap-2">
+              {/* Actions */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setProjectToEdit(prj)}
-                  className="px-2.5 py-1 rounded-lg bg-[#1C1F23] hover:bg-slate-800 text-slate-300 hover:text-white text-[11px] font-semibold border border-[#252932] transition flex items-center gap-1.5"
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-[11px] font-semibold border border-slate-200/60 transition flex items-center gap-1.5"
                 >
-                  <Edit3 className="w-3 h-3 text-amber-400" />
+                  <Edit3 className="w-3 h-3 text-amber-600" />
                   <span>Modifier</span>
                 </button>
                 <button
                   onClick={() => handleDeleteProject(prj.id, prj.title)}
-                  className="px-2.5 py-1 rounded-lg bg-[#8E2424]/20 hover:bg-[#8E2424]/35 text-[#E58585] text-[11px] font-semibold border border-[#8E2424]/50 transition flex items-center gap-1.5"
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#8E2424] text-[11px] font-semibold border border-rose-200 transition flex items-center gap-1.5"
                 >
-                  <Trash2 className="w-3 h-3 text-[#E58585]" />
+                  <Trash2 className="w-3 h-3 text-[#8E2424]" />
                   <span>Supprimer</span>
                 </button>
               </div>
@@ -315,16 +314,16 @@ export default function ProjectsPage() {
 
       {/* Edit Project Modal */}
       {projectToEdit && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#14171D] rounded-2xl border border-[#252932] max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#252932] pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-amber-400" />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-lg w-full p-6 shadow-2xl space-y-4 text-[#1C1F23] animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-[#1C1F23] flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-amber-600" />
                 <span>Modifier le Chantier : {projectToEdit.code}</span>
               </h3>
               <button
                 onClick={() => setProjectToEdit(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -332,42 +331,42 @@ export default function ProjectsPage() {
 
             <form onSubmit={handleUpdateProject} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Titre de l&apos;Ouvrage</label>
+                <label className="block text-slate-700 font-semibold mb-1">Titre de l&apos;Ouvrage</label>
                 <input
                   type="text"
                   required
                   value={projectToEdit.title}
                   onChange={(e) => setProjectToEdit({ ...projectToEdit, title: e.target.value })}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Maître d&apos;Ouvrage / Client</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Maître d&apos;Ouvrage / Client</label>
                   <input
                     type="text"
                     required
                     value={projectToEdit.client_name}
                     onChange={(e) => setProjectToEdit({ ...projectToEdit, client_name: e.target.value })}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Localisation / Ville</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Localisation / Ville</label>
                   <input
                     type="text"
                     required
                     value={projectToEdit.location}
                     onChange={(e) => setProjectToEdit({ ...projectToEdit, location: e.target.value })}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Budget Alloué USD ($)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Budget Alloué USD ($)</label>
                   <input
                     type="number"
                     step="100"
@@ -380,11 +379,11 @@ export default function ProjectsPage() {
                         budget: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Budget Alloué CDF (FC)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Budget Alloué CDF (FC)</label>
                   <input
                     type="number"
                     step="10000"
@@ -396,15 +395,15 @@ export default function ProjectsPage() {
                         budget_allocated_cdf: parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Statut</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Statut</label>
                   <select
                     value={projectToEdit.status}
                     onChange={(e) => setProjectToEdit({ ...projectToEdit, status: e.target.value as ProjectStatus })}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   >
                     <option value="in_progress">En Cours</option>
                     <option value="on_hold">En Attente</option>
@@ -415,11 +414,11 @@ export default function ProjectsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Conducteur de Travaux Assigné</label>
+                <label className="block text-slate-700 font-semibold mb-1">Conducteur de Travaux Assigné</label>
                 <select
                   value={projectToEdit.site_manager_id || ""}
                   onChange={(e) => setProjectToEdit({ ...projectToEdit, site_manager_id: e.target.value || null })}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 >
                   <option value="">Non assigné</option>
                   {siteManagers.map((sm) => (
@@ -431,27 +430,27 @@ export default function ProjectsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Description</label>
+                <label className="block text-slate-700 font-semibold mb-1">Description</label>
                 <textarea
                   rows={3}
                   value={projectToEdit.description || ""}
                   onChange={(e) => setProjectToEdit({ ...projectToEdit, description: e.target.value })}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setProjectToEdit(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={editSaving}
-                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-xs transition disabled:opacity-50 shadow-sm"
                 >
                   {editSaving ? "Enregistrement..." : "Mettre à Jour"}
                 </button>
@@ -463,16 +462,16 @@ export default function ProjectsPage() {
 
       {/* New Project Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#14171D] rounded-2xl border border-[#252932] max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#252932] pb-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-lg w-full p-6 shadow-2xl space-y-4 text-[#1C1F23] animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-[#1C1F23] flex items-center gap-2">
                 <HardHat className="w-5 h-5 text-[#8E2424]" />
                 <span>Nouveau Chantier BTP</span>
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -481,22 +480,22 @@ export default function ProjectsPage() {
             <form onSubmit={handleCreateProject} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Code Chantier</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Code Chantier</label>
                   <input
                     type="text"
                     required
                     placeholder="PRJ-2026-00X"
                     value={newCode}
                     onChange={(e) => setNewCode(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Devise de Référence</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Devise de Référence</label>
                   <select
                     value={newCurrency}
                     onChange={(e) => setNewCurrency(e.target.value as CurrencyCode)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   >
                     <option value="USD">USD ($)</option>
                     <option value="CDF">Franc Congolais (CDF)</option>
@@ -505,45 +504,45 @@ export default function ProjectsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Titre / Désignation de l&apos;Ouvrage</label>
+                <label className="block text-slate-700 font-semibold mb-1">Titre / Désignation de l&apos;Ouvrage</label>
                 <input
                   type="text"
                   required
                   placeholder="ex: Construction Hangar Métallique Portuaire"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Maître d&apos;Ouvrage / Client</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Maître d&apos;Ouvrage / Client</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: Ministère des ITPR"
                     value={newClient}
                     onChange={(e) => setNewClient(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Localisation / Ville</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Localisation / Ville</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: Kinshasa - Maluku"
                     value={newLocation}
                     onChange={(e) => setNewLocation(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Budget USD ($) *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Budget USD ($) *</label>
                   <input
                     type="number"
                     step="100"
@@ -551,26 +550,26 @@ export default function ProjectsPage() {
                     placeholder="ex: 750000"
                     value={newBudget}
                     onChange={(e) => setNewBudget(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Budget CDF (Optionnel)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Budget CDF (Optionnel)</label>
                   <input
                     type="number"
                     step="10000"
                     placeholder="ex: 50000000"
                     value={newBudgetCdf}
                     onChange={(e) => setNewBudgetCdf(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono font-bold"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Conducteur de Travaux</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Conducteur de Travaux</label>
                   <select
                     value={newSiteManagerId}
                     onChange={(e) => setNewSiteManagerId(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   >
                     <option value="">Sélectionner...</option>
                     {siteManagers.map((sm) => (
@@ -583,28 +582,28 @@ export default function ProjectsPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Description Sommaire des Travaux</label>
+                <label className="block text-slate-700 font-semibold mb-1">Description Sommaire des Travaux</label>
                 <textarea
                   rows={3}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Spécifications techniques, portée, caractéristiques..."
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-xs transition disabled:opacity-50 shadow-sm"
                 >
                   {saving ? "Enregistrement..." : "Créer le Projet"}
                 </button>

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Profile } from "@/types/database";
 import { ROLES_CONFIG } from "@/lib/rbac";
-import { Edit3, X, Check, RefreshCw, AlertCircle } from "lucide-react";
+import { Edit3, X, Check, RefreshCw, Search, Bell } from "lucide-react";
 
 interface HeaderProps {
   profile: Profile | null;
@@ -98,53 +98,84 @@ export function Header({ profile }: HeaderProps) {
     }
   };
 
+  const getInitials = (name?: string | null) => {
+    if (!name) return "EM";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <>
-      <header className="h-14 bg-[#14171B] border-b border-[#252932] px-6 flex items-center justify-between sticky top-0 z-20 select-none">
+      <header className="h-16 bg-white border-b border-slate-100 px-8 flex items-center justify-between sticky top-0 z-20 select-none shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
         {/* Left: Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-          <span className="text-slate-500 font-semibold tracking-wider uppercase text-[11px]">
+        <div className="flex items-center gap-2.5 text-xs font-medium text-slate-400">
+          <span className="text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
             SIX SIGMA
           </span>
-          <span className="text-slate-600">/</span>
-          <span className="text-white font-semibold">{getBreadcrumbTitle()}</span>
+          <span className="text-slate-300">/</span>
+          <span className="text-[#1C1F23] font-bold text-sm">{getBreadcrumbTitle()}</span>
         </div>
 
-        {/* Right Toolbar */}
+        {/* Center/Right Toolbar */}
         <div className="flex items-center gap-4">
+          {/* Quick Search Bar (Inspired by Slide 05 AdminPro) */}
+          <div className="hidden md:flex items-center relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              className="w-48 lg:w-64 pl-9 pr-8 py-1.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition-all"
+            />
+            <span className="text-[10px] font-mono text-slate-400 absolute right-2.5 bg-white px-1.5 py-0.5 rounded border border-slate-200/80">
+              ⌘K
+            </span>
+          </div>
+
           {/* Currency Exchange Rate Ticker */}
           {isAdmin ? (
             <button
               onClick={handleOpenModal}
               title="Ajuster le taux officiel BCC (Super-Admin)"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0E1116] hover:bg-[#1C1F23] border border-[#252932] hover:border-[#8E2424]/60 text-xs font-mono text-slate-300 transition cursor-pointer shadow-sm active:scale-95"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 hover:border-[#8E2424]/40 text-xs font-mono text-slate-700 transition cursor-pointer shadow-xs active:scale-95"
             >
-              <span className="text-slate-400 font-sans text-[11px]">Taux BCC :</span>
-              <span className="font-semibold text-white">
+              <span className="text-slate-400 font-sans text-[11px] font-medium">BCC :</span>
+              <span className="font-bold text-slate-900">
                 1 USD = {rate.toLocaleString("fr-FR")} CDF
               </span>
-              <Edit3 className="w-3 h-3 text-slate-500 hover:text-white ml-0.5 transition" />
+              <Edit3 className="w-3 h-3 text-slate-400 hover:text-[#8E2424] ml-0.5 transition-colors" />
             </button>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0E1116] border border-[#252932] text-xs font-mono text-slate-300">
-              <span className="text-slate-400 font-sans text-[11px]">Taux BCC :</span>
-              <span className="font-semibold text-white">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-mono text-slate-700">
+              <span className="text-slate-400 font-sans text-[11px] font-medium">BCC :</span>
+              <span className="font-bold text-slate-900">
                 1 USD = {rate.toLocaleString("fr-FR")} CDF
               </span>
             </div>
           )}
 
-          {/* User Info Badge */}
-          <div className="flex items-center gap-3 pl-3 border-l border-[#252932]">
-            <div className="w-8 h-8 rounded-lg bg-[#1C1F23] flex items-center justify-center text-xs font-semibold text-slate-300 border border-[#252932]">
-              {profile?.first_name?.[0] || "E"}
-              {profile?.last_name?.[0] || "M"}
+          {/* Notifications Icon Button */}
+          <button
+            title="Notifications"
+            className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200/70 flex items-center justify-center transition-colors relative"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="w-2 h-2 rounded-full bg-[#8E2424] absolute top-2 right-2 ring-2 ring-white" />
+          </button>
+
+          {/* User Avatar Badge */}
+          <div className="flex items-center gap-2.5 pl-2 border-l border-slate-100">
+            <div className="w-8 h-8 rounded-full bg-[#8E2424]/10 text-[#8E2424] font-bold text-xs flex items-center justify-center border border-[#8E2424]/20 shadow-xs">
+              {getInitials(profile?.full_name)}
             </div>
-            <div className="hidden sm:block text-right">
-              <div className="text-xs font-semibold text-slate-200">
+            <div className="hidden lg:block text-left leading-tight">
+              <div className="text-xs font-semibold text-slate-900">
                 {profile?.full_name || "Elysée Mudimbi"}
               </div>
-              <div className="text-[10px] text-[#94A3B8]">
+              <div className="text-[10px] text-slate-400">
                 {isAdmin ? "Super-Admin" : roleInfo.label}
               </div>
             </div>
@@ -152,24 +183,24 @@ export function Header({ profile }: HeaderProps) {
         </div>
       </header>
 
-      {/* Toast Notification */}
+      {/* Floating Notification Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 p-4 rounded-xl shadow-2xl flex items-center gap-3 border transition-all animate-in fade-in slide-in-from-top-4 ${
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-2.5 text-xs animate-in slide-in-from-bottom-3 ${
             toast.type === "success"
-              ? "bg-[#14171D] border-[#7BA238] text-[#A5CE5B]"
-              : "bg-[#14171D] border-[#8E2424] text-[#E58585]"
+              ? "bg-white border-[#7BA238]/40 text-slate-800"
+              : "bg-white border-rose-200 text-rose-800"
           }`}
         >
           {toast.type === "success" ? (
-            <Check className="w-4 h-4 text-[#7BA238]" />
+            <Check className="w-4 h-4 text-[#7BA238] flex-shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-[#E58585]" />
+            <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
           )}
-          <span className="text-xs font-medium">{toast.message}</span>
+          <span className="font-medium">{toast.message}</span>
           <button
             onClick={() => setToast(null)}
-            className="text-slate-400 hover:text-white p-1 ml-2"
+            className="text-slate-400 hover:text-slate-600 p-1 ml-2"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -178,33 +209,31 @@ export function Header({ profile }: HeaderProps) {
 
       {/* Admin Exchange Rate Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#14171D] border border-[#252932] rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 space-y-4">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3 border-b border-[#252932] pb-4">
-              <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Taux de Référence Officiel (BCC)
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Conversion opérationnelle USD / Francs Congolais (CDF)
-                </p>
-              </div>
+            <div className="border-b border-slate-100 pb-4">
+              <h3 className="text-base font-bold text-slate-900">
+                Taux de Référence Officiel (BCC)
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Conversion opérationnelle USD / Francs Congolais (CDF)
+              </p>
             </div>
 
             <form onSubmit={handleSaveRate} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Taux de change (1 USD en CDF)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-500">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
                     1 USD =
                   </span>
                   <input
@@ -214,9 +243,9 @@ export function Header({ profile }: HeaderProps) {
                     value={rateInput}
                     onChange={(e) => setRateInput(e.target.value)}
                     placeholder="2850"
-                    className="w-full pl-20 pr-14 py-2.5 bg-[#0E1116] border border-[#252932] rounded-xl text-sm font-mono font-bold text-white focus:outline-none focus:border-[#8E2424]"
+                    className="w-full pl-20 pr-14 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424]"
                   />
-                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono font-medium text-slate-500">
                     CDF
                   </span>
                 </div>
@@ -224,7 +253,7 @@ export function Header({ profile }: HeaderProps) {
 
               {/* Quick Preset Buttons */}
               <div>
-                <span className="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">
+                <span className="block text-[11px] font-medium text-slate-500 mb-1.5">
                   Paliers Rapides
                 </span>
                 <div className="flex items-center gap-2">
@@ -233,10 +262,10 @@ export function Header({ profile }: HeaderProps) {
                       key={val}
                       type="button"
                       onClick={() => setRateInput(String(val))}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium border transition ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium border transition ${
                         rateInput === String(val)
-                          ? "bg-[#1C2129] border-[#8E2424] text-white"
-                          : "bg-[#0E1116] border-[#252932] text-slate-400 hover:text-white"
+                          ? "bg-[#8E2424]/10 border-[#8E2424] text-[#8E2424] font-bold"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
                       {val.toLocaleString("fr-FR")}
@@ -245,7 +274,7 @@ export function Header({ profile }: HeaderProps) {
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#0E1116] border border-[#252932] text-[11px] text-slate-400 space-y-1">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-500 space-y-1">
                 <p>
                   • Ce taux sera appliqué aux conversions automatiques (dépenses caisse, seuils de validation, valorisation de stocks).
                 </p>
@@ -254,18 +283,18 @@ export function Header({ profile }: HeaderProps) {
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-[#252932] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1C1F23] hover:bg-[#252932] text-slate-300 text-xs font-medium transition"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold border border-[#8E2424] transition disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-xs transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                 >
                   {saving ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />

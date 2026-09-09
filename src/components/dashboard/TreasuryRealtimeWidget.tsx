@@ -80,50 +80,50 @@ export function TreasuryRealtimeWidget({
 
   return (
     <div
-      className={`bg-[#14171D] rounded-xl p-5 border transition duration-500 space-y-3 shadow-sm ${
-        hasRealtimeUpdate ? "border-emerald-500 ring-1 ring-emerald-500/50" : "border-[#252932]"
+      className={`bg-white rounded-2xl p-5 border transition duration-500 space-y-3.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] ${
+        hasRealtimeUpdate ? "border-[#7BA238] ring-2 ring-[#7BA238]/20" : "border-slate-100"
       }`}
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono">
+        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
           <Coins className="w-4 h-4 text-slate-400" />
           <span>Trésorerie & Dépenses Chantiers</span>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-800">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="flex items-center gap-1 text-[10px] text-[#5e7c2b] font-bold bg-[#7BA238]/10 px-2 py-0.5 rounded-full border border-[#7BA238]/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] animate-pulse" />
             <span>Direct</span>
           </span>
         </h3>
         <Link
           href="/finance"
-          className="text-xs font-semibold text-slate-300 hover:text-white transition px-2.5 py-1 rounded-lg bg-[#1C1F23] border border-[#252932]"
+          className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80"
         >
           Consulter
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 pt-1">
-        <div className="p-3 rounded-lg bg-[#0E1116] border border-[#252932]">
-          <span className="text-[10px] text-slate-400 uppercase font-mono block">Dépenses USD</span>
-          <div className="text-sm font-bold text-rose-400 mt-0.5 font-mono">
+      <div className="grid grid-cols-2 gap-2.5 pt-1">
+        <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider block">Dépenses USD</span>
+          <div className="text-sm font-bold text-[#8E2424] mt-0.5 font-mono">
             {formatUSD(usdSpent)}
           </div>
-          <span className="text-[10px] text-slate-500 block mt-0.5">
-            Solde net : <strong className={netUSD >= 0 ? "text-emerald-400" : "text-rose-400"}>{formatUSD(netUSD)}</strong>
+          <span className="text-[10px] text-slate-500 block mt-0.5 font-medium">
+            Solde net : <strong className={netUSD >= 0 ? "text-[#5e7c2b]" : "text-[#8E2424]"}>{formatUSD(netUSD)}</strong>
           </span>
         </div>
 
-        <div className="p-3 rounded-lg bg-[#0E1116] border border-[#252932]">
-          <span className="text-[10px] text-slate-400 uppercase font-mono block">Dépenses CDF</span>
-          <div className="text-sm font-bold text-rose-400 mt-0.5 font-mono">
+        <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-100">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider block">Dépenses CDF</span>
+          <div className="text-sm font-bold text-[#8E2424] mt-0.5 font-mono">
             {formatCDF(cdfSpent)}
           </div>
-          <span className="text-[10px] text-slate-500 block mt-0.5">
-            Solde net : <strong className={netCDF >= 0 ? "text-emerald-400" : "text-rose-400"}>{formatCDF(netCDF)}</strong>
+          <span className="text-[10px] text-slate-500 block mt-0.5 font-medium">
+            Solde net : <strong className={netCDF >= 0 ? "text-[#5e7c2b]" : "text-[#8E2424]"}>{formatCDF(netCDF)}</strong>
           </span>
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400 pt-1 flex items-center justify-between">
+      <p className="text-[11px] text-slate-400 pt-0.5 flex items-center justify-between">
         <span>Alerte SoD active : dépenses &gt; 5 000 USD soumises au visa DG.</span>
       </p>
     </div>

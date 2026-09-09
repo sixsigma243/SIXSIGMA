@@ -28,7 +28,7 @@ export default async function AppLayout({
     .single();
 
   return (
-    <div className="flex min-h-screen bg-[#0E1116] text-slate-100">
+    <div className="flex min-h-screen bg-[#F8FAFC] text-[#1C1F23]">
       <Sidebar profile={profile as Profile | null} />
       <div className="flex-1 flex flex-col min-w-0">
         <Header profile={profile as Profile | null} />

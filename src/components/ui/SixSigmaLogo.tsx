@@ -10,6 +10,7 @@ interface SixSigmaLogoProps {
   showText?: boolean;
   showSlogan?: boolean;
   variant?: "full" | "horizontal" | "badge";
+  theme?: "light" | "dark";
 }
 
 export function SixSigmaLogo({
@@ -18,20 +19,20 @@ export function SixSigmaLogo({
   showText = true,
   showSlogan = true,
   variant = "full",
+  theme = "light",
 }: SixSigmaLogoProps) {
-  // Height scale for the official logo graphic
   const heightMap = {
-    sm: "h-12",
-    md: "h-16",
-    lg: "h-20",
-    xl: "h-24",
+    sm: "h-10",
+    md: "h-14",
+    lg: "h-18",
+    xl: "h-22",
   };
 
   if (variant === "badge") {
     return (
       <div
         className={cn(
-          "inline-flex items-center justify-center p-2.5 rounded-xl bg-white shadow-sm border border-slate-200",
+          "inline-flex items-center justify-center p-2 rounded-xl bg-white shadow-sm border border-slate-100",
           className
         )}
       >
@@ -55,16 +56,26 @@ export function SixSigmaLogo({
           alt="SIX SIGMA Emblem"
           width={56}
           height={38}
-          className="h-10 w-auto object-contain flex-shrink-0"
+          className="h-9 w-auto object-contain flex-shrink-0"
           priority
         />
         {showText && (
           <div className="flex flex-col">
-            <span className="font-black tracking-wider uppercase text-white font-sans text-base leading-tight">
+            <span
+              className={cn(
+                "font-bold tracking-tight uppercase font-sans text-base leading-tight",
+                theme === "dark" ? "text-white" : "text-[#1C1F23]"
+              )}
+            >
               SIX SIGMA
             </span>
             {showSlogan && (
-              <span className="text-slate-400 italic font-medium tracking-tight text-[10px] mt-0.5">
+              <span
+                className={cn(
+                  "italic font-medium tracking-tight text-[10px] mt-0.5",
+                  theme === "dark" ? "text-slate-400" : "text-slate-500"
+                )}
+              >
                 « La constance dans la qualité »
               </span>
             )}
@@ -74,11 +85,13 @@ export function SixSigmaLogo({
     );
   }
 
-  // Default: Full authentic official logo graphic (seamless on dark mode)
+  // Default: Full authentic official logo graphic
+  const logoSrc = theme === "dark" ? "/images/logo-dark-mode.png" : "/images/logo-transparent.png";
+
   return (
     <div className={cn("relative flex items-center justify-center select-none", className)}>
       <Image
-        src="/images/logo-dark-mode.png"
+        src={logoSrc}
         alt="SIX SIGMA - La constance dans la qualité"
         width={220}
         height={156}
