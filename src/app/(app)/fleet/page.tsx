@@ -244,11 +244,11 @@ export default function FleetPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <Truck className="w-7 h-7 text-sky-500" />
+          <h1 className="text-2xl font-black text-[#1C1F23] tracking-tight flex items-center gap-2.5">
+            <Truck className="w-7 h-7 text-sky-600" />
             <span>Parc Roulant, Engins Lourds & Dispatch</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Gestion du charroi automobile BTP, pelles sur chenilles, camions bennes, grues et ordres de transport.
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function FleetPage() {
           {canManageFleet && (
             <button
               onClick={() => setShowCreateVehicleModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-[#1C1F23] hover:bg-[#252932] text-slate-200 hover:text-white text-xs font-bold border border-[#252932] transition flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold border border-slate-200 shadow-xs transition flex items-center gap-2"
             >
               <Plus className="w-4 h-4 text-[#7BA238]" />
               <span>+ Nouvel Engin</span>
@@ -277,10 +277,10 @@ export default function FleetPage() {
       {/* Vehicles Grid */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
             État du Parc & Disponibilité des Engins
           </h2>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500 font-medium">
             {vehicles.length} engin(s) inventorié(s)
           </span>
         </div>
@@ -290,7 +290,7 @@ export default function FleetPage() {
             Chargement des engins...
           </div>
         ) : vehicles.length === 0 ? (
-          <div className="glass-card rounded-2xl p-10 text-center text-slate-400 text-xs">
+          <div className="bg-white rounded-2xl p-10 text-center text-slate-500 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] text-xs">
             Aucun engin dans la flotte. Cliquez sur &ldquo;+ Nouvel Engin&rdquo; pour ajouter un véhicule.
           </div>
         ) : (
@@ -298,11 +298,11 @@ export default function FleetPage() {
             {vehicles.map((v) => (
               <div
                 key={v.id}
-                className="glass-card rounded-2xl p-5 border border-slate-800 hover:border-sky-900/50 transition flex flex-col justify-between space-y-4"
+                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:border-slate-200 transition flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-[#E58585]">
+                    <span className="text-xs font-mono font-bold text-[#8E2424]">
                       {v.plate_number}
                     </span>
                     <div className="flex items-center gap-2">
@@ -312,63 +312,63 @@ export default function FleetPage() {
                           <button
                             onClick={() => handleOpenEditVehicle(v)}
                             title="Modifier l'engin"
-                            className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition"
                           >
-                            <Edit3 className="w-3 h-3" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteVehicle(v.id, v.plate_number)}
                             title="Supprimer l'engin"
-                            className="p-1 rounded bg-rose-950 hover:bg-rose-900 text-rose-300 hover:text-rose-100 transition"
+                            className="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-[#8E2424] hover:text-rose-800 transition"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <h3 className="text-sm font-bold text-white">
+                  <h3 className="text-sm font-bold text-slate-900">
                     {v.model}
                   </h3>
-                  <span className="text-xs text-slate-400 block">
+                  <span className="text-xs text-slate-500 block">
                     Type : {v.vehicle_type}
                   </span>
 
-                  <div className="space-y-1.5 pt-2 border-t border-slate-800 text-xs text-slate-300">
+                  <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs text-slate-600">
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400 flex items-center gap-1.5">
-                        <Gauge className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <Gauge className="w-3.5 h-3.5 text-slate-400" />
                         <span>Compteur :</span>
                       </span>
-                      <strong className="font-mono">{v.current_mileage.toLocaleString()} km / h</strong>
+                      <strong className="font-mono text-slate-900">{v.current_mileage.toLocaleString()} km / h</strong>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400 flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
                         <span>Chauffeur :</span>
                       </span>
-                      <span className="truncate max-w-[120px]">{v.assigned_driver || "Non assigné"}</span>
+                      <span className="truncate max-w-[120px] font-medium text-slate-800">{v.assigned_driver || "Non assigné"}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400 flex items-center gap-1.5">
-                        <Wrench className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-slate-500 flex items-center gap-1.5">
+                        <Wrench className="w-3.5 h-3.5 text-slate-400" />
                         <span>Entretien :</span>
                       </span>
-                      <span>{formatDate(v.last_maintenance_date)}</span>
+                      <span className="text-slate-800">{formatDate(v.last_maintenance_date)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Status Switcher for Workshop / Dispatch */}
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
                   <span className="text-slate-500">Changer état :</span>
                   <select
                     value={v.status}
                     onChange={(e) => handleUpdateVehicleStatus(v.id, e.target.value as VehicleStatus)}
-                    className="p-1 bg-slate-900 border border-slate-700 rounded text-slate-200 text-[11px]"
+                    className="p-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-[11px] focus:bg-white focus:outline-none"
                   >
                     <option value="available">Disponible</option>
                     <option value="in_mission">En Mission</option>
@@ -383,23 +383,23 @@ export default function FleetPage() {
       </div>
 
       {/* Dispatch Missions Table */}
-      <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <Navigation className="w-4 h-4 text-sky-400" />
+      <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Navigation className="w-4 h-4 text-sky-600" />
             <span>Missions de Dispatch & Déplacements Logistiques</span>
           </h3>
-          <span className="text-xs text-slate-400">{missions.length} mission(s) répertoriée(s)</span>
+          <span className="text-xs text-slate-500 font-medium">{missions.length} mission(s) répertoriée(s)</span>
         </div>
 
         {missions.length === 0 ? (
-          <div className="p-12 text-center text-slate-400 text-xs">
+          <div className="p-12 text-center text-slate-500 text-xs">
             Aucune mission enregistrée pour l&apos;instant.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+              <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100">
                 <tr>
                   <th className="py-3 px-4">Engin / Immatriculation</th>
                   <th className="py-3 px-4">Conducteur / Chauffeur</th>
@@ -410,25 +410,25 @@ export default function FleetPage() {
                   <th className="py-3 px-4 text-right">Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100">
                 {missions.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-800/40 transition">
-                    <td className="py-3 px-4 font-mono font-semibold text-white">
+                  <tr key={m.id} className="hover:bg-slate-50/80 transition">
+                    <td className="py-3 px-4 font-mono font-semibold text-slate-900">
                       {m.vehicle?.plate_number || "Engin"}
-                      <span className="block text-[11px] text-slate-400 font-normal">
+                      <span className="block text-[11px] text-slate-500 font-normal font-sans">
                         {m.vehicle?.model}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-200">
-                      <div className="font-semibold text-white">{m.driver_name}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                    <td className="py-3 px-4 text-slate-700">
+                      <div className="font-semibold text-slate-900">{m.driver_name}</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
                         <span>Permis :</span>
                         <span
                           className={`font-mono font-medium ${
                             m.driver_license_expiry &&
                             new Date(m.driver_license_expiry).getTime() < Date.now()
-                              ? "text-rose-400"
-                              : "text-sky-300"
+                              ? "text-rose-600 font-bold"
+                              : "text-sky-700"
                           }`}
                         >
                           {m.driver_license_expiry ? formatDate(m.driver_license_expiry) : "En règle"}
@@ -436,28 +436,28 @@ export default function FleetPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5 text-slate-300">
-                        <MapPin className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
-                        <span>{m.departure_place} &rarr; <strong className="text-white">{m.destination}</strong></span>
+                      <div className="flex items-center gap-1.5 text-slate-700">
+                        <MapPin className="w-3.5 h-3.5 text-[#8E2424] flex-shrink-0" />
+                        <span>{m.departure_place} &rarr; <strong className="text-slate-900">{m.destination}</strong></span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-300">
+                    <td className="py-3 px-4 text-slate-600 font-medium">
                       {m.project ? `${m.project.code}` : "Transport Général"}
                     </td>
-                    <td className="py-3 px-4 text-slate-400 max-w-xs truncate">
+                    <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
                       {m.cargo_description || "Sans fret"}
                     </td>
-                    <td className="py-3 px-4 font-mono text-amber-300">
+                    <td className="py-3 px-4 font-mono font-bold text-slate-800">
                       {m.fuel_consumed_liters} L
                     </td>
                     <td className="py-3 px-4 text-right">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                           m.status === "in_transit"
-                            ? "bg-blue-950 text-blue-300 border-blue-800"
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
                             : m.status === "completed"
-                            ? "bg-emerald-950 text-emerald-300 border-emerald-800"
-                            : "bg-slate-800 text-slate-400 border-slate-700"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-slate-100 text-slate-600 border border-slate-200"
                         }`}
                       >
                         {m.status === "in_transit"
@@ -477,16 +477,16 @@ export default function FleetPage() {
 
       {/* CREATE VEHICLE MODAL */}
       {showCreateVehicleModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Truck className="w-4 h-4 text-sky-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Truck className="w-4 h-4 text-sky-600" />
                 <span>Ajouter un Nouvel Engin / Véhicule</span>
               </h3>
               <button
                 onClick={() => setShowCreateVehicleModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -495,22 +495,22 @@ export default function FleetPage() {
             <form onSubmit={handleCreateVehicle} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Immatriculation / N° Parc *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Immatriculation / N° Parc *</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: KN-8921-BG"
                     value={newPlate}
                     onChange={(e) => setNewPlate(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Type d&apos;Engin *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Type d&apos;Engin *</label>
                   <select
                     value={newType}
                     onChange={(e) => setNewType(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   >
                     <option value="Camion Benne 20T">Camion Benne 20T</option>
                     <option value="Pelle Mécanique CAT">Pelle Mécanique Chenille</option>
@@ -525,24 +525,24 @@ export default function FleetPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Modèle & Marque *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Modèle & Marque *</label>
                 <input
                   type="text"
                   required
                   placeholder="ex: Mercedes Actros 3340 6x4"
                   value={newModel}
                   onChange={(e) => setNewModel(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Statut Initial *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Statut Initial *</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value as VehicleStatus)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   >
                     <option value="available">Disponible</option>
                     <option value="in_mission">En Mission</option>
@@ -551,52 +551,52 @@ export default function FleetPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Compteur Initial (km/h) *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Compteur Initial (km/h) *</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={newMileage}
                     onChange={(e) => setNewMileage(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Chauffeur / Opérateur</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Chauffeur / Opérateur</label>
                   <input
                     type="text"
                     placeholder="ex: André Lukoki"
                     value={newDriver}
                     onChange={(e) => setNewDriver(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Dernier Entretien</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Dernier Entretien</label>
                   <input
                     type="date"
                     value={newMaintenanceDate}
                     onChange={(e) => setNewMaintenanceDate(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateVehicleModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={creatingVehicle}
-                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50 shadow-xs"
                 >
                   {creatingVehicle ? "Enregistrement..." : "Ajouter au Parc"}
                 </button>
@@ -608,16 +608,16 @@ export default function FleetPage() {
 
       {/* EDIT VEHICLE MODAL */}
       {editingVehicle && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-sky-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-sky-600" />
                 <span>Modifier l&apos;Engin : {editingVehicle.plate_number}</span>
               </h3>
               <button
                 onClick={() => setEditingVehicle(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -626,83 +626,83 @@ export default function FleetPage() {
             <form onSubmit={handleUpdateVehicle} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Immatriculation / N° Parc *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Immatriculation / N° Parc *</label>
                   <input
                     type="text"
                     required
                     value={editPlate}
                     onChange={(e) => setEditPlate(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Type d&apos;Engin *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Type d&apos;Engin *</label>
                   <input
                     type="text"
                     required
                     value={editType}
                     onChange={(e) => setEditType(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Modèle & Marque *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Modèle & Marque *</label>
                 <input
                   type="text"
                   required
                   value={editModel}
                   onChange={(e) => setEditModel(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Compteur Relevé (km/h) *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Compteur Relevé (km/h) *</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={editMileage}
                     onChange={(e) => setEditMileage(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Dernier Entretien</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Dernier Entretien</label>
                   <input
                     type="date"
                     value={editMaintenanceDate}
                     onChange={(e) => setEditMaintenanceDate(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Chauffeur / Opérateur Attitré</label>
+                <label className="block text-slate-700 font-semibold mb-1">Chauffeur / Opérateur Attitré</label>
                 <input
                   type="text"
                   value={editDriver}
                   onChange={(e) => setEditDriver(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingVehicle(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={updatingVehicle}
-                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition disabled:opacity-50 shadow-xs"
                 >
                   {updatingVehicle ? "Enregistrement..." : "Mettre à jour"}
                 </button>
@@ -714,16 +714,16 @@ export default function FleetPage() {
 
       {/* NEW MISSION MODAL */}
       {showMissionModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Navigation className="w-4 h-4 text-sky-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Navigation className="w-4 h-4 text-sky-600" />
                 <span>Créer un Ordre de Mission (Dispatch)</span>
               </h3>
               <button
                 onClick={() => setShowMissionModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -731,12 +731,12 @@ export default function FleetPage() {
 
             <form onSubmit={handleCreateMission} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Véhicule / Engin *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Véhicule / Engin *</label>
                 <select
                   value={selectedVehicleId}
                   onChange={(e) => setSelectedVehicleId(e.target.value)}
                   required
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 >
                   {vehicles.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -748,35 +748,35 @@ export default function FleetPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Chauffeur Assigné *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Chauffeur Assigné *</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: André Lukoki"
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Validité Permis Chauffeur *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Validité Permis Chauffeur *</label>
                   <input
                     type="date"
                     required
                     value={driverLicenseExpiry}
                     onChange={(e) => setDriverLicenseExpiry(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Chantier Lié</label>
+                <label className="block text-slate-700 font-semibold mb-1">Chantier Lié</label>
                 <select
                   value={selectedProjectId}
                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 >
                   <option value="">Hors chantier (Transport Général)</option>
                   {projects.map((p) => (
@@ -789,65 +789,65 @@ export default function FleetPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Lieu de Départ *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Lieu de Départ *</label>
                   <input
                     type="text"
                     required
                     value={departurePlace}
                     onChange={(e) => setDeparturePlace(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Destination *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Destination *</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: Chantier Nsele"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Cargaison / Fret</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Cargaison / Fret</label>
                   <input
                     type="text"
                     placeholder="ex: 15 tonnes sable lavé"
                     value={cargo}
                     onChange={(e) => setCargo(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Carburant Alloué (Litres)</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Carburant Alloué (Litres)</label>
                   <input
                     type="number"
                     min="1"
                     value={fuelLiters}
                     onChange={(e) => setFuelLiters(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowMissionModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={savingMission}
-                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424] shadow-xs"
                 >
                   {savingMission ? "Affectation..." : "Lancer la Mission"}
                 </button>

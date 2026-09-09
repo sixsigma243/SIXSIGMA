@@ -1,40 +1,134 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { formatUSD } from "@/lib/utils";
-import { TrendingUp, Calendar, ArrowUpRight } from "lucide-react";
+import { Calendar, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
 
-interface MonthlyData {
-  month: string;
-  shortMonth: string;
-  actual: number; // in USD
-  budget: number; // in USD
-  change: string;
+export interface TransactionSummaryItem {
+  id: string;
+  amount: number;
+  currency: string;
+  exchange_rate?: number;
+  transaction_type: string;
+  status?: string;
+  created_at: string;
 }
 
-const SAMPLE_2026_DATA: MonthlyData[] = [
-  { month: "Janvier", shortMonth: "Jan", actual: 8200, budget: 10000, change: "-18%" },
-  { month: "Février", shortMonth: "Fév", actual: 12400, budget: 13000, change: "-5%" },
-  { month: "Mars", shortMonth: "Mar", actual: 19800, budget: 16000, change: "+24%" },
-  { month: "Avril", shortMonth: "Avr", actual: 18500, budget: 19000, change: "-3%" },
-  { month: "Mai", shortMonth: "Mai", actual: 28400, budget: 22000, change: "+29%" },
-  { month: "Juin", shortMonth: "Juin", actual: 24200, budget: 25000, change: "-3%" },
-  { month: "Juillet", shortMonth: "Juil", actual: 31000, budget: 28000, change: "+11%" },
-  { month: "Août", shortMonth: "Août", actual: 29500, budget: 31000, change: "-5%" },
-  { month: "Septembre", shortMonth: "Sep", actual: 35000, budget: 34000, change: "+3%" },
+export interface ProjectSummaryItem {
+  id: string;
+  budget: number;
+  currency: string;
+  start_date?: string;
+  end_date?: string | null;
+}
+
+interface FinancialPerformanceChartProps {
+  transactions?: TransactionSummaryItem[];
+  projects?: ProjectSummaryItem[];
+  exchangeRate?: number;
+}
+
+const MONTH_NAMES = [
+  { full: "Janvier", short: "Jan" },
+  { full: "Février", short: "Fév" },
+  { full: "Mars", short: "Mar" },
+  { full: "Avril", short: "Avr" },
+  { full: "Mai", short: "Mai" },
+  { full: "Juin", short: "Juin" },
+  { full: "Juillet", short: "Juil" },
+  { full: "Août", short: "Août" },
+  { full: "Septembre", short: "Sep" },
+  { full: "Octobre", short: "Oct" },
+  { full: "Novembre", short: "Nov" },
+  { full: "Décembre", short: "Déc" },
 ];
 
-export function FinancialPerformanceChart() {
-  const [hoveredIndex, setHoveredIndex] = useState<number>(4); // Default to Mai (index 4) as in Slide 04
-  const [year, setYear] = useState("2026");
+export function FinancialPerformanceChart({
+  transactions = [],
+  projects = [],
+  exchangeRate = 2850,
+}: FinancialPerformanceChartProps) {
+  const currentYear = new Date().getFullYear();
+  const currentMonthIdx = new Date().getMonth();
+  const [hoveredIndex, setHoveredIndex] = useState<number>(Math.min(currentMonthIdx, 8));
 
-  const data = SAMPLE_2026_DATA;
-  const maxVal = 40000;
+  // Compute 100% REAL data aggregated from actual database records
+  const { monthlyData, maxVal, totalRealExpensesUSD, totalBudgetUSD } = useMemo(() => {
+    // 1. Calculate project budget allocation
+    const totalProjBudgetUSD = projects.reduce((acc, p) => {
+      const budgetNum = Number(p.budget) || 0;
+      if (p.currency === "USD") return acc + budgetNum;
+      return acc + budgetNum / exchangeRate;
+    }, 0);
+
+    const monthlyBudgetUSD = totalProjBudgetUSD > 0 ? Math.round(totalProjBudgetUSD / 12) : 0;
+
+    // 2. Aggregate real cashbox expenses by month
+    // We show from January to current month (or up to September if earlier)
+    const monthsCount = Math.max(currentMonthIdx + 1, 9);
+    const displayedMonths = MONTH_NAMES.slice(0, monthsCount);
+
+    let sumRealExpenses = 0;
+
+    const data = displayedMonths.map((m, idx) => {
+      // Sum real transactions for this month
+      const monthExpenses = transactions.filter((t) => {
+        if (t.transaction_type !== "EXPENSE") return false;
+        if (t.status === "rejected") return false;
+        const d = new Date(t.created_at);
+        return d.getFullYear() === currentYear && d.getMonth() === idx;
+      });
+
+      const actualMonthUSD = monthExpenses.reduce((sum, t) => {
+        const amt = Number(t.amount) || 0;
+        if (t.currency === "USD") return sum + amt;
+        const rate = t.exchange_rate && t.exchange_rate > 0 ? t.exchange_rate : exchangeRate;
+        return sum + amt / rate;
+      }, 0);
+
+      sumRealExpenses += actualMonthUSD;
+
+      let changeStr = "0%";
+      if (monthlyBudgetUSD > 0 && actualMonthUSD > 0) {
+        const diffPercent = Math.round(((actualMonthUSD - monthlyBudgetUSD) / monthlyBudgetUSD) * 100);
+        changeStr = `${diffPercent >= 0 ? "+" : ""}${diffPercent}%`;
+      } else if (monthlyBudgetUSD > 0 && actualMonthUSD === 0) {
+        changeStr = "-100%";
+      } else if (actualMonthUSD > 0) {
+        changeStr = "Réel";
+      }
+
+      return {
+        month: m.full,
+        shortMonth: m.short,
+        actual: Math.round(actualMonthUSD),
+        budget: monthlyBudgetUSD,
+        change: changeStr,
+        count: monthExpenses.length,
+      };
+    });
+
+    // Determine scale dynamically from real values
+    const highestVal = Math.max(
+      ...data.map((d) => Math.max(d.actual, d.budget)),
+      1000 // Minimum baseline of 1,000 USD to prevent division by zero
+    );
+
+    // Round up to nice number
+    const ceiling = Math.ceil((highestVal * 1.25) / 1000) * 1000;
+
+    return {
+      monthlyData: data,
+      maxVal: ceiling,
+      totalRealExpensesUSD: Math.round(sumRealExpenses),
+      totalBudgetUSD: Math.round(totalProjBudgetUSD),
+    };
+  }, [transactions, projects, exchangeRate, currentYear, currentMonthIdx]);
 
   // Chart dimensions
   const width = 640;
   const height = 240;
-  const paddingLeft = 45;
+  const paddingLeft = 50;
   const paddingRight = 20;
   const paddingTop = 25;
   const paddingBottom = 35;
@@ -42,11 +136,12 @@ export function FinancialPerformanceChart() {
   const chartW = width - paddingLeft - paddingRight;
   const chartH = height - paddingTop - paddingBottom;
 
-  const getX = (index: number) => paddingLeft + (index / (data.length - 1)) * chartW;
-  const getY = (val: number) => paddingTop + chartH - (val / maxVal) * chartH;
+  const dataLength = Math.max(monthlyData.length, 2);
+  const getX = (index: number) => paddingLeft + (index / (dataLength - 1)) * chartW;
+  const getY = (val: number) => paddingTop + chartH - (Math.min(val, maxVal) / maxVal) * chartH;
 
-  // Generate smooth cubic bezier spline for actual line
-  const splinePoints = data.map((d, i) => ({ x: getX(i), y: getY(d.actual) }));
+  // Generate cubic bezier spline for real actual line
+  const splinePoints = monthlyData.map((d, i) => ({ x: getX(i), y: getY(d.actual) }));
   let actualPath = `M ${splinePoints[0].x} ${splinePoints[0].y}`;
   for (let i = 0; i < splinePoints.length - 1; i++) {
     const p0 = splinePoints[i === 0 ? 0 : i - 1];
@@ -63,30 +158,50 @@ export function FinancialPerformanceChart() {
   }
 
   // Area under curve path
-  const areaPath = `${actualPath} L ${getX(data.length - 1)} ${paddingTop + chartH} L ${getX(0)} ${paddingTop + chartH} Z`;
+  const areaPath = `${actualPath} L ${getX(monthlyData.length - 1)} ${paddingTop + chartH} L ${getX(0)} ${paddingTop + chartH} Z`;
 
-  // Forecast path (dashed linear/soft curve)
-  const budgetPoints = data.map((d, i) => ({ x: getX(i), y: getY(d.budget) }));
+  // Budget forecast line
+  const budgetPoints = monthlyData.map((d, i) => ({ x: getX(i), y: getY(d.budget) }));
   let budgetPath = `M ${budgetPoints[0].x} ${budgetPoints[0].y}`;
   for (let i = 0; i < budgetPoints.length - 1; i++) {
     const midX = (budgetPoints[i].x + budgetPoints[i + 1].x) / 2;
     budgetPath += ` Q ${midX} ${(budgetPoints[i].y + budgetPoints[i + 1].y) / 2}, ${budgetPoints[i + 1].x} ${budgetPoints[i + 1].y}`;
   }
 
-  const activeData = data[hoveredIndex] || data[4];
-  const activeX = getX(hoveredIndex);
+  const safeHoverIndex = Math.min(hoveredIndex, monthlyData.length - 1);
+  const activeData = monthlyData[safeHoverIndex] || monthlyData[0];
+  const activeX = getX(safeHoverIndex);
   const activeY = getY(activeData.actual);
+
+  // Y Axis ticks (4 steps)
+  const yTicks = [
+    0,
+    Math.round(maxVal * 0.25),
+    Math.round(maxVal * 0.5),
+    Math.round(maxVal * 0.75),
+    maxVal,
+  ];
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-5">
-      {/* Header (Inspired by Slide 04) */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900 tracking-tight">
-            Revenus & Décaissements Chantiers
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Suivi des dépenses réelles et alignement prévisionnel
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-[#1C1F23] tracking-tight">
+              Revenus & Décaissements Réels
+            </h2>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7BA238]/15 text-[#5A7C22] border border-[#7BA238]/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] animate-pulse" />
+              100% Données Réelles
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Cumul réel exercice {currentYear} :{" "}
+            <strong className="text-slate-800 font-bold">{formatUSD(totalRealExpensesUSD)}</strong>
+            {totalBudgetUSD > 0 && (
+              <span> sur un budget global de {formatUSD(totalBudgetUSD)}</span>
+            )}
           </p>
         </div>
 
@@ -95,18 +210,20 @@ export function FinancialPerformanceChart() {
           <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#8E2424]" />
-              <span>Dépenses</span>
+              <span className="font-semibold text-slate-700">Dépenses Réelles</span>
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-              <span>Budget prévu</span>
-            </span>
+            {totalBudgetUSD > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                <span>Budget mensuel</span>
+              </span>
+            )}
           </div>
 
-          {/* Year selector */}
+          {/* Year indicator */}
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
             <Calendar className="w-3 h-3 text-slate-400" />
-            <span>{year}</span>
+            <span>{currentYear}</span>
           </div>
         </div>
       </div>
@@ -119,7 +236,7 @@ export function FinancialPerformanceChart() {
         >
           <defs>
             {/* Soft vertical gradient for area under curve */}
-            <linearGradient id="curveGradient" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="realCurveGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#8E2424" stopOpacity="0.25" />
               <stop offset="60%" stopColor="#8E2424" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#8E2424" stopOpacity="0.00" />
@@ -127,7 +244,7 @@ export function FinancialPerformanceChart() {
           </defs>
 
           {/* Horizontal Grid lines & Y Axis */}
-          {[0, 10000, 20000, 30000, 40000].map((tick) => {
+          {yTicks.map((tick) => {
             const y = getY(tick);
             return (
               <g key={tick}>
@@ -146,24 +263,26 @@ export function FinancialPerformanceChart() {
                   textAnchor="end"
                   className="text-[10px] font-mono fill-slate-400 font-medium"
                 >
-                  {tick === 0 ? "0" : `${tick / 1000}k`}
+                  {tick === 0 ? "0" : tick >= 1000 ? `${Math.round(tick / 1000)}k` : tick}
                 </text>
               </g>
             );
           })}
 
           {/* Area fill */}
-          <path d={areaPath} fill="url(#curveGradient)" />
+          <path d={areaPath} fill="url(#realCurveGradient)" />
 
-          {/* Forecast Budget line (dashed gray) */}
-          <path
-            d={budgetPath}
-            fill="none"
-            stroke="#94A3B8"
-            strokeWidth="1.8"
-            strokeDasharray="4,4"
-            opacity="0.8"
-          />
+          {/* Forecast Budget line (dashed gray) if budget exists */}
+          {totalBudgetUSD > 0 && (
+            <path
+              d={budgetPath}
+              fill="none"
+              stroke="#94A3B8"
+              strokeWidth="1.8"
+              strokeDasharray="4,4"
+              opacity="0.8"
+            />
+          )}
 
           {/* Actual Expense Spline Curve (#8E2424) */}
           <path
@@ -187,10 +306,10 @@ export function FinancialPerformanceChart() {
           />
 
           {/* X Axis Labels & Interactive trigger points */}
-          {data.map((d, idx) => {
+          {monthlyData.map((d, idx) => {
             const x = getX(idx);
             const y = getY(d.actual);
-            const isHovered = hoveredIndex === idx;
+            const isHovered = safeHoverIndex === idx;
 
             return (
               <g
@@ -234,7 +353,7 @@ export function FinancialPerformanceChart() {
           })}
         </svg>
 
-        {/* Interactive Floating Tooltip (Inspired by Slide 04 AdminPro) */}
+        {/* Interactive Floating Tooltip */}
         <div
           className="absolute pointer-events-none transition-all duration-200"
           style={{
@@ -245,7 +364,7 @@ export function FinancialPerformanceChart() {
         >
           <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] text-center min-w-[120px] animate-in fade-in zoom-in-95">
             <span className="text-[10px] text-slate-400 font-medium block">
-              {activeData.month} {year}
+              {activeData.month} {currentYear}
             </span>
             <div className="text-sm font-extrabold text-[#1C1F23] mt-0.5">
               {formatUSD(activeData.actual)}
@@ -253,12 +372,14 @@ export function FinancialPerformanceChart() {
             <div className="mt-1 flex items-center justify-center gap-1">
               <span
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                  activeData.change.startsWith("+")
+                  activeData.actual === 0
+                    ? "bg-slate-100 text-slate-500"
+                    : activeData.change.startsWith("+")
                     ? "bg-[#7BA238]/10 text-[#5e7c2b]"
                     : "bg-slate-100 text-slate-600"
                 }`}
               >
-                {activeData.change} vs budget
+                {activeData.count} transaction(s)
               </span>
             </div>
           </div>

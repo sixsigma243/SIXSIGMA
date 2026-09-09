@@ -68,46 +68,11 @@ export default function AttendancePage() {
       overtime_hours: number;
     }>
   >([
-    {
-      worker_name: "Kabamba Jean-Luc",
-      worker_function: "Maçon Coffreur",
-      status: "present",
-      check_in: "07:30",
-      check_out: "16:00",
-      overtime_hours: 0,
-    },
-    {
-      worker_name: "Ilunga Patrick",
-      worker_function: "Ferrailleur",
-      status: "present",
-      check_in: "07:30",
-      check_out: "16:00",
-      overtime_hours: 0,
-    },
-    {
-      worker_name: "Mwamba Serge",
-      worker_function: "Conducteur d'Engin",
-      status: "present",
-      check_in: "07:30",
-      check_out: "16:00",
-      overtime_hours: 1,
-    },
-    {
-      worker_name: "Kalala David",
-      worker_function: "Électricien BTP",
-      status: "late",
-      check_in: "08:15",
-      check_out: "16:00",
-      overtime_hours: 0,
-    },
-    {
-      worker_name: "Tshilombo Eric",
-      worker_function: "Manœuvre Polyvalent",
-      status: "absent",
-      check_in: "",
-      check_out: "",
-      overtime_hours: 0,
-    },
+    { worker_name: "", worker_function: "Coffreur", status: "present", check_in: "07:30", check_out: "16:00", overtime_hours: 0 },
+    { worker_name: "", worker_function: "Ferrailleur", status: "present", check_in: "07:30", check_out: "16:00", overtime_hours: 0 },
+    { worker_name: "", worker_function: "Maçon", status: "present", check_in: "07:30", check_out: "16:00", overtime_hours: 0 },
+    { worker_name: "", worker_function: "Manœuvre", status: "present", check_in: "07:30", check_out: "16:00", overtime_hours: 0 },
+    { worker_name: "", worker_function: "Électricien", status: "present", check_in: "07:30", check_out: "16:00", overtime_hours: 0 },
   ]);
   const [quickSubmitting, setQuickSubmitting] = useState(false);
 
@@ -123,13 +88,13 @@ export default function AttendancePage() {
       if (p) setCurrentUser(p as Profile);
     }
 
-    const { data } = await supabase
+    const { data: entData } = await supabase
       .from("time_entries")
       .select("*, project:project_id(*), profile:profile_id(*)")
       .eq("entry_date", dateFilter)
-      .order("created_at", { ascending: false });
+      .order("worker_name");
 
-    if (data) setEntries(data as TimeEntry[]);
+    if (entData) setEntries(entData as TimeEntry[]);
 
     const { data: recData } = await supabase
       .from("attendance_reconciliations")
@@ -138,14 +103,10 @@ export default function AttendancePage() {
 
     if (recData) setReconciliations(recData as AttendanceReconciliation[]);
 
-    const { data: prj } = await supabase
-      .from("projects")
-      .select("*")
-      .order("title");
-    if (prj) {
-      setProjects(prj as Project[]);
-      if (prj.length > 0 && !newProjectId) setNewProjectId(prj[0].id);
-      if (prj.length > 0 && !quickProjectId) setQuickProjectId(prj[0].id);
+    const { data: prjData } = await supabase.from("projects").select("*").order("title");
+    if (prjData) {
+      setProjects(prjData as Project[]);
+      if (prjData.length > 0 && !newProjectId) setNewProjectId(prjData[0].id);
     }
 
     setLoading(false);
@@ -161,22 +122,23 @@ export default function AttendancePage() {
 
     const { error } = await supabase.from("time_entries").insert({
       worker_name: newWorkerName.trim(),
-      worker_function: newFunction.trim(),
+      worker_function: newFunction.trim() || "Ouvrier",
       project_id: newProjectId || null,
       entry_date: dateFilter,
       status: newStatus,
-      check_in: newCheckIn || null,
-      check_out: newCheckOut || null,
+      check_in: newStatus !== "absent" ? newCheckIn : null,
+      check_out: newStatus !== "absent" ? newCheckOut : null,
       overtime_hours: parseFloat(newOvertime) || 0,
       notes: newNotes.trim() || null,
+      supervisor_id: currentUser?.id,
     });
 
     if (!error) {
       setShowModal(false);
       setNewWorkerName("");
       setNewFunction("");
-      setNewOvertime("0");
       setNewNotes("");
+      setNewOvertime("0");
       fetchAttendance();
     } else {
       alert("Erreur d'enregistrement : " + error.message);
@@ -186,7 +148,7 @@ export default function AttendancePage() {
 
   const handleQuickSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validRows = quickWorkers.filter((w) => w.worker_name.trim() !== "");
+    const validRows = quickWorkers.filter((w) => w.worker_name.trim().length > 0);
     if (validRows.length === 0) {
       alert("Veuillez renseigner au moins un ouvrier.");
       return;
@@ -248,21 +210,11 @@ export default function AttendancePage() {
             .from("time_entries")
             .update({ status: decision })
             .eq("id", existing.id);
-        } else {
-          await supabase.from("time_entries").insert({
-            worker_name: rec.worker_name,
-            worker_function: rec.worker_function || "Ouvrier",
-            project_id: rec.project_id,
-            entry_date: targetDate,
-            status: decision,
-            check_in: decision === "present" ? "07:30" : decision === "late" ? "08:15" : null,
-            check_out: decision !== "absent" ? "16:00" : null,
-          });
         }
       }
       fetchAttendance();
     } else {
-      alert("Erreur lors de l'arbitrage : " + error.message);
+      alert("Erreur d'arbitrage : " + error.message);
     }
     setArbitratingId(null);
   };
@@ -302,15 +254,15 @@ export default function AttendancePage() {
     );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-[#7BA238]" />
+          <h1 className="text-xl md:text-2xl font-bold text-[#1C1F23] tracking-tight flex items-center gap-2.5">
+            <Users className="w-6 h-6 text-[#7BA238]" />
             <span>Pointage & Ressources Humaines (Terrain)</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Enregistrement journalier des présences, arbitrage des écarts (Pointeur vs Chef d&apos;Équipe) et suivi des heures sup.
           </p>
         </div>
@@ -321,7 +273,7 @@ export default function AttendancePage() {
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="p-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white"
+              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold shadow-xs focus:outline-none focus:border-[#8E2424]"
             />
           </div>
 
@@ -332,7 +284,7 @@ export default function AttendancePage() {
                 if (projects.length > 0 && !quickProjectId) setQuickProjectId(projects[0].id);
                 setShowQuickSheet(true);
               }}
-              className="px-4 py-2.5 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold shadow-lg shadow-[#7BA238]/20 border border-[#7BA238] transition flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-semibold shadow-sm transition flex items-center gap-2 active:scale-95"
             >
               <ClipboardCheck className="w-4 h-4" />
               <span>Soumission Rapide Feuille de Présence</span>
@@ -341,7 +293,7 @@ export default function AttendancePage() {
 
           <button
             onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-bold shadow-lg shadow-[#8E2424]/20 border border-[#8E2424] transition flex items-center gap-2"
+            className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-sm transition flex items-center gap-2 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>Nouveau Pointage</span>
@@ -350,34 +302,34 @@ export default function AttendancePage() {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex items-center gap-3 border-b border-slate-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab("daily")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
             activeTab === "daily"
-              ? "bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/60"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+              ? "bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/30"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
           <Calendar className="w-4 h-4" />
           <span>Feuille de Pointage Journalière</span>
-          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-bold">
             {entries.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab("reconciliation")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
             activeTab === "reconciliation"
-              ? "bg-amber-950 text-amber-200 border border-amber-800"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+              ? "bg-amber-50 text-amber-800 border border-amber-300"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
-          <Scale className="w-4 h-4 text-amber-400" />
+          <Scale className="w-4 h-4 text-amber-600" />
           <span>Arbitrage des Écarts (Pointeur vs Team Leader)</span>
           {pendingReconciliationsCount > 0 && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500 text-black font-black animate-pulse">
+            <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold animate-pulse">
               {pendingReconciliationsCount} à arbitrer
             </span>
           )}
@@ -387,72 +339,80 @@ export default function AttendancePage() {
       {activeTab === "daily" ? (
         <>
           {/* Stats Summary Bar */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="glass-card p-4 rounded-2xl">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Présents Aujourd&apos;hui</span>
-                <UserCheck className="w-4 h-4 text-[#7BA238]" />
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Présents Aujourd&apos;hui</span>
+                <div className="w-8 h-8 rounded-full bg-[#7BA238]/10 flex items-center justify-center text-[#7BA238]">
+                  <UserCheck className="w-4 h-4" />
+                </div>
               </div>
-              <div className="mt-2 text-2xl font-black text-white">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#1C1F23] tracking-tight">
                 {presentCount} <span className="text-xs text-slate-400 font-normal">/ {totalEntries} inscrits</span>
               </div>
-              <div className="mt-1 text-xs text-[#7BA238] font-semibold">
+              <div className="mt-2 text-xs text-[#7BA238] font-semibold pt-2 border-t border-slate-100">
                 Taux de présence : {attendanceRate}%
               </div>
             </div>
 
-            <div className="glass-card p-4 rounded-2xl">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Retards Relevés</span>
-                <Clock className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Retards Relevés</span>
+                <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600">
+                  <Clock className="w-4 h-4" />
+                </div>
               </div>
-              <div className="mt-2 text-2xl font-black text-amber-400">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-amber-600 tracking-tight">
                 {lateCount}
               </div>
-              <div className="mt-1 text-xs text-slate-400">
+              <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
                 Tolérance 15 min max
               </div>
             </div>
 
-            <div className="glass-card p-4 rounded-2xl">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Absences Injustifiées</span>
-                <UserX className="w-4 h-4 text-[#E58585]" />
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Absences Injustifiées</span>
+                <div className="w-8 h-8 rounded-full bg-[#8E2424]/10 flex items-center justify-center text-[#8E2424]">
+                  <UserX className="w-4 h-4" />
+                </div>
               </div>
-              <div className="mt-2 text-2xl font-black text-[#E58585]">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#8E2424] tracking-tight">
                 {absentCount}
               </div>
-              <div className="mt-1 text-xs text-slate-400">
+              <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
                 Impact sur paie journalière
               </div>
             </div>
 
-            <div className="glass-card p-4 rounded-2xl">
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase">Heures Supplémentaires</span>
-                <TrendingUp className="w-4 h-4 text-blue-400" />
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Heures Supplémentaires</span>
+                <div className="w-8 h-8 rounded-full bg-sky-500/10 flex items-center justify-center text-sky-600">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
               </div>
-              <div className="mt-2 text-2xl font-black text-blue-400">
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-sky-700 tracking-tight">
                 {totalOvertime} h
               </div>
-              <div className="mt-1 text-xs text-slate-400">
+              <div className="mt-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
                 Cumul journée de travail
               </div>
             </div>
           </div>
 
           {/* Attendance Table */}
-          <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#1C1F23] flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-400" />
                 <span>Feuille de Pointage - {formatDate(dateFilter)}</span>
               </h3>
-              <span className="text-xs text-slate-400">{entries.length} ouvriers pointés</span>
+              <span className="text-xs text-slate-500 font-medium">{entries.length} ouvriers pointés</span>
             </div>
 
             {loading ? (
-              <div className="p-8 text-center text-slate-500 text-xs">
+              <div className="p-8 text-center text-slate-400 text-xs">
                 Chargement des pointages...
               </div>
             ) : entries.length === 0 ? (
@@ -462,7 +422,7 @@ export default function AttendancePage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+                  <thead className="bg-slate-50/70 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100">
                     <tr>
                       <th className="py-3 px-4">Ouvrier / Agent</th>
                       <th className="py-3 px-4">Spécialité & Chantier</th>
@@ -473,20 +433,20 @@ export default function AttendancePage() {
                       {isSupervisorOrManager && <th className="py-3 px-4 text-right">Actions</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
                     {entries.map((entry) => (
-                      <tr key={entry.id} className="hover:bg-slate-800/40 transition">
-                        <td className="py-3 px-4 font-semibold text-white">
-                          <div className="flex flex-wrap items-center gap-1.5">
+                      <tr key={entry.id} className="hover:bg-slate-50/60 transition">
+                        <td className="py-3 px-4">
+                          <div className="flex flex-wrap items-center gap-1.5 font-bold text-[#1C1F23]">
                             <span>{entry.worker_name}</span>
                             {entry.profile?.contract_end_date &&
                               new Date(entry.profile.contract_end_date).getTime() - Date.now() <=
                                 15 * 86400000 && (
                                 <span
                                   title={`Fin de contrat le ${entry.profile.contract_end_date}`}
-                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-[#E58585] bg-[#8E2424]/20 border border-[#8E2424]/50 px-1.5 py-0.5 rounded-md"
+                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-[#8E2424] bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full"
                                 >
-                                  <AlertCircle className="w-2.5 h-2.5 text-[#E58585]" /> Contrat
+                                  <AlertCircle className="w-2.5 h-2.5 text-[#8E2424]" /> Contrat
                                 </span>
                               )}
                             {entry.profile?.id_expiry_date &&
@@ -494,15 +454,15 @@ export default function AttendancePage() {
                                 15 * 86400000 && (
                                 <span
                                   title={`Pièce d'identité expire le ${entry.profile.id_expiry_date}`}
-                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-300 bg-amber-950/80 border border-amber-800 px-1.5 py-0.5 rounded-md"
+                                  className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full"
                                 >
-                                  <AlertCircle className="w-2.5 h-2.5 text-amber-400" /> ID
+                                  <AlertCircle className="w-2.5 h-2.5 text-amber-600" /> ID
                                 </span>
                               )}
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-slate-200">{entry.worker_function || "Polyvalent"}</span>
+                          <span className="text-slate-800 font-medium">{entry.worker_function || "Polyvalent"}</span>
                           <span className="block text-[11px] text-slate-500">
                             {entry.project?.code || "Chantier Général"}
                           </span>
@@ -510,19 +470,19 @@ export default function AttendancePage() {
                         <td className="py-3 px-4">
                           <StatusBadge status={entry.status} type="presence" />
                         </td>
-                        <td className="py-3 px-4 text-slate-300 font-mono">
+                        <td className="py-3 px-4 text-slate-700 font-mono">
                           {entry.check_in || "--:--"} - {entry.check_out || "--:--"}
                         </td>
                         <td className="py-3 px-4">
                           {Number(entry.overtime_hours) > 0 ? (
-                            <span className="font-bold text-amber-400">
+                            <span className="font-bold text-amber-600 font-mono">
                               +{entry.overtime_hours} h
                             </span>
                           ) : (
-                            <span className="text-slate-500">0 h</span>
+                            <span className="text-slate-400">0 h</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-slate-400 max-w-xs truncate">
+                        <td className="py-3 px-4 text-slate-600 max-w-xs truncate">
                           {entry.notes || "-"}
                         </td>
                         {isSupervisorOrManager && (
@@ -530,7 +490,7 @@ export default function AttendancePage() {
                             <button
                               onClick={() => handleDeleteEntry(entry.id, entry.worker_name)}
                               title="Supprimer ce pointage"
-                              className="p-1 rounded bg-[#8E2424]/20 hover:bg-[#8E2424]/35 text-[#E58585] hover:text-white transition border border-[#8E2424]/50"
+                              className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-[#8E2424] transition border border-rose-200"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -547,23 +507,23 @@ export default function AttendancePage() {
       ) : (
         /* RECONCILIATION TAB */
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 flex items-start gap-3 text-xs text-amber-200">
-            <Scale className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs text-amber-900 shadow-sm">
+            <Scale className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <strong className="font-bold">Contrôle de Cohérence RH & Séparation des Pouvoirs : </strong>
+              <strong className="font-semibold text-amber-950">Contrôle de Cohérence RH & Séparation des Pouvoirs : </strong>
               <span>
                 Le Pointeur enregistre les entrées physiques au portail tandis que le Chef d&apos;Équipe (Team Leader) atteste de la présence effective sur le front de taille / coulage. Tout écart doit faire l&apos;objet d&apos;un arbitrage formel par le Superviseur avant clôture de paie.
               </span>
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#1C1F23] flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
                 <span>Registre des Écarts de Présence Relevés</span>
               </h3>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500 font-medium">
                 {reconciliations.length} cas répertorié(s)
               </span>
             </div>
@@ -575,7 +535,7 @@ export default function AttendancePage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+                  <thead className="bg-slate-50/70 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100">
                     <tr>
                       <th className="py-3 px-4">Ouvrier & Spécialité</th>
                       <th className="py-3 px-4">Chantier</th>
@@ -586,14 +546,14 @@ export default function AttendancePage() {
                       <th className="py-3 px-4 text-right">Arbitrage Superviseur</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
                     {reconciliations.map((rec) => (
-                      <tr key={rec.id} className="hover:bg-slate-800/40 transition">
+                      <tr key={rec.id} className="hover:bg-slate-50/60 transition">
                         <td className="py-3 px-4">
-                          <span className="font-bold text-white block">{rec.worker_name}</span>
-                          <span className="text-[11px] text-slate-400">{rec.worker_function || "Ouvrier"}</span>
+                          <span className="font-bold text-[#1C1F23] block">{rec.worker_name}</span>
+                          <span className="text-[11px] text-slate-500">{rec.worker_function || "Ouvrier"}</span>
                         </td>
-                        <td className="py-3 px-4 text-slate-300">
+                        <td className="py-3 px-4 text-slate-700 font-medium">
                           {rec.project?.code || "Chantier"}
                         </td>
                         <td className="py-3 px-4">
@@ -602,7 +562,7 @@ export default function AttendancePage() {
                         <td className="py-3 px-4">
                           <StatusBadge status={rec.pointer_status} type="presence" />
                         </td>
-                        <td className="py-3 px-4 max-w-xs text-slate-300 leading-tight">
+                        <td className="py-3 px-4 max-w-xs text-slate-600 leading-tight">
                           {rec.notes}
                         </td>
                         <td className="py-3 px-4">
@@ -612,7 +572,7 @@ export default function AttendancePage() {
                               <span>Tranché : <StatusBadge status={rec.arbitrated_status!} type="presence" /></span>
                             </div>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800 animate-pulse">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                               En attente
                             </span>
                           )}
@@ -623,7 +583,7 @@ export default function AttendancePage() {
                               <button
                                 onClick={() => handleArbitrate(rec.id, "present")}
                                 disabled={arbitratingId === rec.id}
-                                className="px-2.5 py-1 rounded-lg bg-[#7BA238]/20 hover:bg-[#7BA238]/35 text-[#A5CE5B] border border-[#7BA238]/50 text-[11px] font-bold transition"
+                                className="px-3 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#7BA238] border border-emerald-200 text-xs font-semibold transition"
                                 title="Reconnaître l'ouvrier comme présent"
                               >
                                 Présent
@@ -631,7 +591,7 @@ export default function AttendancePage() {
                               <button
                                 onClick={() => handleArbitrate(rec.id, "late")}
                                 disabled={arbitratingId === rec.id}
-                                className="px-2.5 py-1 rounded-lg bg-amber-950 hover:bg-amber-900 text-amber-300 border border-amber-800 text-[11px] font-bold transition"
+                                className="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-semibold transition"
                                 title="Appliquer un statut retard"
                               >
                                 Retard
@@ -639,18 +599,18 @@ export default function AttendancePage() {
                               <button
                                 onClick={() => handleArbitrate(rec.id, "absent")}
                                 disabled={arbitratingId === rec.id}
-                                className="px-2.5 py-1 rounded-lg bg-[#8E2424]/20 hover:bg-[#8E2424]/35 text-[#E58585] border border-[#8E2424]/50 text-[11px] font-bold transition"
+                                className="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#8E2424] border border-rose-200 text-xs font-semibold transition"
                                 title="Statuer en absence injustifiée"
                               >
                                 Absent
                               </button>
                             </div>
                           ) : rec.status === "resolved" ? (
-                            <span className="text-[11px] text-slate-500">
+                            <span className="text-[11px] text-slate-500 font-medium">
                               Arbitré par {rec.supervisor?.full_name || "Conducteur / Admin"}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-slate-500 italic">Réservé Conducteur / Admin</span>
+                            <span className="text-[11px] text-slate-400 italic">Réservé Conducteur / Admin</span>
                           )}
                         </td>
                       </tr>
@@ -665,51 +625,51 @@ export default function AttendancePage() {
 
       {/* New Entry Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-md w-full p-6 shadow-2xl space-y-4 text-[#1C1F23] animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-[#1C1F23] flex items-center gap-2">
+                <Users className="w-5 h-5 text-sky-600" />
                 <span>Nouveau Pointage Journalier</span>
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-700 p-1"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateEntry} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Nom Complet de l&apos;Ouvrier *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Nom Complet de l&apos;Ouvrier *</label>
                 <input
                   type="text"
                   required
                   placeholder="ex: Jean-Luc Kalala"
                   value={newWorkerName}
                   onChange={(e) => setNewWorkerName(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Fonction / Corps d&apos;état</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Fonction / Corps d&apos;état</label>
                   <input
                     type="text"
                     placeholder="ex: Ferrailleur, Grutier"
                     value={newFunction}
                     onChange={(e) => setNewFunction(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Chantier d&apos;Affectation</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Chantier d&apos;Affectation</label>
                   <select
                     value={newProjectId}
                     onChange={(e) => setNewProjectId(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   >
                     {projects.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -722,11 +682,11 @@ export default function AttendancePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Statut Présence</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Statut Présence</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value as PresenceStatus)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   >
                     <option value="present">Présent</option>
                     <option value="late">En Retard</option>
@@ -735,62 +695,62 @@ export default function AttendancePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Heures Supplémentaires</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Heures Supplémentaires</label>
                   <input
                     type="number"
                     step="0.5"
                     min="0"
                     value={newOvertime}
                     onChange={(e) => setNewOvertime(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Heure Arrivée</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Heure Arrivée</label>
                   <input
                     type="time"
                     value={newCheckIn}
                     onChange={(e) => setNewCheckIn(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Heure Départ</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Heure Départ</label>
                   <input
                     type="time"
                     value={newCheckOut}
                     onChange={(e) => setNewCheckOut(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Observations / Motif retard</label>
+                <label className="block text-slate-700 font-semibold mb-1">Observations / Motif retard</label>
                 <input
                   type="text"
                   placeholder="Notes facultatives..."
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424]"
+                  className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold transition disabled:opacity-50 shadow-sm"
                 >
                   {saving ? "Enregistrement..." : "Enregistrer"}
                 </button>
@@ -802,25 +762,25 @@ export default function AttendancePage() {
 
       {/* Quick Attendance Sheet Modal */}
       {showQuickSheet && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-4xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto text-[#1C1F23] animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-[#7BA238]/20 border border-[#7BA238]/40 text-[#A5CE5B]">
+                <div className="w-10 h-10 rounded-full bg-[#7BA238]/10 text-[#7BA238] flex items-center justify-center">
                   <ClipboardCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">
+                  <h3 className="text-base font-bold text-[#1C1F23]">
                     Soumission Rapide de la Feuille de Présence Journalière
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs text-slate-500">
                     Saisie directe de l&apos;équipe de chantier pour validation du pointage quotidien
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowQuickSheet(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                className="text-slate-400 hover:text-slate-700 p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -828,16 +788,16 @@ export default function AttendancePage() {
 
             <form onSubmit={handleQuickSubmit} className="space-y-4 text-xs">
               {/* Project & Date Selector */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Chantier Actif *
                   </label>
                   <select
                     value={quickProjectId}
                     onChange={(e) => setQuickProjectId(e.target.value)}
                     required
-                    className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs"
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#8E2424]"
                   >
                     {projects.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -847,7 +807,7 @@ export default function AttendancePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">
+                  <label className="block text-slate-700 font-semibold mb-1">
                     Date de la Feuille *
                   </label>
                   <input
@@ -855,7 +815,7 @@ export default function AttendancePage() {
                     value={quickDate}
                     onChange={(e) => setQuickDate(e.target.value)}
                     required
-                    className="w-full p-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs"
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
               </div>
@@ -863,7 +823,7 @@ export default function AttendancePage() {
               {/* Workers Rows */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
                     Liste des Ouvriers & Agents ({quickWorkers.length})
                   </span>
                   <div className="flex items-center gap-2">
@@ -882,7 +842,7 @@ export default function AttendancePage() {
                           },
                         ])
                       }
-                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1 border border-slate-200/60"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Ajouter une ligne</span>
@@ -890,9 +850,9 @@ export default function AttendancePage() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-900 text-slate-400 text-[10px] uppercase border-b border-slate-800">
+                    <thead className="bg-slate-50/80 text-slate-500 text-[10px] font-bold uppercase border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3">Nom Ouvrier</th>
                         <th className="py-2.5 px-3">Fonction</th>
@@ -902,9 +862,9 @@ export default function AttendancePage() {
                         <th className="py-2.5 px-2 text-right"></th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60">
+                    <tbody className="divide-y divide-slate-100">
                       {quickWorkers.map((w, idx) => (
-                        <tr key={idx} className="hover:bg-slate-900/40">
+                        <tr key={idx} className="hover:bg-slate-50/60">
                           <td className="py-2 px-3">
                             <input
                               type="text"
@@ -916,7 +876,7 @@ export default function AttendancePage() {
                                 copy[idx].worker_name = e.target.value;
                                 setQuickWorkers(copy);
                               }}
-                              className="w-full p-1.5 bg-slate-900 border border-slate-700 rounded text-white text-xs font-semibold"
+                              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs font-semibold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                             />
                           </td>
                           <td className="py-2 px-3">
@@ -929,7 +889,7 @@ export default function AttendancePage() {
                                 copy[idx].worker_function = e.target.value;
                                 setQuickWorkers(copy);
                               }}
-                              className="w-full p-1.5 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs"
+                              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs focus:bg-white focus:outline-none focus:border-[#8E2424]"
                             />
                           </td>
                           <td className="py-2 px-3">
@@ -940,7 +900,7 @@ export default function AttendancePage() {
                                 copy[idx].status = e.target.value as PresenceStatus;
                                 setQuickWorkers(copy);
                               }}
-                              className="p-1.5 bg-slate-900 border border-slate-700 rounded text-white text-xs font-semibold"
+                              className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs font-semibold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                             >
                               <option value="present">Présent</option>
                               <option value="late">Retard</option>
@@ -959,9 +919,9 @@ export default function AttendancePage() {
                                   copy[idx].check_in = e.target.value;
                                   setQuickWorkers(copy);
                                 }}
-                                className="p-1 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs disabled:opacity-30"
+                                className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs disabled:opacity-30"
                               />
-                              <span className="text-slate-500">-</span>
+                              <span className="text-slate-400">-</span>
                               <input
                                 type="time"
                                 value={w.check_out}
@@ -971,7 +931,7 @@ export default function AttendancePage() {
                                   copy[idx].check_out = e.target.value;
                                   setQuickWorkers(copy);
                                 }}
-                                className="p-1 bg-slate-900 border border-slate-700 rounded text-slate-200 text-xs disabled:opacity-30"
+                                className="p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 text-xs disabled:opacity-30"
                               />
                             </div>
                           </td>
@@ -986,7 +946,7 @@ export default function AttendancePage() {
                                 copy[idx].overtime_hours = parseFloat(e.target.value) || 0;
                                 setQuickWorkers(copy);
                               }}
-                              className="w-16 p-1.5 bg-slate-900 border border-slate-700 rounded text-amber-300 font-mono text-xs font-bold text-center"
+                              className="w-16 p-2 bg-slate-50 border border-slate-200 rounded-lg text-amber-700 font-mono text-xs font-bold text-center"
                             />
                           </td>
                           <td className="py-2 px-2 text-right">
@@ -997,7 +957,7 @@ export default function AttendancePage() {
                                   const copy = quickWorkers.filter((_, i) => i !== idx);
                                   setQuickWorkers(copy);
                                 }}
-                                className="p-1 text-slate-500 hover:text-rose-400"
+                                className="p-1 text-slate-400 hover:text-rose-600 transition"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1011,25 +971,25 @@ export default function AttendancePage() {
               </div>
 
               {/* Actions Footer */}
-              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                <span className="text-[11px] text-slate-400">
-                  {quickWorkers.filter((w) => w.status === "present").length} présents •{" "}
-                  {quickWorkers.filter((w) => w.status === "late").length} retards •{" "}
-                  {quickWorkers.filter((w) => w.status === "absent").length} absents
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <span className="text-xs text-slate-500">
+                  <strong className="text-slate-700">{quickWorkers.filter((w) => w.status === "present").length}</strong> présents •{" "}
+                  <strong className="text-amber-700">{quickWorkers.filter((w) => w.status === "late").length}</strong> retards •{" "}
+                  <strong className="text-rose-700">{quickWorkers.filter((w) => w.status === "absent").length}</strong> absents
                 </span>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => setShowQuickSheet(false)}
-                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs"
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
                     disabled={quickSubmitting}
-                    className="px-5 py-2 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-[#7BA238]/20 border border-[#7BA238] disabled:opacity-50"
+                    className="px-5 py-2 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{quickSubmitting ? "Transmission..." : "Soumettre la Feuille de Présence"}</span>

@@ -50,6 +50,8 @@ export default async function DashboardPage() {
     { data: timeEntries },
     { data: transactions },
     { data: reconciliations },
+    { data: allYearTransactions },
+    { data: exchangeRateSetting },
   ] = await Promise.all([
     supabase.from("projects").select("*, site_manager:site_manager_id(*)").order("created_at", { ascending: false }),
     supabase.from("daily_site_reports").select("*, project:project_id(*), supervisor:supervisor_id(*)").order("report_date", { ascending: false }).limit(5),
@@ -59,7 +61,11 @@ export default async function DashboardPage() {
     supabase.from("time_entries").select("*").eq("entry_date", new Date().toISOString().split("T")[0]),
     supabase.from("cashbox_transactions").select("*, project:project_id(*)").order("created_at", { ascending: false }).limit(5),
     supabase.from("attendance_reconciliations").select("*").eq("status", "pending"),
+    supabase.from("cashbox_transactions").select("id, amount, currency, exchange_rate, transaction_type, status, created_at").gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00Z`),
+    supabase.from("app_settings").select("value").eq("key", "exchange_rate_usd_cdf").maybeSingle(),
   ]);
+
+  const currentExchangeRate = exchangeRateSetting?.value ? Number(exchangeRateSetting.value) : 2850;
 
   const userRole = (profile?.role || "supervisor") as keyof typeof ROLES_CONFIG;
   const roleConfig = ROLES_CONFIG[userRole];
@@ -244,8 +250,12 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Financial Performance Curve Chart (Slide 04) */}
-      <FinancialPerformanceChart />
+      {/* Financial Performance Curve Chart (100% Real Time Data) */}
+      <FinancialPerformanceChart
+        transactions={allYearTransactions || []}
+        projects={projects || []}
+        exchangeRate={currentExchangeRate}
+      />
 
       {/* Main Content Grid: Projects & Quick Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

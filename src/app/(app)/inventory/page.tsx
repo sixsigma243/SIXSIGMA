@@ -231,11 +231,11 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-            <Boxes className="w-7 h-7 text-teal-500" />
+          <h1 className="text-2xl font-black text-[#1C1F23] tracking-tight flex items-center gap-2.5">
+            <Boxes className="w-7 h-7 text-teal-600" />
             <span>Gestion des Stocks & Matériaux (Dépôt Central & Chantiers)</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Suivi en temps réel des liants, armatures, hydrocarbures, outillage et seuils d&apos;alerte de réapprovisionnement.
           </p>
         </div>
@@ -244,7 +244,7 @@ export default function InventoryPage() {
           {canManageInventory && (
             <button
               onClick={() => setShowCreateItemModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-[#1C1F23] hover:bg-[#252932] text-slate-200 hover:text-white text-xs font-bold border border-[#252932] transition flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-bold border border-slate-200 shadow-xs transition flex items-center gap-2"
             >
               <PackagePlus className="w-4 h-4 text-[#7BA238]" />
               <span>+ Nouvel Article</span>
@@ -263,30 +263,30 @@ export default function InventoryPage() {
 
       {/* Critical Stock Alert */}
       {lowStockCount > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 flex items-center gap-3 text-xs text-amber-200">
-          <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center gap-3 text-xs text-amber-900 shadow-xs">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
           <div>
-            <strong className="font-bold">Alerte Réapprovisionnement BTP : </strong>
-            <span>{lowStockCount} article(s) ont atteint ou dépassé leur seuil critique minimal. Veuillez initier une commande d&apos;achat fournisseur.</span>
+            <strong className="font-bold text-amber-950">Alerte Réapprovisionnement BTP : </strong>
+            <span className="text-amber-900">{lowStockCount} article(s) ont atteint ou dépassé leur seuil critique minimal. Veuillez initier une commande d&apos;achat fournisseur.</span>
           </div>
         </div>
       )}
 
       {/* Inventory Grid / Table */}
-      <div className="glass-card rounded-2xl overflow-hidden border border-slate-800">
-        <div className="p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Filtrer par désignation, SKU, catégorie..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500"
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 transition"
             />
           </div>
 
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500 font-medium">
             {filteredItems.length} référence(s) en catalogue
           </span>
         </div>
@@ -298,7 +298,7 @@ export default function InventoryPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+              <thead className="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[10px] border-b border-slate-100 font-bold">
                 <tr>
                   <th className="py-3 px-4">SKU / Code</th>
                   <th className="py-3 px-4">Désignation Matériau</th>
@@ -310,39 +310,39 @@ export default function InventoryPage() {
                   {canManageInventory && <th className="py-3 px-4 text-right">Actions</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100">
                 {filteredItems.map((it) => {
                   const isLow = Number(it.current_stock) <= Number(it.min_threshold);
                   return (
-                    <tr key={it.id} className="hover:bg-slate-800/40 transition">
-                      <td className="py-3 px-4 font-mono font-bold text-[#E58585]">
+                    <tr key={it.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3 px-4 font-mono font-bold text-[#8E2424]">
                         {it.sku}
                       </td>
-                      <td className="py-3 px-4 font-semibold text-white">
+                      <td className="py-3 px-4 font-semibold text-slate-900">
                         {it.name}
                       </td>
-                      <td className="py-3 px-4 text-slate-400">
+                      <td className="py-3 px-4 text-slate-500">
                         {it.category}
                       </td>
                       <td className="py-3 px-4">
-                        <span className="font-mono text-sm font-bold text-white">
+                        <span className="font-mono text-sm font-bold text-slate-900">
                           {it.current_stock}
                         </span>{" "}
-                        <span className="text-slate-400">{it.unit}</span>
+                        <span className="text-slate-500">{it.unit}</span>
                       </td>
-                      <td className="py-3 px-4 text-slate-400 font-mono">
+                      <td className="py-3 px-4 text-slate-500 font-mono">
                         {it.min_threshold} {it.unit}
                       </td>
-                      <td className="py-3 px-4 text-slate-300">
+                      <td className="py-3 px-4 text-slate-700 font-medium">
                         {formatUSD(Number(it.unit_cost))}
                       </td>
                       <td className="py-3 px-4">
                         {isLow ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/60">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-[#8E2424] border border-rose-200">
                             Stock Bas
                           </span>
                         ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7BA238]/15 text-[#A5CE5B] border border-[#7BA238]/50">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Optimal
                           </span>
                         )}
@@ -353,14 +353,14 @@ export default function InventoryPage() {
                             <button
                               onClick={() => handleOpenEdit(it)}
                               title="Modifier l'article"
-                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition border border-slate-700"
+                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition border border-slate-200"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteItem(it.id, it.name)}
                               title="Supprimer l'article"
-                              className="p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-rose-100 transition border border-rose-800/60"
+                              className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-[#8E2424] hover:text-rose-800 transition border border-rose-200"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -377,8 +377,8 @@ export default function InventoryPage() {
       </div>
 
       {/* Recent Movements Section */}
-      <div className="glass-card rounded-2xl p-5 border border-slate-800 space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+      <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-3">
+        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <Layers className="w-4 h-4 text-slate-400" />
           <span>Derniers Mouvements de Stock (Entrées / Sorties / Ajustements)</span>
         </h3>
@@ -386,17 +386,17 @@ export default function InventoryPage() {
         {movements.length === 0 ? (
           <p className="text-xs text-slate-500">Aucun mouvement récent.</p>
         ) : (
-          <div className="divide-y divide-slate-800 text-xs">
+          <div className="divide-y divide-slate-100 text-xs">
             {movements.map((m) => (
               <div key={m.id} className="py-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span
                     className={`p-1.5 rounded-lg ${
                       m.movement_type === "IN"
-                        ? "bg-emerald-950 text-emerald-400"
+                        ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                         : m.movement_type === "OUT"
-                        ? "bg-rose-950 text-rose-400"
-                        : "bg-blue-950 text-blue-400"
+                        ? "bg-rose-50 text-[#8E2424] border border-rose-200"
+                        : "bg-blue-50 text-blue-600 border border-blue-200"
                     }`}
                   >
                     {m.movement_type === "IN" ? (
@@ -406,10 +406,10 @@ export default function InventoryPage() {
                     )}
                   </span>
                   <div>
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-slate-900">
                       {m.item?.name}
                     </span>
-                    <span className="text-slate-400 ml-2">
+                    <span className="text-slate-500 ml-2">
                       ({m.movement_type === "IN" ? "Entrée" : m.movement_type === "OUT" ? "Sortie" : "Ajustement"} : {m.quantity} {m.item?.unit})
                     </span>
                     {m.project && (
@@ -420,9 +420,9 @@ export default function InventoryPage() {
                   </div>
                 </div>
 
-                <div className="text-right text-slate-400">
+                <div className="text-right text-slate-500">
                   <span>{formatDate(m.created_at)}</span>
-                  <span className="text-[10px] text-slate-500 block">
+                  <span className="text-[10px] text-slate-400 block">
                     Par {m.performer?.full_name || "Magasinier"}
                   </span>
                 </div>
@@ -434,16 +434,16 @@ export default function InventoryPage() {
 
       {/* CREATE ITEM MODAL */}
       {showCreateItemModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <PackagePlus className="w-4 h-4 text-teal-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <PackagePlus className="w-4 h-4 text-teal-600" />
                 <span>Ajouter un Nouvel Article en Stock</span>
               </h3>
               <button
                 onClick={() => setShowCreateItemModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -452,22 +452,22 @@ export default function InventoryPage() {
             <form onSubmit={handleCreateItem} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Code SKU / Référence *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Code SKU / Référence *</label>
                   <input
                     type="text"
                     required
                     placeholder="ex: CIM-001, FER-012"
                     value={newSku}
                     onChange={(e) => setNewSku(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Catégorie *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Catégorie *</label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   >
                     <option value="Liants & Ciments">Liants & Ciments</option>
                     <option value="Aciers & Armatures">Aciers & Armatures</option>
@@ -483,24 +483,24 @@ export default function InventoryPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Désignation du Matériau *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Désignation du Matériau *</label>
                 <input
                   type="text"
                   required
                   placeholder="ex: Ciment Gris CPJ 42.5 (Sac 50kg)"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Unité de Mesure *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Unité de Mesure *</label>
                   <select
                     value={newUnit}
                     onChange={(e) => setNewUnit(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   >
                     <option value="Sac 50kg">Sac 50kg</option>
                     <option value="Tonne">Tonne</option>
@@ -513,7 +513,7 @@ export default function InventoryPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Coût Unitaire Ref (USD) *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Coût Unitaire Ref (USD) *</label>
                   <input
                     type="number"
                     min="0"
@@ -521,14 +521,14 @@ export default function InventoryPage() {
                     required
                     value={newUnitCost}
                     onChange={(e) => setNewUnitCost(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Stock Initial *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Stock Initial *</label>
                   <input
                     type="number"
                     min="0"
@@ -536,11 +536,11 @@ export default function InventoryPage() {
                     required
                     value={newCurrentStock}
                     onChange={(e) => setNewCurrentStock(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Seuil Critique d&apos;Alerte *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Seuil Critique d&apos;Alerte *</label>
                   <input
                     type="number"
                     min="0"
@@ -548,16 +548,16 @@ export default function InventoryPage() {
                     required
                     value={newMinThreshold}
                     onChange={(e) => setNewMinThreshold(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowCreateItemModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium"
                 >
                   Annuler
                 </button>
@@ -576,16 +576,16 @@ export default function InventoryPage() {
 
       {/* EDIT ITEM MODAL */}
       {editingItem && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-sky-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-sky-600" />
                 <span>Modifier l&apos;Article : {editingItem.sku}</span>
               </h3>
               <button
                 onClick={() => setEditingItem(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -594,51 +594,51 @@ export default function InventoryPage() {
             <form onSubmit={handleUpdateItem} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Code SKU / Référence *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Code SKU / Référence *</label>
                   <input
                     type="text"
                     required
                     value={editSku}
                     onChange={(e) => setEditSku(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Catégorie *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Catégorie *</label>
                   <input
                     type="text"
                     required
                     value={editCategory}
                     onChange={(e) => setEditCategory(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Désignation du Matériau *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Désignation du Matériau *</label>
                 <input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Unité de Mesure *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Unité de Mesure *</label>
                   <input
                     type="text"
                     required
                     value={editUnit}
                     onChange={(e) => setEditUnit(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Coût Unitaire Ref (USD) *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Coût Unitaire Ref (USD) *</label>
                   <input
                     type="number"
                     min="0"
@@ -646,25 +646,25 @@ export default function InventoryPage() {
                     required
                     value={editUnitCost}
                     onChange={(e) => setEditUnitCost(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Stock Actuel Réel *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Stock Actuel Réel *</label>
                   <input
                     type="number"
                     step="0.1"
                     required
                     value={editCurrentStock}
                     onChange={(e) => setEditCurrentStock(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Seuil Critique d&apos;Alerte *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Seuil Critique d&apos;Alerte *</label>
                   <input
                     type="number"
                     min="0"
@@ -672,16 +672,16 @@ export default function InventoryPage() {
                     required
                     value={editMinThreshold}
                     onChange={(e) => setEditMinThreshold(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium"
                 >
                   Annuler
                 </button>
@@ -700,16 +700,16 @@ export default function InventoryPage() {
 
       {/* MOVEMENT MODAL */}
       {showMovementModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] rounded-2xl border border-slate-700 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Boxes className="w-4 h-4 text-teal-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-100 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Boxes className="w-4 h-4 text-teal-600" />
                 <span>Enregistrer un Mouvement de Stock</span>
               </h3>
               <button
                 onClick={() => setShowMovementModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -717,12 +717,12 @@ export default function InventoryPage() {
 
             <form onSubmit={handleSaveMovement} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Article / Matériau *</label>
+                <label className="block text-slate-700 font-semibold mb-1">Article / Matériau *</label>
                 <select
                   value={selectedItemId}
                   onChange={(e) => setSelectedItemId(e.target.value)}
                   required
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 >
                   {items.map((it) => (
                     <option key={it.id} value={it.id}>
@@ -734,11 +734,11 @@ export default function InventoryPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Type de Mouvement</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Type de Mouvement</label>
                   <select
                     value={movementType}
                     onChange={(e) => setMovementType(e.target.value as any)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   >
                     <option value="OUT">Sortie Chantier (OUT)</option>
                     <option value="IN">Entrée Fournisseur (IN)</option>
@@ -747,7 +747,7 @@ export default function InventoryPage() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Quantité</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Quantité</label>
                   <input
                     type="number"
                     min="0.1"
@@ -755,17 +755,17 @@ export default function InventoryPage() {
                     required
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white font-mono"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Chantier de Destination</label>
+                <label className="block text-slate-700 font-semibold mb-1">Chantier de Destination</label>
                 <select
                   value={selectedProjectId}
                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 >
                   <option value="">Dépôt Central / Stock Général</option>
                   {projects.map((p) => (
@@ -777,32 +777,32 @@ export default function InventoryPage() {
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">N° Bon de Livraison / Réquisition</label>
+                <label className="block text-slate-700 font-semibold mb-1">N° Bon de Livraison / Réquisition</label>
                 <input
                   type="text"
                   placeholder="ex: BL-2026-441 ou DRI-2026-001"
                   value={referenceDoc}
                   onChange={(e) => setReferenceDoc(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Remarques</label>
+                <label className="block text-slate-700 font-semibold mb-1">Remarques</label>
                 <input
                   type="text"
                   placeholder="ex: Réception camion 15T sable lavé"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full p-2 bg-slate-900 border border-slate-700 rounded-lg text-white"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-300"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowMovementModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-medium"
                 >
                   Annuler
                 </button>

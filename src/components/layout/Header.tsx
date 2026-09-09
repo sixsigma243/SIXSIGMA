@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Profile } from "@/types/database";
 import { ROLES_CONFIG } from "@/lib/rbac";
 import { Edit3, X, Check, RefreshCw, Search, Bell } from "lucide-react";
+import { NotificationDrawer } from "./NotificationDrawer";
+import { GlobalSearchModal } from "./GlobalSearchModal";
 
 interface HeaderProps {
   profile: Profile | null;
@@ -21,6 +23,23 @@ export function Header({ profile }: HeaderProps) {
   const [rateInput, setRateInput] = useState<string>("2850");
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Notifications and Search states
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  // Global shortcut ⌘K / Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setShowSearch((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Fetch current exchange rate from API / database
   useEffect(() => {
@@ -122,18 +141,18 @@ export function Header({ profile }: HeaderProps) {
 
         {/* Center/Right Toolbar */}
         <div className="flex items-center gap-4">
-          {/* Quick Search Bar (Inspired by Slide 05 AdminPro) */}
-          <div className="hidden md:flex items-center relative">
+          {/* Quick Search Trigger (Cmd+K) */}
+          <button
+            type="button"
+            onClick={() => setShowSearch(true)}
+            className="hidden md:flex items-center relative w-48 lg:w-64 pl-9 pr-8 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200/70 text-xs text-slate-500 hover:text-slate-800 transition cursor-pointer text-left"
+          >
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              className="w-48 lg:w-64 pl-9 pr-8 py-1.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#8E2424] focus:ring-1 focus:ring-[#8E2424] transition-all"
-            />
-            <span className="text-[10px] font-mono text-slate-400 absolute right-2.5 bg-white px-1.5 py-0.5 rounded border border-slate-200/80">
+            <span>Rechercher...</span>
+            <span className="text-[10px] font-mono text-slate-400 absolute right-2.5 bg-white px-1.5 py-0.5 rounded border border-slate-200/80 shadow-xs">
               ⌘K
             </span>
-          </div>
+          </button>
 
           {/* Currency Exchange Rate Ticker */}
           {isAdmin ? (
@@ -159,11 +178,19 @@ export function Header({ profile }: HeaderProps) {
 
           {/* Notifications Icon Button */}
           <button
-            title="Notifications"
-            className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200/70 flex items-center justify-center transition-colors relative"
+            type="button"
+            onClick={() => setShowNotifications(true)}
+            title="Activités & Mouvements"
+            className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-[#8E2424] border border-slate-200/70 flex items-center justify-center transition-colors relative cursor-pointer active:scale-95"
           >
             <Bell className="w-4 h-4" />
-            <span className="w-2 h-2 rounded-full bg-[#8E2424] absolute top-2 right-2 ring-2 ring-white" />
+            {unreadCount > 0 ? (
+              <span className="min-w-[16px] h-4 px-1 rounded-full bg-[#8E2424] text-white text-[9px] font-bold flex items-center justify-center absolute -top-1 -right-1 ring-2 ring-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-slate-300 absolute top-2 right-2 ring-2 ring-white" />
+            )}
           </button>
 
           {/* User Avatar Badge */}
@@ -308,6 +335,19 @@ export function Header({ profile }: HeaderProps) {
           </div>
         </div>
       )}
+
+      {/* Global Search Command Palette Modal */}
+      <GlobalSearchModal
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+      />
+
+      {/* Notification Drawer Panel */}
+      <NotificationDrawer
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        onUnreadCountChange={setUnreadCount}
+      />
     </>
   );
 }

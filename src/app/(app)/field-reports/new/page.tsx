@@ -94,53 +94,53 @@ export default function NewFieldReportPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/field-reports"
-          className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition"
+          className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-slate-900 transition shadow-xs"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl font-black text-[#1C1F23] tracking-tight flex items-center gap-2.5">
             <ClipboardList className="w-6 h-6 text-amber-500" />
             <span>Saisie du Journal Quotidien de Chantier</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5">
             Enregistrement des effectifs, avancement journalier et transmission pour visa au Conducteur de travaux.
           </p>
         </div>
       </div>
 
       {/* 19h00 Cutoff Banner */}
-      <div className="p-4 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between gap-4">
+      <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-4 text-amber-900 shadow-xs">
         <div className="flex items-center gap-3">
-          <Clock className="w-5 h-5 text-amber-400 flex-shrink-0" />
+          <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />
           <div>
-            <div className="text-xs font-bold text-amber-200">
+            <div className="text-xs font-bold text-amber-950">
               Règle de Clôture Quotidienne Stricte : Clôture avant 19h00 (Heure RDC UTC+2)
             </div>
-            <div className="text-[11px] text-amber-300/70 mt-0.5">
-              Passé 19h00, le trigger PostgreSQL <code className="text-amber-200">trg_enforce_daily_report_cutoff</code> bloque automatiquement toute soumission du jour.
+            <div className="text-[11px] text-amber-800/80 mt-0.5">
+              Passé 19h00, le trigger PostgreSQL <code className="text-amber-950 font-mono bg-amber-100/60 px-1 py-0.5 rounded">trg_enforce_daily_report_cutoff</code> bloque automatiquement toute soumission du jour.
             </div>
           </div>
         </div>
-        <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-900/80 text-amber-200 border border-amber-700">
+        <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
           Coupe-Circuit 19h00
         </span>
       </div>
 
       {/* Form Container */}
-      <div className="glass-card rounded-2xl p-6 md:p-8 border border-slate-800">
+      <div className="bg-white rounded-2xl p-6 md:p-8 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
         <form onSubmit={handleSubmit} className="space-y-6 text-xs">
           {/* Project & Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px]">
-                Chantier Concerne *
+              <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px]">
+                Chantier Concerné *
               </label>
               <select
                 value={projectId}
                 onChange={(e) => setProjectId(e.target.value)}
                 required
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white transition"
               >
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -151,7 +151,7 @@ export default function NewFieldReportPage() {
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px]">
+              <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px]">
                 Date du Journal *
               </label>
               <div className="relative">
@@ -160,7 +160,7 @@ export default function NewFieldReportPage() {
                   value={reportDate}
                   onChange={(e) => setReportDate(e.target.value)}
                   required
-                  className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white transition"
                 />
               </div>
             </div>
@@ -169,8 +169,8 @@ export default function NewFieldReportPage() {
           {/* Weather & Workforce */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <CloudSun className="w-4 h-4 text-amber-400" />
+              <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <CloudSun className="w-4 h-4 text-amber-500" />
                 <span>Conditions Météo</span>
               </label>
               <input
@@ -178,13 +178,13 @@ export default function NewFieldReportPage() {
                 value={weather}
                 onChange={(e) => setWeather(e.target.value)}
                 placeholder="ex: Ensoleillé (32°C), Averses dans l'après-midi"
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white transition"
               />
             </div>
 
             <div>
-              <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-blue-400" />
+              <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-blue-500" />
                 <span>Effectif Total Présent sur Site</span>
               </label>
               <input
@@ -193,14 +193,14 @@ export default function NewFieldReportPage() {
                 value={workforceCount}
                 onChange={(e) => setWorkforceCount(e.target.value)}
                 placeholder="ex: 35"
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white transition"
               />
             </div>
           </div>
 
           {/* Activities Summary */}
           <div>
-            <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px]">
+            <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px]">
               Activités & Tâches Réalisées Aujourd&apos;hui *
             </label>
             <textarea
@@ -209,14 +209,14 @@ export default function NewFieldReportPage() {
               value={activitiesSummary}
               onChange={(e) => setActivitiesSummary(e.target.value)}
               placeholder="Détaillez les ouvrages réalisés : ferraillage, coulage, coffrage, terrassement, métrés..."
-              className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none leading-relaxed"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white leading-relaxed transition"
             />
           </div>
 
           {/* Issues and Delays */}
           <div>
-            <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
               <span>Incidents, Arrêts ou Retards (Optionnel)</span>
             </label>
             <textarea
@@ -224,14 +224,14 @@ export default function NewFieldReportPage() {
               value={issuesAndDelays}
               onChange={(e) => setIssuesAndDelays(e.target.value)}
               placeholder="Pannes mécaniques, coupures d'électricité, retards de livraison béton ou ciment..."
-              className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white transition"
             />
           </div>
 
           {/* Safety & QHSE */}
           <div>
-            <label className="block text-slate-300 font-semibold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <label className="block text-slate-700 font-bold mb-1.5 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#7BA238]" />
               <span>Observations QHSE & Sécurité</span>
             </label>
             <textarea
@@ -239,15 +239,15 @@ export default function NewFieldReportPage() {
               value={safetyObservations}
               onChange={(e) => setSafetyObservations(e.target.value)}
               placeholder="Quart d'heure sécurité, port des EPI, sécurisation des tranchées ou échafaudages..."
-              className="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] focus:outline-none focus:bg-white transition"
             />
           </div>
 
           {/* Submit Button */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <Link
               href="/field-reports"
-              className="px-5 py-2.5 rounded-xl bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-700 transition"
+              className="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition font-medium"
             >
               Annuler
             </Link>

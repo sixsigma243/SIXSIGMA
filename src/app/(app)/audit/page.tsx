@@ -221,13 +221,13 @@ export default async function AuditGovernancePage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="rounded-xl bg-[#14171D] border border-[#252932] p-5 shadow-sm">
+      <div className="rounded-2xl bg-white border border-slate-100 p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl md:text-2xl font-black text-[#1C1F23] tracking-tight">
               Gouvernance & Piste d&apos;Audit
             </h1>
-            <p className="text-xs text-slate-400 mt-1 max-w-3xl">
+            <p className="text-xs text-slate-500 mt-1 max-w-3xl">
               Registre des transactions sensibles, verrous de clôture de paie et contrôles d&apos;intégrité (SoD).
             </p>
           </div>
@@ -236,57 +236,57 @@ export default async function AuditGovernancePage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-xl bg-[#14171D] border border-[#252932] shadow-sm">
+        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
               Événements Tracés
             </span>
-            <History className="w-4 h-4 text-slate-500" />
+            <History className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{totalAuditEvents}</div>
+          <div className="text-2xl font-black text-[#1C1F23] mt-2">{totalAuditEvents}</div>
           <div className="text-[11px] text-slate-500 mt-1">Transactions consignées</div>
         </div>
 
-        <div className="p-5 rounded-xl bg-[#14171D] border border-[#252932] shadow-sm">
+        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
               Périodes Clôturées
             </span>
-            <Lock className="w-4 h-4 text-slate-500" />
+            <Lock className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{lockedPeriodsCount}</div>
+          <div className="text-2xl font-black text-[#1C1F23] mt-2">{lockedPeriodsCount}</div>
           <div className="text-[11px] text-slate-500 mt-1">Verrouillage rétroactif</div>
         </div>
 
-        <div className="p-5 rounded-xl bg-[#14171D] border border-[#252932] shadow-sm">
+        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
               Collaborateurs Actifs
             </span>
-            <UserCheck className="w-4 h-4 text-slate-500" />
+            <UserCheck className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">{activeUsersCount}</div>
+          <div className="text-2xl font-black text-[#1C1F23] mt-2">{activeUsersCount}</div>
           <div className="text-[11px] text-slate-500 mt-1">Sur 14 rôles opérationnels</div>
         </div>
 
-        <div className="p-5 rounded-xl bg-[#14171D] border border-[#252932] shadow-sm">
+        <div className="p-5 rounded-2xl bg-white border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-mono">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
               Contrôles SoD
             </span>
-            <ShieldCheck className="w-4 h-4 text-slate-500" />
+            <ShieldCheck className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-bold text-white mt-2">6 Verrous</div>
+          <div className="text-2xl font-black text-[#1C1F23] mt-2">6 Verrous</div>
           <div className="text-[11px] text-slate-500 mt-1">Règles PostgreSQL actives</div>
         </div>
       </div>
 
       {/* Section 1: Panneau de Gestion des Périodes de Paie (Payroll Lock) */}
-      <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#252932] pb-3">
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-slate-400" />
-            <h2 className="text-base font-bold text-white tracking-tight">
+            <Lock className="w-4 h-4 text-[#8E2424]" />
+            <h2 className="text-base font-bold text-[#1C1F23] tracking-tight">
               Gestion des Périodes de Paie & Verrous Rétroactifs
             </h2>
           </div>
@@ -296,33 +296,33 @@ export default async function AuditGovernancePage() {
         </div>
 
         {/* Current Month Active Panel */}
-        <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">
+              <Calendar className="w-4 h-4 text-slate-500" />
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">
                 Mois en cours :
               </span>
-              <span className="text-sm font-bold text-white">{currentMonthName}</span>
+              <span className="text-sm font-bold text-[#1C1F23]">{currentMonthName}</span>
               <span className="text-xs text-slate-500 font-mono">
                 ({formatDate(currentMonthStart)} au {formatDate(currentMonthEnd)})
               </span>
             </div>
 
             <div className="flex items-center gap-2 pt-0.5">
-              <span className="text-xs text-slate-400">Statut :</span>
+              <span className="text-xs text-slate-500">Statut :</span>
               {isCurrentMonthLocked ? (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/30">
                   <Lock className="w-3 h-3" /> Période Verrouillée (Pointages Faisant Foi)
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-[#7BA238]/20 text-[#A5CE5B] border border-[#7BA238]/50">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7BA238]/15 text-[#5A7C22] border border-[#7BA238]/40">
                   <Unlock className="w-3 h-3" /> Période Ouverte (Pointages Autorisés)
                 </span>
               )}
             </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed max-w-2xl pt-0.5">
+            <p className="text-xs text-slate-600 leading-relaxed max-w-2xl pt-0.5">
               {isCurrentMonthLocked
                 ? `La période de ${currentMonthName} est verrouillée. Le trigger PostgreSQL bloque immédiatement toute insertion ou correction de pointage.`
                 : `La période de ${currentMonthName} est active. Verrouillez-la en fin de mois pour figer définitivement les calculs de paie.`}
@@ -333,10 +333,10 @@ export default async function AuditGovernancePage() {
             <form action={toggleCurrentMonthLock}>
               <button
                 type="submit"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition ${
                   isCurrentMonthLocked
-                    ? "bg-[#1C1F23] hover:bg-[#252932] text-slate-200 border border-[#252932]"
-                    : "bg-[#8E2424] hover:bg-[#751D1D] text-white border border-[#8E2424]"
+                    ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                    : "bg-[#8E2424] hover:bg-[#751D1D] text-white"
                 }`}
               >
                 {isCurrentMonthLocked ? (
@@ -357,13 +357,13 @@ export default async function AuditGovernancePage() {
 
         {/* Historical Payroll Periods Table */}
         <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
             Historique des Périodes & Archives de Paie
           </h3>
 
-          <div className="overflow-x-auto rounded-xl border border-[#252932]">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-[#0E1116] text-xs uppercase text-slate-400 border-b border-[#252932]">
+          <div className="overflow-x-auto rounded-xl border border-slate-200/80">
+            <table className="w-full text-left text-sm text-slate-600">
+              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                 <tr>
                   <th className="py-3 px-4">Période</th>
                   <th className="py-3 px-4">Date Début</th>
@@ -373,43 +373,43 @@ export default async function AuditGovernancePage() {
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#252932]">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {payrollPeriods && payrollPeriods.length > 0 ? (
                   payrollPeriods.map((period) => (
-                    <tr key={period.id} className="hover:bg-[#1C1F23]/50 transition">
-                      <td className="py-3 px-4 font-semibold text-white flex items-center gap-2">
+                    <tr key={period.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3 px-4 font-bold text-[#1C1F23] flex items-center gap-2">
                         {period.period_name}
                         {period.period_name.toLowerCase() === currentMonthName.toLowerCase() && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#1C1F23] text-slate-300 border border-[#252932]">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/20">
                             En cours
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-mono text-xs text-slate-400">{formatDate(period.start_date)}</td>
-                      <td className="py-3 px-4 font-mono text-xs text-slate-400">{formatDate(period.end_date)}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-slate-500">{formatDate(period.start_date)}</td>
+                      <td className="py-3 px-4 font-mono text-xs text-slate-500">{formatDate(period.end_date)}</td>
                       <td className="py-3 px-4">
                         {period.is_locked ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-[#8E2424]/20 text-[#E58585] border border-[#8E2424]/50">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/30">
                             <Lock className="w-3 h-3" /> Verrouillée
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-[#7BA238]/20 text-[#A5CE5B] border border-[#7BA238]/50">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7BA238]/15 text-[#5A7C22] border border-[#7BA238]/40">
                             <Unlock className="w-3 h-3" /> Ouverte
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-400">
+                      <td className="py-3 px-4 text-xs text-slate-500">
                         {period.is_locked ? (
                           <div>
-                            <div className="font-medium text-slate-300">
+                            <div className="font-semibold text-slate-800">
                               {period.locker?.full_name || "Direction SI / Admin"}
                             </div>
-                            <div className="text-[10px] text-slate-500 font-mono">
+                            <div className="text-[10px] text-slate-400 font-mono">
                               {period.locked_at ? new Date(period.locked_at).toLocaleString("fr-FR") : "-"}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-slate-400">—</span>
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -422,10 +422,10 @@ export default async function AuditGovernancePage() {
                           />
                           <button
                             type="submit"
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition ${
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                               period.is_locked
-                                ? "bg-[#1C1F23] hover:bg-[#252932] text-slate-300 border border-[#252932]"
-                                : "bg-[#8E2424] hover:bg-[#751D1D] text-white border border-[#8E2424]"
+                                ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
+                                : "bg-[#8E2424] hover:bg-[#751D1D] text-white"
                             }`}
                           >
                             {period.is_locked ? (
@@ -444,7 +444,7 @@ export default async function AuditGovernancePage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="text-center py-6 text-slate-500">
+                    <td colSpan={6} className="text-center py-6 text-slate-400">
                       Aucune période de paie archivée. Utilisez le bouton ci-dessus pour initialiser le mois en cours.
                     </td>
                   </tr>
@@ -456,15 +456,15 @@ export default async function AuditGovernancePage() {
       </div>
 
       {/* Section 2: Journaux d'Audit Système (Piste Inaltérable avec Filtres) */}
-      <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#252932] pb-3">
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <History className="w-4 h-4 text-slate-400" />
-            <h2 className="text-base font-bold text-white tracking-tight">
+            <History className="w-4 h-4 text-[#8E2424]" />
+            <h2 className="text-base font-bold text-[#1C1F23] tracking-tight">
               Piste d&apos;Audit Système (Transactions & Modifications Traçables)
             </h2>
           </div>
-          <span className="text-xs text-slate-500 font-mono">
+          <span className="text-xs text-slate-400 font-mono">
             Table : public.audit_logs
           </span>
         </div>
@@ -474,89 +474,89 @@ export default async function AuditGovernancePage() {
       </div>
 
       {/* Section 3: Règles d'Intégrité & Contrôles Système (SoD) */}
-      <div className="bg-[#14171D] border border-[#252932] rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 border-b border-[#252932] pb-3">
-          <Scale className="w-4 h-4 text-slate-400" />
-          <h2 className="text-base font-bold text-white tracking-tight">
+      <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+          <Scale className="w-4 h-4 text-[#8E2424]" />
+          <h2 className="text-base font-bold text-[#1C1F23] tracking-tight">
             Règles d&apos;Intégrité & Contrôles Système (SoD)
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
-              <span className="text-xs font-semibold text-white">1. SoD Caisse & Trésorerie</span>
+              <span className="w-2 h-2 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
+              <span className="text-xs font-bold text-slate-800">1. SoD Caisse & Trésorerie</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               L&apos;administrateur système a interdiction formelle de valider des dépenses. Plafond de 5 000 USD réservé à la Direction Générale.
             </p>
-            <div className="pt-1 font-mono text-xs text-slate-500 border-t border-[#252932]">
+            <div className="pt-1 font-mono text-[11px] text-slate-500 border-t border-slate-200">
               Trigger : trg_enforce_sod_cashbox
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
-              <span className="text-xs font-semibold text-white">2. Clôture Journal Chantier</span>
+              <span className="w-2 h-2 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
+              <span className="text-xs font-bold text-slate-800">2. Clôture Journal Chantier</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Verrouillage strict à 19h00 (Heure RDC / UTC+2). Tout journal du jour soumis après 19h00 est automatiquement rejeté.
             </p>
-            <div className="pt-1 font-mono text-xs text-slate-500 border-t border-[#252932]">
+            <div className="pt-1 font-mono text-[11px] text-slate-500 border-t border-slate-200">
               Trigger : trg_enforce_daily_report_cutoff
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
-              <span className="text-xs font-semibold text-white">3. Conformité RH & Pointage</span>
+              <span className="w-2 h-2 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
+              <span className="text-xs font-bold text-slate-800">3. Conformité RH & Pointage</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Rejet automatique de tout pointage pour un travailleur dont le contrat de travail ou la pièce d&apos;identité est expiré(e).
             </p>
-            <div className="pt-1 font-mono text-xs text-slate-500 border-t border-[#252932]">
+            <div className="pt-1 font-mono text-[11px] text-slate-500 border-t border-slate-200">
               Trigger : trg_validate_worker_compliance_on_time_entry
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
-              <span className="text-xs font-semibold text-white">4. Dispatch & Permis Chauffeur</span>
+              <span className="w-2 h-2 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
+              <span className="text-xs font-bold text-slate-800">4. Dispatch & Permis Chauffeur</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Blocage immédiat de tout ordre de mission si le véhicule est en atelier ou si le permis de conduire du chauffeur est expiré.
             </p>
-            <div className="pt-1 font-mono text-xs text-slate-500 border-t border-[#252932]">
+            <div className="pt-1 font-mono text-[11px] text-slate-500 border-t border-slate-200">
               Trigger : trg_validate_dispatch_vehicle
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
-              <span className="text-xs font-semibold text-white">5. Zéro Stock Négatif</span>
+              <span className="w-2 h-2 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
+              <span className="text-xs font-bold text-slate-800">5. Zéro Stock Négatif</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Rejet strict de toute sortie de stock excédant la quantité disponible et obligation de rattachement à un chantier précis.
             </p>
-            <div className="pt-1 font-mono text-xs text-slate-500 border-t border-[#252932]">
+            <div className="pt-1 font-mono text-[11px] text-slate-500 border-t border-slate-200">
               Trigger : trg_validate_stock_out
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-[#0E1116] border border-[#252932] space-y-2">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
-              <span className="text-xs font-semibold text-white">6. Verrou Période de Paie</span>
+              <span className="w-2 h-2 rounded-full bg-[#7BA238] inline-block flex-shrink-0"></span>
+              <span className="text-xs font-bold text-slate-800">6. Verrou Période de Paie</span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Interdiction de modification des pointages sur les périodes clôturées. Seul l&apos;administrateur peut déroger avec traçabilité intégrale.
             </p>
-            <div className="pt-1 font-mono text-xs text-slate-500 border-t border-[#252932]">
+            <div className="pt-1 font-mono text-[11px] text-slate-500 border-t border-slate-200">
               Trigger : trg_enforce_payroll_period_lock
             </div>
           </div>
