@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { CashboxTransaction, Project, Profile, CurrencyCode } from "@/types/database";
 import { formatUSD, formatCDF, formatDate } from "@/lib/utils";
@@ -56,7 +56,29 @@ export default function FinancePage() {
   const [budgetCDF, setBudgetCDF] = useState("");
   const [budgetSaving, setBudgetSaving] = useState(false);
 
-  const EXCHANGE_RATE = 2850.0;
+  const [exchangeRate, setExchangeRate] = useState<number>(2850.0);
+
+  // Load official BCC exchange rate from API / settings
+  useEffect(() => {
+    async function loadRate() {
+      try {
+        const res = await fetch("/api/settings/exchange-rate");
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.rate) setExchangeRate(Number(data.rate));
+        }
+      } catch (err) {
+        console.error("Failed to load exchange rate in Finance:", err);
+      }
+    }
+    loadRate();
+
+    const handleRateChange = (e: any) => {
+      if (e?.detail) setExchangeRate(Number(e.detail));
+    };
+    window.addEventListener("exchange-rate-updated", handleRateChange);
+    return () => window.removeEventListener("exchange-rate-updated", handleRateChange);
+  }, []);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -138,7 +160,7 @@ export default function FinancePage() {
     // Convert to USD equivalent to check the threshold of 5,000 USD
     let amountInUSD = numericAmount;
     if (currency === "CDF") {
-      amountInUSD = numericAmount / EXCHANGE_RATE;
+      amountInUSD = numericAmount / exchangeRate;
     }
     const requiresManagement = amountInUSD >= 5000.0;
 
@@ -148,6 +170,7 @@ export default function FinancePage() {
       transaction_type: transactionType,
       amount: numericAmount,
       currency: currency,
+      exchange_rate: exchangeRate,
       category: category,
       beneficiary: beneficiary.trim() || null,
       description: description.trim(),
@@ -270,6 +293,109 @@ export default function FinancePage() {
   const pendingApprovalsCount = transactions.filter(
     (t) => t.status === "pending" && t.requires_management_approval
   ).length;
+
+  // --- EXPERT COMPTABLE & FINANCIER INTÉGRÉ (Calculs Automatisés en Temps Réel) ---
+
+  // 1. Portfolio-level aggregations (Multi-devise consolidé au taux officiel BCC)
+  const portfolioBudgetUSD = useMemo(() => {
+    return projects.reduce((acc, p) => {
+      const bUSD = Number(p.budget_allocated_usd) || Number(p.budget) || 0;
+      const bCDF = Number(p.budget_allocated_cdf) || 0;
+      return acc + bUSD + (bCDF / exchangeRate);
+    }, 0);
+  }, [projects, exchangeRate]);
+
+  const portfolioExpensesUSD = useMemo(() => {
+    return transactions
+      .filter((t) => t.transaction_type === "EXPENSE" && t.status !== "rejected")
+      .reduce((acc, t) => {
+        const amt = Number(t.amount) || 0;
+        if (t.currency === "USD") return acc + amt;
+        const rate = t.exchange_rate && t.exchange_rate > 0 ? t.exchange_rate : exchangeRate;
+        return acc + (amt / rate);
+      }, 0);
+  }, [transactions, exchangeRate]);
+
+  const portfolioRemainingBudgetUSD = portfolioBudgetUSD - portfolioExpensesUSD;
+  const portfolioBurnRate = portfolioBudgetUSD > 0
+    ? Math.round((portfolioExpensesUSD / portfolioBudgetUSD) * 100)
+    : 0;
+
+  // 2. Health check on all projects (Sain, Vigilance, Dépassement)
+  const projectHealthStats = useMemo(() => {
+    let healthyCount = 0;
+    let warningCount = 0;
+    let overrunCount = 0;
+
+    projects.forEach((p) => {
+      const bUSD = Number(p.budget_allocated_usd) || Number(p.budget) || 0;
+      const bCDF = Number(p.budget_allocated_cdf) || 0;
+      const totalAllocatedEqUSD = bUSD + (bCDF / exchangeRate);
+
+      const spentUSD = transactions
+        .filter((t) => t.project_id === p.id && t.transaction_type === "EXPENSE" && t.status !== "rejected")
+        .reduce((sum, t) => {
+          const amt = Number(t.amount) || 0;
+          if (t.currency === "USD") return sum + amt;
+          const rate = t.exchange_rate && t.exchange_rate > 0 ? t.exchange_rate : exchangeRate;
+          return sum + (amt / rate);
+        }, 0);
+
+      const ratio = totalAllocatedEqUSD > 0 ? (spentUSD / totalAllocatedEqUSD) * 100 : 0;
+      if (ratio > 100) overrunCount++;
+      else if (ratio >= 80) warningCount++;
+      else healthyCount++;
+    });
+
+    return { healthyCount, warningCount, overrunCount };
+  }, [projects, transactions, exchangeRate]);
+
+  // 3. Live Budget Impact Simulator for New Transaction Modal
+  const selectedProjectBudgetInfo = useMemo(() => {
+    if (!selectedProjectId) return null;
+    const p = projects.find((prj) => prj.id === selectedProjectId);
+    if (!p) return null;
+
+    const bUSD = Number(p.budget_allocated_usd) || Number(p.budget) || 0;
+    const bCDF = Number(p.budget_allocated_cdf) || 0;
+    const totalAllocatedEqUSD = bUSD + (bCDF / exchangeRate);
+
+    const alreadySpentUSD = transactions
+      .filter((t) => t.project_id === p.id && t.transaction_type === "EXPENSE" && t.status !== "rejected")
+      .reduce((sum, t) => {
+        const amt = Number(t.amount) || 0;
+        if (t.currency === "USD") return sum + amt;
+        const rate = t.exchange_rate && t.exchange_rate > 0 ? t.exchange_rate : exchangeRate;
+        return sum + (amt / rate);
+      }, 0);
+
+    const numAmount = parseFloat(amount) || 0;
+    const thisOpUSD = currency === "USD" ? numAmount : numAmount / exchangeRate;
+
+    const remainingBeforeUSD = totalAllocatedEqUSD - alreadySpentUSD;
+    const remainingAfterUSD = transactionType === "EXPENSE"
+      ? remainingBeforeUSD - thisOpUSD
+      : remainingBeforeUSD + thisOpUSD;
+
+    const burnRateBefore = totalAllocatedEqUSD > 0 ? Math.round((alreadySpentUSD / totalAllocatedEqUSD) * 100) : 0;
+    const burnRateAfter = totalAllocatedEqUSD > 0
+      ? Math.round(((transactionType === "EXPENSE" ? alreadySpentUSD + thisOpUSD : alreadySpentUSD - thisOpUSD) / totalAllocatedEqUSD) * 100)
+      : 0;
+
+    const isOverrun = remainingAfterUSD < 0;
+
+    return {
+      project: p,
+      totalAllocatedEqUSD,
+      alreadySpentUSD,
+      remainingBeforeUSD,
+      remainingAfterUSD,
+      burnRateBefore,
+      burnRateAfter,
+      isOverrun,
+      overrunAmountUSD: Math.abs(Math.min(0, remainingAfterUSD)),
+    };
+  }, [selectedProjectId, projects, transactions, amount, currency, transactionType, exchangeRate]);
 
   const canCreateTransaction = [
     "admin",
@@ -433,7 +559,7 @@ export default function FinancePage() {
             </div>
           </div>
           <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#1C1F23] tracking-tight">
-            1 USD = {EXCHANGE_RATE.toLocaleString()} CDF
+            1 USD = {exchangeRate.toLocaleString()} CDF
           </div>
           <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100">
             Taux de référence pour toutes les imputations
@@ -571,121 +697,268 @@ export default function FinancePage() {
           )}
         </div>
       ) : (
-        /* BUDGETS CHANTIERS TAB */
-        <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-4">
-          <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-bold text-[#1C1F23] flex items-center gap-2">
-                <PieChart className="w-4 h-4 text-[#7BA238]" />
-                <span>Allocation & Suivi des Budgets Chantiers (USD & CDF)</span>
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Pilotage des enveloppes allouées par projet et calcul en direct du taux de consommation des fonds de caisse.
-              </p>
+        /* BUDGETS CHANTIERS TAB - VRAI EXPERT COMPTABLE ET FINANCIER INTÉGRÉ */
+        <div className="space-y-6">
+          {/* 4 Executive Accounting & Financial Expert Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Card 1: Budget Total Portefeuille */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  BUDGET GLOBAL ALLOUÉ
+                </span>
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+                  <PieChart className="w-4 h-4 text-[#8E2424]" />
+                </div>
+              </div>
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#1C1F23] tracking-tight">
+                {formatUSD(portfolioBudgetUSD)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100">
+                Sur {projects.length} projet(s) • Éq. {formatCDF(portfolioBudgetUSD * exchangeRate)}
+              </div>
             </div>
-            {isAdmin && (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7BA238]/10 text-[#7BA238] border border-[#7BA238]/30">
-                Administration Budgétaire Active
-              </span>
-            )}
+
+            {/* Card 2: Dépenses Totales Consommées */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  DÉCAISSEMENTS RÉALISÉS
+                </span>
+                <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-[#8E2424]">
+                  <ArrowDownLeft className="w-4 h-4 text-[#8E2424]" />
+                </div>
+              </div>
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#8E2424] tracking-tight">
+                {formatUSD(portfolioExpensesUSD)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100">
+                Consolidé USD + CDF (Taux {exchangeRate.toLocaleString()} CDF)
+              </div>
+            </div>
+
+            {/* Card 3: Reste Disponible (Solde Budgétaire) */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  SOLDE RESTANT À ENGAGER
+                </span>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  portfolioRemainingBudgetUSD >= 0 ? "bg-emerald-50 text-[#7BA238]" : "bg-rose-50 text-rose-600"
+                }`}>
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div className={`mt-3 text-2xl lg:text-3xl font-bold tracking-tight ${
+                portfolioRemainingBudgetUSD >= 0 ? "text-[#7BA238]" : "text-rose-600"
+              }`}>
+                {portfolioRemainingBudgetUSD >= 0 ? "+" : ""}{formatUSD(portfolioRemainingBudgetUSD)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <span>Enveloppe disponible</span>
+                <span className={`font-bold ${portfolioRemainingBudgetUSD >= 0 ? "text-[#7BA238]" : "text-rose-600"}`}>
+                  {portfolioRemainingBudgetUSD >= 0 ? "Solvable" : "Déficit global"}
+                </span>
+              </div>
+            </div>
+
+            {/* Card 4: Bilan de Santé & Diagnostic */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  DIAGNOSTIC SANTÉ BUDGET
+                </span>
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#1C1F23] tracking-tight flex items-baseline gap-2">
+                <span>{portfolioBurnRate}%</span>
+                <span className="text-xs font-semibold text-slate-500">consommé</span>
+              </div>
+              <div className="mt-3 text-[11px] flex items-center gap-1.5 pt-2.5 border-t border-slate-100 flex-wrap">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7BA238]/10 text-[#5A7C22]">
+                  {projectHealthStats.healthyCount} Sain(s)
+                </span>
+                {projectHealthStats.warningCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">
+                    {projectHealthStats.warningCount} Vigilance
+                  </span>
+                )}
+                {projectHealthStats.overrunCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700">
+                    {projectHealthStats.overrunCount} Dépassement
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/70 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100">
-                <tr>
-                  <th className="py-3 px-4">Projet / Chantier</th>
-                  <th className="py-3 px-4">Budget Alloué (USD)</th>
-                  <th className="py-3 px-4">Budget Alloué (CDF)</th>
-                  <th className="py-3 px-4">Dépenses Réalisées (USD)</th>
-                  <th className="py-3 px-4">Dépenses Réalisées (CDF)</th>
-                  <th className="py-3 px-4">Consommation</th>
-                  {isAdmin && <th className="py-3 px-4 text-right">Action Admin</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {projects.map((prj) => {
-                  const prjExpensesUSD = transactions
-                    .filter(
-                      (t) =>
-                        t.project_id === prj.id &&
-                        t.currency === "USD" &&
-                        t.transaction_type === "EXPENSE"
-                    )
-                    .reduce((acc, t) => acc + Number(t.amount), 0);
+          {/* Table Container */}
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] space-y-4">
+            <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-[#1C1F23] flex items-center gap-2">
+                  <PieChart className="w-4 h-4 text-[#7BA238]" />
+                  <span>Tableau Analytique de Suivi Budgétaire Chantiers</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Calcul automatique et instantané du solde restant et du taux de consommation à chaque décaissement.
+                </p>
+              </div>
+              {isAdmin && (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#7BA238]/10 text-[#7BA238] border border-[#7BA238]/30">
+                  Administration Budgétaire Active
+                </span>
+              )}
+            </div>
 
-                  const prjExpensesCDF = transactions
-                    .filter(
-                      (t) =>
-                        t.project_id === prj.id &&
-                        t.currency === "CDF" &&
-                        t.transaction_type === "EXPENSE"
-                    )
-                    .reduce((acc, t) => acc + Number(t.amount), 0);
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50/70 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100">
+                  <tr>
+                    <th className="py-3 px-4">Projet / Chantier</th>
+                    <th className="py-3 px-4">Budget Alloué (USD)</th>
+                    <th className="py-3 px-4">Budget Alloué (CDF)</th>
+                    <th className="py-3 px-4">Total Consommé (Eq. USD)</th>
+                    <th className="py-3 px-4">Solde Disponible (Reste)</th>
+                    <th className="py-3 px-4">Consommation & Santé</th>
+                    {isAdmin && <th className="py-3 px-4 text-right">Action Admin</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {projects.map((prj) => {
+                    const prjExpensesUSD = transactions
+                      .filter(
+                        (t) =>
+                          t.project_id === prj.id &&
+                          t.currency === "USD" &&
+                          t.transaction_type === "EXPENSE" &&
+                          t.status !== "rejected"
+                      )
+                      .reduce((acc, t) => acc + Number(t.amount), 0);
 
-                  const allocatedUSD = Number(prj.budget_allocated_usd) || Number(prj.budget) || 0;
-                  const allocatedCDF = Number(prj.budget_allocated_cdf) || 0;
-                  const ratioUSD = allocatedUSD > 0 ? Math.min(100, Math.round((prjExpensesUSD / allocatedUSD) * 100)) : 0;
+                    const prjExpensesCDF = transactions
+                      .filter(
+                        (t) =>
+                          t.project_id === prj.id &&
+                          t.currency === "CDF" &&
+                          t.transaction_type === "EXPENSE" &&
+                          t.status !== "rejected"
+                      )
+                      .reduce((acc, t) => acc + Number(t.amount), 0);
 
-                  return (
-                    <tr key={prj.id} className="hover:bg-slate-50/60 transition">
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-[#1C1F23]">{prj.title}</div>
-                        <div className="text-[11px] text-slate-500">{prj.code} • {prj.location}</div>
-                      </td>
+                    const allocatedUSD = Number(prj.budget_allocated_usd) || Number(prj.budget) || 0;
+                    const allocatedCDF = Number(prj.budget_allocated_cdf) || 0;
+                    const totalAllocatedEqUSD = allocatedUSD + (allocatedCDF / exchangeRate);
 
-                      <td className="py-3 px-4 font-mono font-bold text-slate-800">
-                        {formatUSD(allocatedUSD)}
-                      </td>
+                    const totalSpentEqUSD = prjExpensesUSD + (prjExpensesCDF / exchangeRate);
+                    const remainingUSD = totalAllocatedEqUSD - totalSpentEqUSD;
+                    const burnRate = totalAllocatedEqUSD > 0
+                      ? Math.round((totalSpentEqUSD / totalAllocatedEqUSD) * 100)
+                      : 0;
 
-                      <td className="py-3 px-4 font-mono font-bold text-amber-700">
-                        {allocatedCDF > 0 ? formatCDF(allocatedCDF) : "-"}
-                      </td>
+                    const isOverrun = remainingUSD < 0;
 
-                      <td className="py-3 px-4 font-mono text-[#8E2424] font-bold">
-                        {formatUSD(prjExpensesUSD)}
-                      </td>
-
-                      <td className="py-3 px-4 font-mono text-[#8E2424] font-bold">
-                        {prjExpensesCDF > 0 ? formatCDF(prjExpensesCDF) : "-"}
-                      </td>
-
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                ratioUSD > 90
-                                  ? "bg-rose-500"
-                                  : ratioUSD > 70
-                                  ? "bg-amber-500"
-                                  : "bg-[#7BA238]"
-                              }`}
-                              style={{ width: `${ratioUSD}%` }}
-                            />
+                    return (
+                      <tr key={prj.id} className="hover:bg-slate-50/60 transition">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-[#1C1F23]">{prj.title}</div>
+                          <div className="text-[11px] text-slate-500">
+                            {prj.code} • {prj.location || "RDC"} {prj.client_name ? `• ${prj.client_name}` : ""}
                           </div>
-                          <span className="font-mono text-[11px] font-bold text-slate-700">
-                            {ratioUSD}%
-                          </span>
-                        </div>
-                      </td>
-
-                      {isAdmin && (
-                        <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => openBudgetAllocation(prj)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 text-xs font-semibold inline-flex items-center gap-1.5 transition"
-                          >
-                            <Edit3 className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Allouer / Modifier</span>
-                          </button>
                         </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                        <td className="py-3 px-4 font-mono font-bold text-slate-800">
+                          {formatUSD(allocatedUSD)}
+                        </td>
+
+                        <td className="py-3 px-4 font-mono font-bold text-amber-700">
+                          {allocatedCDF > 0 ? formatCDF(allocatedCDF) : "-"}
+                        </td>
+
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                          <div className="text-[#8E2424] font-black">{formatUSD(totalSpentEqUSD)}</div>
+                          <div className="text-[10px] text-slate-400 font-normal">
+                            USD: {formatUSD(prjExpensesUSD)} | CDF: {formatCDF(prjExpensesCDF)}
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-4 font-mono font-bold">
+                          {isOverrun ? (
+                            <span className="text-rose-600 font-black flex items-center gap-1">
+                              <span>-{formatUSD(Math.abs(remainingUSD))}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[#7BA238] font-bold">
+                              +{formatUSD(remainingUSD)}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    burnRate > 100
+                                      ? "bg-rose-600"
+                                      : burnRate >= 90
+                                      ? "bg-orange-500"
+                                      : burnRate >= 75
+                                      ? "bg-amber-500"
+                                      : "bg-[#7BA238]"
+                                  }`}
+                                  style={{ width: `${Math.min(100, burnRate)}%` }}
+                                />
+                              </div>
+                              <span className={`font-mono text-[11px] font-bold ${
+                                burnRate > 100 ? "text-rose-600 font-black" : "text-slate-700"
+                              }`}>
+                                {burnRate}%
+                              </span>
+                            </div>
+
+                            <div>
+                              {burnRate > 100 ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 border border-rose-200">
+                                  Dépassement Budgétaire
+                                </span>
+                              ) : burnRate >= 90 ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                                  Alerte Risque
+                                </span>
+                              ) : burnRate >= 75 ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                  Vigilance
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-[#5A7C22] border border-emerald-200">
+                                  Sain
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {isAdmin && (
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              onClick={() => openBudgetAllocation(prj)}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200/80 text-xs font-semibold inline-flex items-center gap-1.5 transition active:scale-95"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Allouer / Modifier</span>
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -774,11 +1047,11 @@ export default function FinancePage() {
               {/* Indicative Conversion Note */}
               {amount && parseFloat(amount) > 0 && (
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
-                  <span>Conversion indicative (Taux 1 USD = 2 850 CDF) :</span>
+                  <span>Conversion indicative (Taux 1 USD = {exchangeRate.toLocaleString()} CDF) :</span>
                   <span className="font-mono font-bold text-slate-900">
                     {currency === "USD"
-                      ? formatCDF(parseFloat(amount) * EXCHANGE_RATE)
-                      : formatUSD(parseFloat(amount) / EXCHANGE_RATE)}
+                      ? formatCDF(parseFloat(amount) * exchangeRate)
+                      : formatUSD(parseFloat(amount) / exchangeRate)}
                   </span>
                 </div>
               )}
@@ -817,6 +1090,97 @@ export default function FinancePage() {
                   </select>
                 </div>
               </div>
+
+              {/* Live Accounting & Budget Simulator for Selected Project */}
+              {selectedProjectBudgetInfo && (
+                <div
+                  className={`p-3.5 rounded-2xl border transition-all ${
+                    selectedProjectBudgetInfo.isOverrun
+                      ? "bg-rose-50/80 border-rose-200 text-rose-950 shadow-[0_4px_20px_-4px_rgba(225,29,72,0.15)]"
+                      : "bg-slate-50 border-slate-200 text-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <PieChart
+                        className={`w-4 h-4 ${
+                          selectedProjectBudgetInfo.isOverrun ? "text-rose-600" : "text-[#7BA238]"
+                        }`}
+                      />
+                      <span className="font-bold text-xs">Diagnostic d&apos;Impact Budgétaire Temps Réel</span>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        selectedProjectBudgetInfo.isOverrun
+                          ? "bg-rose-600 text-white animate-pulse"
+                          : selectedProjectBudgetInfo.burnRateAfter > 85
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-emerald-100 text-emerald-800"
+                      }`}
+                    >
+                      {selectedProjectBudgetInfo.isOverrun
+                        ? `Dépassement (${selectedProjectBudgetInfo.burnRateAfter}%)`
+                        : `Conso. Projetée : ${selectedProjectBudgetInfo.burnRateAfter}%`}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Budget Alloué</span>
+                      <span className="font-bold font-mono text-slate-900">
+                        {formatUSD(selectedProjectBudgetInfo.totalAllocatedEqUSD)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Déjà Consommé</span>
+                      <span className="font-bold font-mono text-slate-900">
+                        {formatUSD(selectedProjectBudgetInfo.alreadySpentUSD)} ({selectedProjectBudgetInfo.burnRateBefore}%)
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Solde Disponible</span>
+                      <span
+                        className={`font-bold font-mono ${
+                          selectedProjectBudgetInfo.remainingBeforeUSD < 0
+                            ? "text-rose-600"
+                            : "text-emerald-700"
+                        }`}
+                      >
+                        {formatUSD(selectedProjectBudgetInfo.remainingBeforeUSD)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Projected impact with current operation */}
+                  {amount && parseFloat(amount) > 0 && (
+                    <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                      <span className="font-medium">
+                        Solde Restant Après{" "}
+                        {transactionType === "EXPENSE" ? "Décaissement" : "Recette"} :
+                      </span>
+                      <span
+                        className={`font-mono font-black text-xs ${
+                          selectedProjectBudgetInfo.remainingAfterUSD < 0
+                            ? "text-rose-600"
+                            : "text-emerald-700"
+                        }`}
+                      >
+                        {formatUSD(selectedProjectBudgetInfo.remainingAfterUSD)}
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedProjectBudgetInfo.isOverrun && (
+                    <div className="mt-2.5 p-2 rounded-xl bg-rose-100/90 border border-rose-300 text-rose-900 text-[11px] font-semibold flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 animate-bounce" />
+                      <span>
+                        Alerte Trésorerie : Cette dépense dépassera le budget du chantier de{" "}
+                        <strong>{formatUSD(selectedProjectBudgetInfo.overrunAmountUSD)}</strong>.
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Category */}
               <div>
@@ -898,7 +1262,7 @@ export default function FinancePage() {
 
               {/* Threshold Notice */}
               {((currency === "USD" && parseFloat(amount) >= 5000) ||
-                (currency === "CDF" && parseFloat(amount) >= 5000 * EXCHANGE_RATE)) && (
+                (currency === "CDF" && parseFloat(amount) >= 5000 * exchangeRate)) && (
                 <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-600" />
                   <span>Montant &ge; 5 000 USD : Soumis au visa obligatoire de la Direction Générale.</span>
@@ -980,6 +1344,40 @@ export default function FinancePage() {
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-mono font-bold focus:bg-white focus:outline-none focus:border-[#8E2424]"
                 />
               </div>
+
+              {/* Live Preview for Admin Budget Allocation */}
+              {(() => {
+                const spent = transactions
+                  .filter((t) => t.project_id === budgetProject.id && t.transaction_type === "EXPENSE" && t.status !== "rejected")
+                  .reduce((sum, t) => {
+                    const amt = Number(t.amount) || 0;
+                    if (t.currency === "USD") return sum + amt;
+                    const rate = t.exchange_rate && t.exchange_rate > 0 ? t.exchange_rate : exchangeRate;
+                    return sum + (amt / rate);
+                  }, 0);
+                const proposedEqUSD = (parseFloat(budgetUSD) || 0) + ((parseFloat(budgetCDF) || 0) / exchangeRate);
+                const projectedBal = proposedEqUSD - spent;
+                const burnPct = proposedEqUSD > 0 ? Math.round((spent / proposedEqUSD) * 100) : 0;
+
+                return (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-[11px]">
+                    <div className="flex items-center justify-between font-semibold text-slate-700">
+                      <span>Dépenses Déjà Engagées :</span>
+                      <span className="font-mono font-bold text-slate-900">{formatUSD(spent)}</span>
+                    </div>
+                    <div className="flex items-center justify-between font-semibold text-slate-700">
+                      <span>Budget Total Équivalent USD :</span>
+                      <span className="font-mono font-bold text-[#1C1F23]">{formatUSD(proposedEqUSD)}</span>
+                    </div>
+                    <div className="flex items-center justify-between font-bold pt-1.5 border-t border-slate-200">
+                      <span>Solde Disponible Prévisionnel :</span>
+                      <span className={`font-mono font-bold ${projectedBal < 0 ? "text-rose-600" : "text-emerald-700"}`}>
+                        {formatUSD(projectedBal)} ({burnPct}% consommé)
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
