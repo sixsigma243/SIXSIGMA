@@ -1,0 +1,5 @@
+# SIX SIGMA ERP - Système d'Information Opérationnel Privé
+# L'indexation publique de ce domaine est formellement interdite.
+
+User-agent: *
+Disallow: /

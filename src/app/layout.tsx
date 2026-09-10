@@ -18,6 +18,16 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "SIX SIGMA ERP",
   },
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

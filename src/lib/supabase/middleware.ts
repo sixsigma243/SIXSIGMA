@@ -52,14 +52,19 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Allow public routes
+  // Allow public routes and static assets
   const isPublicRoute =
     pathname === "/login" ||
     pathname === "/privacy" ||
     pathname === "/terms" ||
+    pathname === "/robots.txt" ||
+    pathname === "/manifest.json" ||
+    pathname === "/sw.js" ||
+    pathname.startsWith("/icons/") ||
+    pathname.startsWith("/images/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname === "/favicon.ico";
+    pathname.startsWith("/favicon");
 
   // Protect all internal routes
   if (!user && !isPublicRoute) {
