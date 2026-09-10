@@ -26,6 +26,15 @@ const MODULE_NAV_ITEMS: SearchResultItem[] = [
 
 export async function GET(req: Request) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.trim() || "";
 
@@ -35,7 +44,6 @@ export async function GET(req: Request) {
       });
     }
 
-    const supabase = await createClient();
     const qLower = query.toLowerCase();
 
     // 1. Modules matches
