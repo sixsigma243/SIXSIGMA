@@ -115,8 +115,14 @@ export async function POST(request: Request) {
       message: `Taux mis à jour : 1 USD = ${newRate.toLocaleString("fr-FR")} CDF`,
     });
   } catch (err: any) {
+    console.error("Erreur serveur API exchange-rate:", err);
     return NextResponse.json(
-      { error: "Erreur serveur : " + err.message },
+      {
+        error:
+          process.env.NODE_ENV === "production"
+            ? "Une erreur interne est survenue lors du traitement."
+            : "Erreur serveur : " + err.message,
+      },
       { status: 500 }
     );
   }

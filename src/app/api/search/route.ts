@@ -147,7 +147,14 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ results });
   } catch (err: any) {
-    console.error("Erreur recherche globale:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          process.env.NODE_ENV === "production"
+            ? "Erreur lors de la recherche."
+            : err.message,
+      },
+      { status: 500 }
+    );
   }
 }

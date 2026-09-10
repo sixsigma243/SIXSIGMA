@@ -25,6 +25,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutSeconds((prev) => {
+        if (prev <= 1) {
+          setErrorMsg(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutSeconds]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -39,6 +56,8 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockoutSeconds > 0) return;
+
     setLoading(true);
     setErrorMsg(null);
 
@@ -50,14 +69,24 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setErrorMsg(
-        error.message === "Invalid login credentials"
-          ? "Identifiants invalides. Vérifiez votre adresse email et votre mot de passe."
-          : error.message
-      );
+      const nextFailed = failedAttempts + 1;
+      setFailedAttempts(nextFailed);
+
+      // Rate limiting: 5 failed attempts -> 60s lockout
+      if (nextFailed >= 5) {
+        setLockoutSeconds(60);
+        setErrorMsg("Sécurité : Trop de tentatives infructueuses. Veuillez patienter 60 secondes.");
+      } else {
+        // Message d'erreur unique générique pour empêcher l'énumération d'utilisateurs
+        setErrorMsg("Identifiants incorrects. Veuillez vérifier votre adresse email et votre mot de passe.");
+      }
       setLoading(false);
       return;
     }
+
+    // Reset lockout counter on success
+    setFailedAttempts(0);
+    setLockoutSeconds(0);
 
     if (data?.user) {
       router.push("/dashboard");
@@ -229,14 +258,16 @@ export default function LoginPage() {
             {/* Official Brick Red Solid Button (#8E2424 / Hover: #751D1D) */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || lockoutSeconds > 0}
               className="w-full mt-2 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white bg-[#8E2424] hover:bg-[#751D1D] active:bg-[#5A1616] border border-[#8E2424] shadow-lg shadow-[#8E2424]/25 transition duration-150 disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : lockoutSeconds > 0 ? (
+                <span>Accès verrouillé ({lockoutSeconds}s)</span>
               ) : (
                 <>
-                  <span>Se connecter au portail</span>
+                  <span>Authentification Sécurisée</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

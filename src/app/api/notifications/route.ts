@@ -305,7 +305,12 @@ export async function GET() {
   } catch (error: any) {
     console.error("Erreur API notifications:", error);
     return NextResponse.json(
-      { error: error?.message || "Erreur serveur" },
+      {
+        error:
+          process.env.NODE_ENV === "production"
+            ? "Impossible de charger les notifications."
+            : error?.message || "Erreur serveur",
+      },
       { status: 500 }
     );
   }
