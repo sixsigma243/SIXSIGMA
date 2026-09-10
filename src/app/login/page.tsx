@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { SixSigmaLogo } from "@/components/ui/SixSigmaLogo";
@@ -274,8 +275,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Security Standards & Governance */}
-          <div className="pt-6 border-t border-[#252932] space-y-2">
+          {/* Security Standards & Legal Links */}
+          <div className="pt-6 border-t border-[#252932] space-y-2.5">
             <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
               <ShieldCheck className="w-4 h-4 text-[#7BA238] flex-shrink-0" />
               <span>Contrôle d&apos;accès RBAC & Séparation des Pouvoirs (SoD)</span>
@@ -283,6 +284,15 @@ export default function LoginPage() {
             <p className="text-[11px] text-slate-400 leading-relaxed pl-6">
               Toutes les sessions et transactions sont soumises à la traçabilité intégrale par journal d&apos;audit centralisé.
             </p>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-[#252932]/60">
+              <Link href="/terms" className="hover:text-slate-200 transition underline underline-offset-2">
+                Charte d&apos;Accès SI
+              </Link>
+              <span>•</span>
+              <Link href="/privacy" className="hover:text-slate-200 transition underline underline-offset-2">
+                Protection des Données (RDC)
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -74,6 +74,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
     contract_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     id_expiry_date: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
   });
+  const [legalConsent, setLegalConsent] = useState(false);
 
   // Edit Role Form
   const [newRole, setNewRole] = useState<UserRole>("supervisor");
@@ -152,6 +153,11 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   // Handlers
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!legalConsent) {
+      showToast("error", "Veuillez attester de la conformité de la collecte des données selon le Code du Travail de la RDC.");
+      return;
+    }
+
     setLoading(true);
 
     const emailToUse = createForm.email.includes("@")
@@ -171,6 +177,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
     showToast("success", `Collaborateur ${createForm.first_name} ${createForm.last_name} créé avec succès.`);
     setShowCreateModal(false);
+    setLegalConsent(false);
     setCreateForm({
       first_name: "",
       last_name: "",
@@ -753,17 +760,36 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                 </div>
               </div>
 
+              {/* Informed Consent Checkbox according to DRC Labor Code */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={legalConsent}
+                    onChange={(e) => setLegalConsent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#8E2424] focus:ring-[#8E2424]"
+                  />
+                  <span className="text-[11px] leading-relaxed text-slate-700">
+                    J&apos;atteste que la collecte de ces données est conforme au Code du Travail de la RDC et à la politique interne de protection des données de SIX SIGMA SARL.
+                  </span>
+                </label>
+              </div>
+
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setLegalConsent(false);
+                  }}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !legalConsent}
                   className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-sm transition disabled:opacity-50 flex items-center gap-2"
                 >
                   {loading ? (
