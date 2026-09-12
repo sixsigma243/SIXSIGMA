@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Profile } from "@/types/database";
 import { ROLES_CONFIG } from "@/lib/rbac";
@@ -71,6 +72,7 @@ export function Header({ profile }: HeaderProps) {
     if (pathname.startsWith("/fleet")) return "Flotte & Engins";
     if (pathname.startsWith("/audit")) return "Gouvernance & Audit";
     if (pathname.startsWith("/admin/users")) return "Administration Employés";
+    if (pathname.startsWith("/profile")) return "Mon Profil & Sécurité";
     return "Système";
   };
 
@@ -193,20 +195,24 @@ export function Header({ profile }: HeaderProps) {
             )}
           </button>
 
-          {/* User Avatar Badge */}
-          <div className="flex items-center gap-2.5 pl-2 border-l border-slate-100">
-            <div className="w-8 h-8 rounded-full bg-[#8E2424]/10 text-[#8E2424] font-bold text-xs flex items-center justify-center border border-[#8E2424]/20 shadow-xs">
+          {/* User Avatar Badge Linked to /profile */}
+          <Link
+            href="/profile"
+            className="flex items-center gap-2.5 pl-2 border-l border-slate-100 hover:opacity-80 transition group"
+            title="Mon Profil & Sécurité (Changer mon mot de passe)"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#8E2424]/10 text-[#8E2424] font-bold text-xs flex items-center justify-center border border-[#8E2424]/20 shadow-xs group-hover:border-[#8E2424]/50">
               {getInitials(profile?.full_name)}
             </div>
             <div className="hidden lg:block text-left leading-tight">
-              <div className="text-xs font-semibold text-slate-900">
+              <div className="text-xs font-semibold text-slate-900 group-hover:text-[#8E2424] transition-colors">
                 {profile?.full_name || "Elysée Mudimbi"}
               </div>
               <div className="text-[10px] text-slate-400">
                 {isAdmin ? "Super-Admin" : roleInfo.label}
               </div>
             </div>
-          </div>
+          </Link>
         </div>
       </header>
 

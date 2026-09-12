@@ -284,6 +284,9 @@ export interface PayrollItem {
   deductions: number;
   net_salary: number;
   currency: CurrencyCode;
+  calculation_mode?: string;
+  absence_days?: number;
+  notes?: string | null;
   created_at: string;
   profile?: Profile;
 }

@@ -114,19 +114,23 @@ export function Sidebar({ profile }: SidebarProps) {
 
       {/* User Profile Block at Bottom (Inspired by Slide 01 AdminPro) */}
       <div className="mt-auto p-4 border-t border-slate-100 flex items-center justify-between gap-3 bg-white">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+        <Link
+          href="/profile"
+          className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80 transition group"
+          title="Mon Profil & Sécurité (Changer mon mot de passe)"
+        >
+          <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs group-hover:border-[#8E2424]/40">
             {getInitials(profile?.full_name)}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-slate-900 truncate">
+            <p className="text-xs font-semibold text-slate-900 truncate group-hover:text-[#8E2424] transition-colors">
               {profile?.full_name || "Elysée Mudimbi"}
             </p>
             <p className="text-[11px] text-slate-400 truncate">
               {userRole === "admin" ? "Super-Admin" : roleInfo.label}
             </p>
           </div>
-        </div>
+        </Link>
 
         <button
           onClick={handleSignOut}
