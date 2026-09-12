@@ -10,6 +10,7 @@ import {
   toggleEmployeeStatus,
   updateEmployeeCompliance,
   resetEmployeePassword,
+  deleteEmployeeAccount,
 } from "./actions";
 import {
   UserCog,
@@ -33,17 +34,24 @@ import {
   Phone,
   Mail,
   Lock,
+  Trash2,
 } from "lucide-react";
 
 interface UsersClientViewProps {
   initialProfiles: Profile[];
   currentUserId: string;
+  currentUserRole?: UserRole;
 }
 
 const ROOT_EMAIL = "elyseemudimbi@sixsigma.cd";
 
-export function UsersClientView({ initialProfiles, currentUserId }: UsersClientViewProps) {
+export function UsersClientView({
+  initialProfiles,
+  currentUserId,
+  currentUserRole,
+}: UsersClientViewProps) {
   const router = useRouter();
+  const isAdmin = currentUserRole === "admin";
 
   // State
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
@@ -57,6 +65,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   const [selectedUserForRole, setSelectedUserForRole] = useState<Profile | null>(null);
   const [selectedUserForCompliance, setSelectedUserForCompliance] = useState<Profile | null>(null);
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<Profile | null>(null);
+  const [selectedUserForDelete, setSelectedUserForDelete] = useState<Profile | null>(null);
 
   // Forms state
   const [loading, setLoading] = useState(false);
@@ -81,10 +90,14 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   // Edit Role Form
   const [newRole, setNewRole] = useState<UserRole>("supervisor");
 
-  // Edit Compliance Form
+  // Edit Compliance & Administrative Form (HR accessible)
   const [complianceForm, setComplianceForm] = useState({
     contract_end_date: "",
     id_expiry_date: "",
+    base_salary: 0,
+    daily_rate: 0,
+    trade_category: "Manœuvre",
+    job_title: "",
   });
 
   // Reset Password Form
@@ -155,6 +168,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   // Handlers
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showToast("error", "403 Forbidden : Seul un Administrateur Système peut créer un collaborateur.");
+      return;
+    }
     if (!legalConsent) {
       showToast("error", "Veuillez attester de la conformité de la collecte des données selon le Code du Travail de la RDC.");
       return;
@@ -198,6 +215,11 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
   };
 
   const handleToggleStatus = async (userToToggle: Profile) => {
+    if (!isAdmin) {
+      showToast("error", "403 Forbidden : Action réservée exclusivement à l'Administrateur Système.");
+      return;
+    }
+
     if (userToToggle.email === ROOT_EMAIL) {
       showToast("error", "Action interdite : Le compte racine ne peut être désactivé.");
       return;
@@ -227,6 +249,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
   const handleRoleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showToast("error", "403 Forbidden : Modification de rôle réservée exclusivement à l'Administrateur Système.");
+      return;
+    }
     if (!selectedUserForRole) return;
     if (selectedUserForRole.email === ROOT_EMAIL) {
       showToast("error", "Le rôle du compte racine est immuable.");
@@ -263,11 +289,17 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
     const res = await updateEmployeeCompliance(
       selectedUserForCompliance.id,
       complianceForm.contract_end_date || null,
-      complianceForm.id_expiry_date || null
+      complianceForm.id_expiry_date || null,
+      {
+        base_salary: Number(complianceForm.base_salary) || 0,
+        daily_rate: Number(complianceForm.daily_rate) || 0,
+        trade_category: complianceForm.trade_category || null,
+        job_title: complianceForm.job_title || null,
+      }
     );
 
     if (!res.success) {
-      showToast("error", res.error || "Erreur lors de la mise à jour des dates");
+      showToast("error", res.error || "Erreur lors de la mise à jour des données administratives");
       setLoading(false);
       return;
     }
@@ -279,12 +311,19 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
               ...p,
               contract_end_date: complianceForm.contract_end_date || null,
               id_expiry_date: complianceForm.id_expiry_date || null,
+              base_salary: Number(complianceForm.base_salary) || 0,
+              daily_rate: Number(complianceForm.daily_rate) || 0,
+              trade_category: complianceForm.trade_category || null,
+              job_title: complianceForm.job_title || null,
             }
           : p
       )
     );
 
-    showToast("success", `Dates de conformité RH mises à jour pour ${selectedUserForCompliance.full_name}.`);
+    showToast(
+      "success",
+      `Données administratives contractuelles mises à jour pour ${selectedUserForCompliance.full_name}.`
+    );
     setSelectedUserForCompliance(null);
     setLoading(false);
     router.refresh();
@@ -292,6 +331,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showToast("error", "403 Forbidden : Réinitialisation réservée exclusivement à l'Administrateur Système.");
+      return;
+    }
     if (!selectedUserForPassword) return;
     setLoading(true);
 
@@ -306,6 +349,32 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
     setSelectedUserForPassword(null);
     setNewPassword("");
     setLoading(false);
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!isAdmin) {
+      showToast("error", "403 Forbidden : Suppression définitive réservée à l'Administrateur Système.");
+      return;
+    }
+    if (!selectedUserForDelete) return;
+
+    setLoading(true);
+    const res = await deleteEmployeeAccount(selectedUserForDelete.id);
+
+    if (!res.success) {
+      showToast("error", res.error || "Erreur lors de la suppression du compte");
+      setLoading(false);
+      return;
+    }
+
+    setProfiles((prev) => prev.filter((p) => p.id !== selectedUserForDelete.id));
+    showToast(
+      "success",
+      `Le compte de ${selectedUserForDelete.full_name} a été supprimé définitivement.`
+    );
+    setSelectedUserForDelete(null);
+    setLoading(false);
+    router.refresh();
   };
 
   return (
@@ -336,24 +405,36 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#8E2424]/10 text-[#8E2424]">
                 Administration Supabase
               </span>
-              <span className="text-xs text-slate-400">• Gouvernance RH & Sécurité</span>
+              <span className="text-xs text-slate-400">
+                • {isAdmin ? "Mode Super-Admin (Accès Complet & SoD)" : "Mode RH (Consultation & Gestion Administrative)"}
+              </span>
             </div>
             <h1 className="text-xl md:text-2xl font-bold text-[#1C1F23] tracking-tight flex items-center gap-2.5">
               <UserCog className="w-6 h-6 text-[#8E2424]" />
               <span>Gestion des Collaborateurs & Rôles Métier</span>
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Création des comptes d&apos;accès, affectation des 14 rôles opérationnels, coupure de session instantanée et conformité RH.
+              {isAdmin
+                ? "Création des comptes, attribution des 15 rôles opérationnels, coupure de session instantanée et suppression définitive."
+                : "Registre du personnel, suivi des échéances de contrats, validité des pièces d'identité et gestion administrative contractuelle."}
             </p>
           </div>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-xs shadow-sm transition active:scale-95"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Nouvel Employé</span>
-          </button>
+          {/* Create Employee Button - Strictly restricted to Admin */}
+          {isAdmin ? (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-semibold text-xs shadow-sm transition active:scale-95"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Nouvel Employé</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 text-xs">
+              <ShieldCheck className="w-4 h-4 text-[#7BA238]" />
+              <span>Création réservée à l&apos;Administrateur Système</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -383,7 +464,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
         <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-[#8E2424] uppercase tracking-wider">Comptes Désactivés</p>
+            <p className="text-xs font-semibold text-[#8E2424] uppercase tracking-wider">Comptes Suspendus</p>
             <p className="text-2xl lg:text-3xl font-bold text-[#8E2424] mt-1">{inactiveCount}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Accès coupé instantanément</p>
           </div>
@@ -442,7 +523,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           >
             <option value="all">Tous Statuts</option>
             <option value="active">Actifs Uniquement</option>
-            <option value="inactive">Désactivés</option>
+            <option value="inactive">Suspendus / Inactifs</option>
           </select>
 
           {/* Compliance Filter */}
@@ -486,6 +567,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                   const contractStat = getComplianceStatus(user.contract_end_date);
                   const idStat = getComplianceStatus(user.id_expiry_date);
                   const isRoot = user.email === ROOT_EMAIL;
+                  const isSelf = user.id === currentUserId;
 
                   return (
                     <tr key={user.id} className="hover:bg-slate-50/60 transition">
@@ -552,25 +634,42 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                         </div>
                       </td>
 
-                      {/* Status Toggle Pastel Badge */}
+                      {/* Status Session: Interactive toggle for Admin, Static Read-Only badge for HR */}
                       <td className="px-4 py-4">
-                        <button
-                          onClick={() => handleToggleStatus(user)}
-                          disabled={isRoot || loading}
-                          title={isRoot ? "Compte racine protégé" : "Cliquer pour basculer le statut"}
-                          className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition flex items-center gap-1.5 ${
-                            user.is_active !== false
-                              ? "bg-emerald-50 text-[#7BA238] border-emerald-200/60 hover:bg-emerald-100"
-                              : "bg-rose-50 text-[#8E2424] border-rose-200/60 hover:bg-rose-100"
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
+                        {isAdmin ? (
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            disabled={isRoot || loading}
+                            title={isRoot ? "Compte racine protégé" : "Cliquer pour basculer le statut"}
+                            className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition flex items-center gap-1.5 ${
+                              user.is_active !== false
+                                ? "bg-emerald-50 text-[#7BA238] border-emerald-200/60 hover:bg-emerald-100"
+                                : "bg-rose-50 text-[#8E2424] border-rose-200/60 hover:bg-rose-100"
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                user.is_active !== false ? "bg-[#7BA238]" : "bg-[#8E2424]"
+                              }`}
+                            />
+                            <span>{user.is_active !== false ? "Actif" : "Suspendu"}</span>
+                          </button>
+                        ) : (
                           <span
-                            className={`w-2 h-2 rounded-full ${
-                              user.is_active !== false ? "bg-[#7BA238]" : "bg-[#8E2424]"
+                            className={`inline-flex px-3 py-1 rounded-full text-[11px] font-semibold border items-center gap-1.5 ${
+                              user.is_active !== false
+                                ? "bg-emerald-50 text-[#7BA238] border-emerald-200/60"
+                                : "bg-rose-50 text-[#8E2424] border-rose-200/60"
                             }`}
-                          />
-                          <span>{user.is_active !== false ? "Actif" : "Désactivé"}</span>
-                        </button>
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                user.is_active !== false ? "bg-[#7BA238]" : "bg-[#8E2424]"
+                              }`}
+                            />
+                            <span>{user.is_active !== false ? "Actif" : "Suspendu"}</span>
+                          </span>
+                        )}
                       </td>
 
                       {/* Contract End Date */}
@@ -611,48 +710,67 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                         </div>
                       </td>
 
-                      {/* Actions */}
+                      {/* Actions: Strict SoD separation */}
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Change Role */}
-                          <button
-                            onClick={() => {
-                              setSelectedUserForRole(user);
-                              setNewRole(user.role);
-                            }}
-                            disabled={isRoot}
-                            title={isRoot ? "Rôle racine protégé" : "Changer de rôle métier"}
-                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition disabled:opacity-40"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
+                          {/* Change Role: STRICTLY ADMIN */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => {
+                                setSelectedUserForRole(user);
+                                setNewRole(user.role);
+                              }}
+                              disabled={isRoot}
+                              title={isRoot ? "Rôle racine protégé" : "Changer de rôle métier"}
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition disabled:opacity-40"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
 
-                          {/* Compliance Dates */}
+                          {/* Compliance & Administrative Details: Accessible to RH & Admin */}
                           <button
                             onClick={() => {
                               setSelectedUserForCompliance(user);
                               setComplianceForm({
                                 contract_end_date: user.contract_end_date || "",
                                 id_expiry_date: user.id_expiry_date || "",
+                                base_salary: user.base_salary || 0,
+                                daily_rate: user.daily_rate || 0,
+                                trade_category: user.trade_category || "Manœuvre",
+                                job_title: user.job_title || "",
                               });
                             }}
-                            title="Modifier les échéances RH"
+                            title="Mettre à jour les données administratives contractuelles"
                             className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition"
                           >
                             <Calendar className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Reset Password */}
-                          <button
-                            onClick={() => {
-                              setSelectedUserForPassword(user);
-                              setNewPassword("");
-                            }}
-                            title="Réinitialiser le mot de passe"
-                            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition"
-                          >
-                            <Key className="w-3.5 h-3.5" />
-                          </button>
+                          {/* Reset Password: STRICTLY ADMIN */}
+                          {isAdmin && (
+                            <button
+                              onClick={() => {
+                                setSelectedUserForPassword(user);
+                                setNewPassword("");
+                              }}
+                              title="Réinitialiser le mot de passe"
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200/60 transition"
+                            >
+                              <Key className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {/* Delete Account Permanently: STRICTLY ADMIN */}
+                          {isAdmin && !isRoot && !isSelf && (
+                            <button
+                              onClick={() => setSelectedUserForDelete(user)}
+                              title="Supprimer définitivement le compte"
+                              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#8E2424] hover:text-rose-900 border border-rose-200/60 transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -953,10 +1071,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
         </div>
       )}
 
-      {/* MODAL 3: COMPLIANCE DATES */}
+      {/* MODAL 3: COMPLIANCE & ADMINISTRATIVE DETAILS (HR & ADMIN) */}
       {selectedUserForCompliance && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-lg shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
             <button
               onClick={() => setSelectedUserForCompliance(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
@@ -966,35 +1084,110 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
             <h3 className="text-base font-bold text-[#1C1F23] tracking-tight mb-1 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-600" />
-              Dates de Conformité RH
+              Données Administratives & Conformité RH
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Pour : <span className="font-bold text-slate-800">{selectedUserForCompliance.full_name}</span>
+              Collaborateur : <span className="font-bold text-slate-800">{selectedUserForCompliance.full_name}</span> (
+              <span className="font-mono">{selectedUserForCompliance.email}</span>)
             </p>
 
             <form onSubmit={handleComplianceSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                  Date de Fin de Contrat de Travail
-                </label>
-                <input
-                  type="date"
-                  value={complianceForm.contract_end_date}
-                  onChange={(e) => setComplianceForm({ ...complianceForm, contract_end_date: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Fin de Contrat RH
+                  </label>
+                  <input
+                    type="date"
+                    value={complianceForm.contract_end_date}
+                    onChange={(e) => setComplianceForm({ ...complianceForm, contract_end_date: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Validité Pièce d&apos;Identité
+                  </label>
+                  <input
+                    type="date"
+                    value={complianceForm.id_expiry_date}
+                    onChange={(e) => setComplianceForm({ ...complianceForm, id_expiry_date: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                  Date d&apos;Expiration de la Pièce d&apos;Identité
-                </label>
-                <input
-                  type="date"
-                  value={complianceForm.id_expiry_date}
-                  onChange={(e) => setComplianceForm({ ...complianceForm, id_expiry_date: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Intitulé du Poste / Métier
+                  </label>
+                  <input
+                    type="text"
+                    value={complianceForm.job_title}
+                    onChange={(e) => setComplianceForm({ ...complianceForm, job_title: e.target.value })}
+                    placeholder="Ex: Conducteur d'engins"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Corps d&apos;État / Spécialité
+                  </label>
+                  <select
+                    value={complianceForm.trade_category}
+                    onChange={(e) => setComplianceForm({ ...complianceForm, trade_category: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                  >
+                    <option value="Manœuvre">Manœuvre</option>
+                    <option value="Coffreur">Coffreur</option>
+                    <option value="Ferrailleur">Ferrailleur</option>
+                    <option value="Maçon">Maçon</option>
+                    <option value="Électricien">Électricien</option>
+                    <option value="Soudeur">Soudeur</option>
+                    <option value="Plombier">Plombier</option>
+                    <option value="Peintre">Peintre</option>
+                    <option value="Topographe">Topographe</option>
+                    <option value="Mécanicien Engins">Mécanicien Engins</option>
+                    <option value="Chauffeur / Opérateur">Chauffeur / Opérateur</option>
+                    <option value="Polyvalent">Polyvalent</option>
+                    <option value="Cadre / Maîtrise">Cadre / Maîtrise</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Salaire de Base Mensuel (USD)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={complianceForm.base_salary}
+                    onChange={(e) => setComplianceForm({ ...complianceForm, base_salary: parseFloat(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                    Taux Journalier (USD / jour)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={complianceForm.daily_rate}
+                    onChange={(e) => setComplianceForm({ ...complianceForm, daily_rate: parseFloat(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                  />
+                </div>
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
@@ -1008,10 +1201,10 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
                 >
                   {loading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Mettre à Jour</span>
+                  <span>Enregistrer les Données RH</span>
                 </button>
               </div>
             </form>
@@ -1019,7 +1212,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
         </div>
       )}
 
-      {/* MODAL 4: RESET PASSWORD */}
+      {/* MODAL 4: RESET PASSWORD (STRICTLY ADMIN) */}
       {selectedUserForPassword && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
@@ -1071,6 +1264,66 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: DELETE EMPLOYEE ACCOUNT (STRICTLY ADMIN) */}
+      {selectedUserForDelete && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md shadow-2xl p-6 relative animate-in fade-in zoom-in-95 text-[#1C1F23]">
+            <button
+              onClick={() => setSelectedUserForDelete(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-100 text-[#8E2424] flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#1C1F23] tracking-tight">
+                  Supprimer Définitivement le Compte
+                </h3>
+                <p className="text-xs text-slate-500">Action irréversible réservée à l&apos;Administrateur</p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200/80 mb-4 text-xs text-rose-900 space-y-2">
+              <p>
+                Êtes-vous certain de vouloir supprimer définitivement le compte de{" "}
+                <strong className="font-bold">{selectedUserForDelete.full_name}</strong> (
+                <span className="font-mono">{selectedUserForDelete.email}</span>) ?
+              </p>
+              <p className="text-[11px] text-rose-700">
+                Cette action supprimera l&apos;utilisateur de Supabase Auth et nettoiera son profil dans la base de données. L&apos;opération sera consignée dans les journaux d&apos;audit.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSelectedUserForDelete(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleDeleteSubmit}
+                className="px-4 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+              >
+                {loading ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>Confirmer la Suppression</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

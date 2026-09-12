@@ -46,6 +46,7 @@ export default async function AdminUsersPage() {
       <UsersClientView
         initialProfiles={(profiles as Profile[]) || []}
         currentUserId={user.id}
+        currentUserRole={currentProfile.role}
       />
     </div>
   );
