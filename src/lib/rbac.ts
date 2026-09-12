@@ -254,10 +254,10 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
     ],
   },
   {
-    name: "Gestion Collaborateurs",
+    name: "Collaborateurs & Base RH",
     href: "/admin/users",
     iconName: "UserCog",
-    allowedRoles: ["admin"],
+    allowedRoles: ["admin", "hr_officer", "company_management"],
   },
 ];
 

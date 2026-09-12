@@ -36,6 +36,11 @@ export interface Profile {
   is_active?: boolean;
   contract_end_date?: string | null;
   id_expiry_date?: string | null;
+  employee_id?: string | null;
+  job_title?: string | null;
+  base_salary?: number;
+  id_card_number?: string | null;
+  contract_type?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,12 +57,15 @@ export interface Project {
   currency: CurrencyCode;
   site_manager_id: string | null;
   status: ProjectStatus;
+  approval_status?: 'approved' | 'pending_approval' | 'rejected';
+  created_by?: string | null;
   start_date: string;
   end_date: string | null;
   description: string | null;
   created_at: string;
   updated_at: string;
   site_manager?: Profile | null;
+  creator?: Profile | null;
 }
 
 export interface ProjectAssignment {
@@ -250,8 +258,74 @@ export interface PayrollPeriod {
   is_locked: boolean;
   locked_by: string | null;
   locked_at: string | null;
+  total_gross?: number;
+  total_net?: number;
+  total_deductions?: number;
+  currency?: CurrencyCode;
+  status?: 'draft' | 'calculated' | 'transmitted_to_finance' | 'paid';
+  transmitted_at?: string | null;
+  finance_transaction_id?: string | null;
   created_at: string;
   locker?: Profile | null;
+}
+
+export interface PayrollItem {
+  id: string;
+  period_id: string;
+  profile_id: string;
+  worker_name: string;
+  days_worked: number;
+  base_salary: number;
+  overtime_pay: number;
+  bonuses: number;
+  deductions: number;
+  net_salary: number;
+  currency: CurrencyCode;
+  created_at: string;
+  profile?: Profile;
+}
+
+export type HrRequestType = 'sanction' | 'recruitment' | 'promotion' | 'contract_termination' | 'inquiry';
+export type HrRequestStatus = 'submitted' | 'under_review' | 'approved' | 'rejected';
+
+export interface HrRequest {
+  id: string;
+  sender_id: string;
+  target_user_id?: string | null;
+  type: HrRequestType;
+  subject: string;
+  description: string;
+  hr_opinion?: string | null;
+  decision_report?: string | null;
+  status: HrRequestStatus;
+  created_at: string;
+  updated_at: string;
+  sender?: Profile;
+  target_user?: Profile;
+}
+
+export type CommercialActivityType = 'call' | 'meeting' | 'site_visit' | 'proposal_sent' | 'follow_up' | 'negotiation';
+export type CommercialActivityStatus = 'in_progress' | 'won' | 'lost' | 'postponed';
+
+export interface CommercialActivity {
+  id: string;
+  commercial_id: string;
+  client_name: string;
+  contact_person?: string | null;
+  contact_phone?: string | null;
+  contact_email?: string | null;
+  activity_type: CommercialActivityType;
+  subject: string;
+  notes: string;
+  estimated_deal_value?: number;
+  currency?: CurrencyCode;
+  next_follow_up_date?: string | null;
+  status: CommercialActivityStatus;
+  project_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  commercial?: Profile;
+  project?: Project;
 }
 
 export interface CashboxTransaction {

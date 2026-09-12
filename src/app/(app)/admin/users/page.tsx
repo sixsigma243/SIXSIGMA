@@ -27,7 +27,7 @@ export default async function AdminUsersPage() {
     .eq("id", user.id)
     .single();
 
-  if (!currentProfile || currentProfile.role !== "admin") {
+  if (!currentProfile || !["admin", "hr_officer", "company_management"].includes(currentProfile.role)) {
     redirect("/dashboard");
   }
 

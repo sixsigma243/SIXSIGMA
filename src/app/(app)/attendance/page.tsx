@@ -28,12 +28,20 @@ import {
   AlertTriangle,
   Trash2,
   ClipboardCheck,
+  Coins,
+  Inbox,
+  Briefcase,
 } from "lucide-react";
+import { PayrollSection } from "./components/PayrollSection";
+import { HrRequestsSection } from "./components/HrRequestsSection";
+import { WorkersDirectorySection } from "./components/WorkersDirectorySection";
 
 export default function AttendancePage() {
   const supabase = createClient();
 
-  const [activeTab, setActiveTab] = useState<"daily" | "reconciliation">("daily");
+  const [activeTab, setActiveTab] = useState<
+    "daily" | "reconciliation" | "payroll" | "hr_requests" | "workers"
+  >("daily");
   const [dateFilter, setDateFilter] = useState(new Date().toISOString().split("T")[0]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [reconciliations, setReconciliations] = useState<AttendanceReconciliation[]>([]);
@@ -253,6 +261,16 @@ export default function AttendancePage() {
       currentUser.role
     );
 
+  const canAccessPayroll =
+    currentUser &&
+    ["admin", "company_management", "hr_officer", "accountant"].includes(
+      currentUser.role
+    );
+
+  const canAccessWorkersDirectory =
+    currentUser &&
+    ["admin", "company_management", "hr_officer"].includes(currentUser.role);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Header */}
@@ -260,59 +278,61 @@ export default function AttendancePage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-[#1C1F23] tracking-tight flex items-center gap-2.5">
             <Users className="w-6 h-6 text-[#7BA238]" />
-            <span>Pointage & Ressources Humaines (Terrain)</span>
+            <span>Pointage & Ressources Humaines</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Enregistrement journalier des présences, arbitrage des écarts (Pointeur vs Chef d&apos;Équipe) et suivi des heures sup.
+            Pointage terrain, arbitrage des écarts, boîte de réception RH, registre des effectifs et calcul de paie (SoD).
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold shadow-xs focus:outline-none focus:border-[#8E2424]"
-            />
-          </div>
+        {(activeTab === "daily" || activeTab === "reconciliation") && (
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-semibold shadow-xs focus:outline-none focus:border-[#8E2424]"
+              />
+            </div>
 
-          {canQuickSubmit && (
+            {canQuickSubmit && (
+              <button
+                onClick={() => {
+                  setQuickDate(dateFilter);
+                  if (projects.length > 0 && !quickProjectId) setQuickProjectId(projects[0].id);
+                  setShowQuickSheet(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-semibold shadow-sm transition flex items-center gap-2 active:scale-95"
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span>Soumission Rapide Feuille de Présence</span>
+              </button>
+            )}
+
             <button
-              onClick={() => {
-                setQuickDate(dateFilter);
-                if (projects.length > 0 && !quickProjectId) setQuickProjectId(projects[0].id);
-                setShowQuickSheet(true);
-              }}
-              className="px-4 py-2.5 rounded-xl bg-[#7BA238] hover:bg-[#6A8D2F] text-white text-xs font-semibold shadow-sm transition flex items-center gap-2 active:scale-95"
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-sm transition flex items-center gap-2 active:scale-95"
             >
-              <ClipboardCheck className="w-4 h-4" />
-              <span>Soumission Rapide Feuille de Présence</span>
+              <Plus className="w-4 h-4" />
+              <span>Nouveau Pointage</span>
             </button>
-          )}
-
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white text-xs font-semibold shadow-sm transition flex items-center gap-2 active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nouveau Pointage</span>
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("daily")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
             activeTab === "daily"
               ? "bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/30"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>Feuille de Pointage Journalière</span>
+          <span>Pointage Journalier</span>
           <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-bold">
             {entries.length}
           </span>
@@ -320,20 +340,63 @@ export default function AttendancePage() {
 
         <button
           onClick={() => setActiveTab("reconciliation")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
             activeTab === "reconciliation"
               ? "bg-amber-50 text-amber-800 border border-amber-300"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
           <Scale className="w-4 h-4 text-amber-600" />
-          <span>Arbitrage des Écarts (Pointeur vs Team Leader)</span>
+          <span>Arbitrage des Écarts</span>
           {pendingReconciliationsCount > 0 && (
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white font-bold animate-pulse">
               {pendingReconciliationsCount} à arbitrer
             </span>
           )}
         </button>
+
+        {/* Tab 3: Boîte de Réception RH & Signalements */}
+        <button
+          onClick={() => setActiveTab("hr_requests")}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "hr_requests"
+              ? "bg-[#8E2424] text-white shadow-xs"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <Inbox className="w-4 h-4" />
+          <span>Requêtes RH & Signalements</span>
+        </button>
+
+        {/* Tab 4: Base Salariés & Registre RH */}
+        {canAccessWorkersDirectory && (
+          <button
+            onClick={() => setActiveTab("workers")}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "workers"
+                ? "bg-[#7BA238] text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            }`}
+          >
+            <Briefcase className="w-4 h-4" />
+            <span>Base Salariés (Dossiers RH)</span>
+          </button>
+        )}
+
+        {/* Tab 5: Calcul Paie & Transmission Caisse (SoD) */}
+        {canAccessPayroll && (
+          <button
+            onClick={() => setActiveTab("payroll")}
+            className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
+              activeTab === "payroll"
+                ? "bg-emerald-700 text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            }`}
+          >
+            <Coins className="w-4 h-4" />
+            <span>Paie & Caisse (SoD)</span>
+          </button>
+        )}
       </div>
 
       {activeTab === "daily" ? (
@@ -504,7 +567,7 @@ export default function AttendancePage() {
             )}
           </div>
         </>
-      ) : (
+      ) : activeTab === "reconciliation" ? (
         /* RECONCILIATION TAB */
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs text-amber-900 shadow-sm">
@@ -621,6 +684,12 @@ export default function AttendancePage() {
             )}
           </div>
         </div>
+      ) : activeTab === "payroll" ? (
+        <PayrollSection currentUser={currentUser} />
+      ) : activeTab === "hr_requests" ? (
+        <HrRequestsSection currentUser={currentUser} />
+      ) : (
+        <WorkersDirectorySection currentUser={currentUser} />
       )}
 
       {/* New Entry Modal */}

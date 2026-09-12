@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   MaterialRequisition,
@@ -25,9 +26,12 @@ import {
   ShoppingCart,
   BadgePercent,
   FileSpreadsheet,
+  Edit3,
+  ShieldAlert,
 } from "lucide-react";
 
 export default function RequisitionsPage() {
+  const router = useRouter();
   const supabase = createClient();
 
   const [requisitions, setRequisitions] = useState<MaterialRequisition[]>([]);
@@ -35,6 +39,12 @@ export default function RequisitionsPage() {
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Super-Admin Arbitration State
+  const [adminArbitrateReq, setAdminArbitrateReq] = useState<MaterialRequisition | null>(null);
+  const [adminNewStatus, setAdminNewStatus] = useState<string>("approved");
+  const [adminComment, setAdminComment] = useState("");
+  const [adminSaving, setAdminSaving] = useState(false);
 
   // New DRI Modal State
   const [showModal, setShowModal] = useState(false);
@@ -58,13 +68,20 @@ export default function RequisitionsPage() {
   const fetchData = async () => {
     setLoading(true);
     const { data: u } = await supabase.auth.getUser();
-    if (u.user) {
+    if (u?.user) {
       const { data: p } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", u.user.id)
         .single();
-      if (p) setCurrentUser(p as Profile);
+      if (p) {
+        if (p.role === "commercial") {
+          // Restriction DRI : Le commercial n'a aucun accès aux DRI
+          router.push("/dashboard");
+          return;
+        }
+        setCurrentUser(p as Profile);
+      }
     }
 
     const { data: driData } = await supabase
@@ -240,6 +257,30 @@ export default function RequisitionsPage() {
     setActionLoading(null);
   };
 
+  const handleAdminArbitrate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminArbitrateReq) return;
+    setAdminSaving(true);
+
+    const { error } = await supabase
+      .from("material_requisitions")
+      .update({
+        status: adminNewStatus,
+        validation_comment: adminComment ? `[Arbitrage Super-Admin]: ${adminComment}` : adminArbitrateReq.validation_comment,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", adminArbitrateReq.id);
+
+    if (!error) {
+      setAdminArbitrateReq(null);
+      setAdminComment("");
+      fetchData();
+    } else {
+      alert("Erreur lors de l'arbitrage Admin : " + error.message);
+    }
+    setAdminSaving(false);
+  };
+
   const handleCreatePO = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!poModalReq) return;
@@ -288,7 +329,7 @@ export default function RequisitionsPage() {
   const userRole = currentUser?.role || "supervisor";
   const canApprove = ["admin", "company_management", "site_manager"].includes(userRole);
   const canFulfill = ["admin", "company_management", "warehouse_keeper"].includes(userRole);
-  const canBuy = ["admin", "company_management", "buyer", "site_manager"].includes(userRole);
+  const canBuy = ["admin", "company_management", "buyer", "site_manager", "accountant"].includes(userRole);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -401,6 +442,22 @@ export default function RequisitionsPage() {
                     >
                       <PackageCheck className="w-4 h-4" />
                       <span>Délivrer Matériel</span>
+                    </button>
+                  )}
+
+                  {/* Super-Admin Full Arbitration & Modification Rights */}
+                  {currentUser?.role === "admin" && (
+                    <button
+                      onClick={() => {
+                        setAdminArbitrateReq(req);
+                        setAdminNewStatus(req.status);
+                        setAdminComment(req.validation_comment || "");
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold flex items-center gap-1.5 transition"
+                      title="Arbitrage et Modification Super-Admin"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Arbitrer DRI</span>
                     </button>
                   )}
 
@@ -770,6 +827,74 @@ export default function RequisitionsPage() {
                   className="px-5 py-2 rounded-xl bg-[#8E2424] hover:bg-[#751D1D] text-white font-bold transition disabled:opacity-50 border border-[#8E2424] shadow-xs"
                 >
                   {saving ? "Transmission..." : "Soumettre la DRI"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: SUPER-ADMIN ARBITRATION & DRI EDIT */}
+      {adminArbitrateReq && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h2 className="text-base font-bold text-[#1C1F23] flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-purple-600" />
+                <span>Arbitrage & Modification Super-Admin ({adminArbitrateReq.requisition_number})</span>
+              </h2>
+              <button onClick={() => setAdminArbitrateReq(null)} className="text-slate-400 hover:text-slate-600 p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mb-4">
+              En tant que Super-Administrateur, vous pouvez modifier l&apos;état officiel de cette réquisition et consigner une décision d&apos;arbitrage prioritaire :
+            </p>
+
+            <form onSubmit={handleAdminArbitrate} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Statut d&apos;Arbitrage *</label>
+                <select
+                  value={adminNewStatus}
+                  onChange={(e) => setAdminNewStatus(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-purple-600"
+                >
+                  <option value="submitted">Soumis (En attente visa)</option>
+                  <option value="approved">Approuvé (Autorisé pour achat / magasin)</option>
+                  <option value="site_manager_approved">Visé Conducteur Travaux</option>
+                  <option value="delivered">Délivré / Livré sur Chantier</option>
+                  <option value="fulfilled">Complété / Clôturé</option>
+                  <option value="rejected">Rejeté / Annulé</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Motif d&apos;Arbitrage / Commentaire de Décision</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Justification de la décision d'arbitrage ou modification..."
+                  value={adminComment}
+                  onChange={(e) => setAdminComment(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setAdminArbitrateReq(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={adminSaving}
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition disabled:opacity-50 shadow-sm"
+                >
+                  {adminSaving ? "Arbitrage..." : "Appliquer l'Arbitrage"}
                 </button>
               </div>
             </form>

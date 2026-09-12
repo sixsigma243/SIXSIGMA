@@ -461,6 +461,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
               <tr>
                 <th className="px-5 py-4">Collaborateur</th>
+                <th className="px-4 py-4">Matricule</th>
                 <th className="px-4 py-4">Rôle & Département</th>
                 <th className="px-4 py-4">Statut Session</th>
                 <th className="px-4 py-4">Fin de Contrat</th>
@@ -471,7 +472,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             <tbody className="divide-y divide-slate-100">
               {filteredProfiles.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-10 text-center text-slate-400">
                     Aucun collaborateur ne correspond aux critères de recherche.
                   </td>
                 </tr>
@@ -512,6 +513,17 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                             )}
                           </div>
                         </div>
+                      </td>
+
+                      {/* Matricule Badge */}
+                      <td className="px-4 py-4">
+                        {user.employee_id ? (
+                          <span className="font-mono font-bold text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-200/80">
+                            {user.employee_id}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic">Non assigné</span>
+                        )}
                       </td>
 
                       {/* Role & Dept Pastel Pill */}
