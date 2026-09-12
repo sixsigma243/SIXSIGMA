@@ -50,12 +50,16 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
   // Form State
   const [formEmployeeId, setFormEmployeeId] = useState("");
   const [formJobTitle, setFormJobTitle] = useState("");
+  const [formRole, setFormRole] = useState<UserRole>("worker");
   const [formContractType, setFormContractType] = useState("CDI");
   const [formContractEndDate, setFormContractEndDate] = useState("");
   const [formIdCardNumber, setFormIdCardNumber] = useState("");
   const [formIdExpiryDate, setFormIdExpiryDate] = useState("");
   const [formBaseSalary, setFormBaseSalary] = useState<number>(0);
+  const [formDailyRate, setFormDailyRate] = useState<number>(0);
+  const [formTradeCategory, setFormTradeCategory] = useState<string>("Manœuvre");
   const [formPhone, setFormPhone] = useState("");
+  const [tradeCategoryFilter, setTradeCategoryFilter] = useState("all");
 
   const showToast = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
@@ -127,6 +131,11 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
         return false;
       }
 
+      // Trade Category Filter
+      if (tradeCategoryFilter !== "all" && (w.trade_category || "Manœuvre") !== tradeCategoryFilter) {
+        return false;
+      }
+
       // Contract Type
       if (contractFilter !== "all" && (w.contract_type || "CDI") !== contractFilter) {
         return false;
@@ -161,11 +170,14 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
     setEditingWorker(worker);
     setFormEmployeeId(worker.employee_id || "");
     setFormJobTitle(worker.job_title || "");
+    setFormRole(worker.role || "worker");
     setFormContractType(worker.contract_type || "CDI");
     setFormContractEndDate(worker.contract_end_date ? worker.contract_end_date.split("T")[0] : "");
     setFormIdCardNumber(worker.id_card_number || "");
     setFormIdExpiryDate(worker.id_expiry_date ? worker.id_expiry_date.split("T")[0] : "");
     setFormBaseSalary(Number(worker.base_salary) || 0);
+    setFormDailyRate(Number(worker.daily_rate) || 0);
+    setFormTradeCategory(worker.trade_category || "Manœuvre");
     setFormPhone(worker.phone || "");
     setShowEditModal(true);
   };
@@ -187,11 +199,14 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
         .update({
           employee_id: formEmployeeId.trim() || null,
           job_title: formJobTitle.trim() || null,
+          role: formRole,
           contract_type: formContractType,
           contract_end_date: formContractEndDate ? formContractEndDate : null,
           id_card_number: formIdCardNumber.trim() || null,
           id_expiry_date: formIdExpiryDate ? formIdExpiryDate : null,
           base_salary: formBaseSalary,
+          daily_rate: formDailyRate,
+          trade_category: formRole === "worker" ? formTradeCategory : null,
           phone: formPhone.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -318,6 +333,43 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Role Filter */}
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#8E2424]"
+            >
+              <option value="all">Rôles (Tous)</option>
+              <option value="worker">Ouvriers / Journaliers uniquement</option>
+              <option value="site_manager">Conducteurs de Travaux</option>
+              <option value="supervisor">Chefs de Chantier</option>
+              <option value="team_leader">Chefs d&apos;Équipe</option>
+              <option value="warehouse_keeper">Magasiniers</option>
+              <option value="hr_officer">Ressources Humaines</option>
+              <option value="accountant">Comptables</option>
+            </select>
+
+            {/* Trade Category */}
+            <select
+              value={tradeCategoryFilter}
+              onChange={(e) => setTradeCategoryFilter(e.target.value)}
+              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:border-[#8E2424]"
+            >
+              <option value="all">Corps d&apos;État (Tous)</option>
+              <option value="Manœuvre">Manœuvre</option>
+              <option value="Coffreur">Coffreur</option>
+              <option value="Ferrailleur">Ferrailleur</option>
+              <option value="Maçon">Maçon</option>
+              <option value="Électricien">Électricien</option>
+              <option value="Soudeur">Soudeur</option>
+              <option value="Plombier">Plombier</option>
+              <option value="Peintre">Peintre</option>
+              <option value="Topographe">Topographe</option>
+              <option value="Mécanicien Engins">Mécanicien Engins</option>
+              <option value="Chauffeur / Opérateur">Chauffeur / Opérateur</option>
+              <option value="Polyvalent">Polyvalent</option>
+            </select>
+
             {/* Cutoff Filter */}
             <select
               value={cutoffFilter}
@@ -406,11 +458,18 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
                       {/* Job title */}
                       <td className="py-3 px-4">
                         <span className="font-semibold text-slate-800 block">
-                          {w.job_title || "Non spécifié"}
+                          {w.job_title || (w.role === "worker" ? w.trade_category || "Ouvrier" : "Non spécifié")}
                         </span>
-                        <span className="text-[10px] text-slate-400 capitalize">
-                          {w.role.replace("_", " ")}
-                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-[10px] text-slate-400 capitalize">
+                            {w.role === "worker" ? "Ouvrier / Journalier" : w.role.replace("_", " ")}
+                          </span>
+                          {w.role === "worker" && w.trade_category && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                              {w.trade_category}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Contract Type */}
@@ -458,7 +517,16 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
 
                       {/* Salary */}
                       <td className="py-3 px-4 font-mono font-semibold text-slate-900">
-                        {Number(w.base_salary) > 0 ? (
+                        {w.role === "worker" && Number(w.daily_rate) > 0 ? (
+                          <div>
+                            <span className="text-emerald-700 font-bold">{Number(w.daily_rate)} USD / jour</span>
+                            {Number(w.base_salary) > 0 && (
+                              <span className="block text-[10px] text-slate-400 font-normal">
+                                Base: {Number(w.base_salary)} USD
+                              </span>
+                            )}
+                          </div>
+                        ) : Number(w.base_salary) > 0 ? (
                           <span>{Number(w.base_salary).toLocaleString("fr-FR")} USD</span>
                         ) : (
                           <span className="text-slate-400 text-[11px]">-</span>
@@ -526,21 +594,77 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
                 />
               </div>
 
-              {/* Job Title & Phone */}
+              {/* Role & Job Title / Trade Category */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Poste / Fonction
+                    Rôle Système
                   </label>
-                  <input
-                    type="text"
-                    value={formJobTitle}
-                    onChange={(e) => setFormJobTitle(e.target.value)}
-                    placeholder="Ex: Ingénieur Génie Civil"
+                  <select
+                    value={formRole}
+                    onChange={(e) => setFormRole(e.target.value as UserRole)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
-                  />
+                  >
+                    <option value="worker">Ouvrier / Journalier (Sans accès direct)</option>
+                    <option value="supervisor">Chef de Chantier</option>
+                    <option value="team_leader">Chef d&apos;Équipe</option>
+                    <option value="site_manager">Conducteur de Travaux</option>
+                    <option value="warehouse_keeper">Magasinier</option>
+                    <option value="hr_officer">Ressources Humaines</option>
+                    <option value="accountant">Comptable</option>
+                    <option value="buyer">Acheteur</option>
+                    <option value="mechanic">Mécanicien</option>
+                    <option value="dispatch">Dispatch / Chauffeur</option>
+                    <option value="safety_officer">Responsable QHSE</option>
+                    <option value="stewardship">Intendance</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="company_management">Direction Générale</option>
+                    <option value="admin">Super-Administrateur</option>
+                  </select>
                 </div>
 
+                {formRole === "worker" ? (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Corps d&apos;État / Métier
+                    </label>
+                    <select
+                      value={formTradeCategory}
+                      onChange={(e) => setFormTradeCategory(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                    >
+                      <option value="Manœuvre">Manœuvre</option>
+                      <option value="Coffreur">Coffreur</option>
+                      <option value="Ferrailleur">Ferrailleur</option>
+                      <option value="Maçon">Maçon</option>
+                      <option value="Électricien">Électricien</option>
+                      <option value="Soudeur">Soudeur</option>
+                      <option value="Plombier">Plombier</option>
+                      <option value="Peintre">Peintre</option>
+                      <option value="Topographe">Topographe</option>
+                      <option value="Mécanicien Engins">Mécanicien Engins</option>
+                      <option value="Chauffeur / Opérateur">Chauffeur / Opérateur</option>
+                      <option value="Polyvalent">Polyvalent</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Poste / Fonction
+                    </label>
+                    <input
+                      type="text"
+                      value={formJobTitle}
+                      onChange={(e) => setFormJobTitle(e.target.value)}
+                      placeholder="Ex: Ingénieur Génie Civil"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Phone & Daily Rate if worker */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Téléphone Collaborateur
@@ -553,6 +677,39 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
                   />
                 </div>
+
+                {formRole === "worker" ? (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Taux Journalier (USD / jour)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={formDailyRate}
+                      onChange={(e) => setFormDailyRate(parseFloat(e.target.value) || 0)}
+                      placeholder="Ex: 15"
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Type de Contrat
+                    </label>
+                    <select
+                      value={formContractType}
+                      onChange={(e) => setFormContractType(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-[#8E2424]"
+                    >
+                      <option value="CDI">CDI (Indéterminé)</option>
+                      <option value="CDD">CDD (Déterminé)</option>
+                      <option value="Journalier">Journalier / Temporaire</option>
+                      <option value="Sous-traitant">Sous-traitant / Prestataire</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Contract Type & End Date */}

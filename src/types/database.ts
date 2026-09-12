@@ -12,7 +12,8 @@ export type UserRole =
   | 'mechanic'
   | 'dispatch'
   | 'safety_officer'
-  | 'commercial';
+  | 'commercial'
+  | 'worker';
 
 export type CurrencyCode = 'USD' | 'CDF';
 export type ProjectStatus = 'draft' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
@@ -41,6 +42,8 @@ export interface Profile {
   base_salary?: number;
   id_card_number?: string | null;
   contract_type?: string | null;
+  daily_rate?: number;
+  trade_category?: string | null;
   created_at: string;
   updated_at: string;
 }

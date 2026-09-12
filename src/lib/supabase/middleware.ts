@@ -35,20 +35,30 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Check if active user account is disabled
+  // Check if active user account is disabled or has worker role (no app access)
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_active")
+      .select("is_active, role")
       .eq("id", user.id)
       .single();
 
-    if (profile && profile.is_active === false) {
-      await supabase.auth.signOut();
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("error", "account_disabled");
-      return NextResponse.redirect(url);
+    if (profile) {
+      if (profile.is_active === false) {
+        await supabase.auth.signOut();
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("error", "account_disabled");
+        return NextResponse.redirect(url);
+      }
+
+      if (profile.role === "worker") {
+        await supabase.auth.signOut();
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("error", "worker_no_access");
+        return NextResponse.redirect(url);
+      }
     }
   }
 

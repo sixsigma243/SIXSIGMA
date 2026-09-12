@@ -51,6 +51,10 @@ export default function LoginPage() {
         setErrorMsg(
           "Accès révoqué : Votre compte a été désactivé par la Direction SI & Gouvernance. Veuillez contacter le support interne."
         );
+      } else if (params.get("error") === "worker_no_access") {
+        setErrorMsg(
+          "Accès restreint : Le profil Ouvrier / Journalier ne dispose pas d'accès direct à l'interface applicative. Rapprochez-vous de votre chef d'équipe ou du pôle RH."
+        );
       }
     }
   }, []);
@@ -90,6 +94,21 @@ export default function LoginPage() {
     setLockoutSeconds(0);
 
     if (data?.user) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("role, is_active")
+        .eq("id", data.user.id)
+        .single();
+
+      if (prof?.role === "worker") {
+        await supabase.auth.signOut();
+        setErrorMsg(
+          "Accès restreint : Le profil Ouvrier / Journalier ne dispose pas d'accès direct à l'interface applicative. Rapprochez-vous de votre chef d'équipe ou du pôle RH."
+        );
+        setLoading(false);
+        return;
+      }
+
       router.push("/dashboard");
       router.refresh();
     }

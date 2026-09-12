@@ -73,6 +73,8 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
     phone: "",
     contract_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     id_expiry_date: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    daily_rate: 0,
+    trade_category: "Manœuvre",
   });
   const [legalConsent, setLegalConsent] = useState(false);
 
@@ -188,6 +190,8 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
       phone: "",
       contract_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       id_expiry_date: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      daily_rate: 0,
+      trade_category: "Manœuvre",
     });
     setLoading(false);
     router.refresh();
@@ -392,7 +396,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
           <div>
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Rôles Attribués</p>
             <p className="text-2xl lg:text-3xl font-bold text-slate-800 mt-1">
-              {distinctRolesCount} <span className="text-xs text-slate-400 font-normal">/ 14</span>
+              {distinctRolesCount} <span className="text-xs text-slate-400 font-normal">/ {Object.keys(ROLES_CONFIG).length}</span>
             </p>
             <p className="text-[11px] text-slate-400 mt-0.5">Matrice SoD BTP</p>
           </div>
@@ -422,7 +426,7 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
             onChange={(e) => setRoleFilter(e.target.value)}
             className="bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-700 px-3 py-2 focus:bg-white focus:outline-none focus:border-[#8E2424] transition"
           >
-            <option value="all">Tous les Rôles (14)</option>
+            <option value="all">Tous les Rôles ({Object.keys(ROLES_CONFIG).length})</option>
             {(Object.keys(ROLES_CONFIG) as UserRole[]).map((rKey) => (
               <option key={rKey} value={rKey}>
                 {ROLES_CONFIG[rKey].label}
@@ -528,11 +532,23 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
 
                       {/* Role & Dept Pastel Pill */}
                       <td className="px-4 py-4">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                          {roleCfg.label}
-                        </span>
-                        <div className="text-[10px] text-slate-400 mt-1 font-medium">
-                          {roleCfg.department}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                            {roleCfg.label}
+                          </span>
+                          {user.role === "worker" && user.trade_category && (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              {user.trade_category}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-1 font-medium flex items-center gap-2">
+                          <span>{roleCfg.department}</span>
+                          {user.role === "worker" && Number(user.daily_rate) > 0 && (
+                            <span className="font-mono text-emerald-600 font-semibold">
+                              ({Number(user.daily_rate)} USD/j)
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -750,6 +766,54 @@ export function UsersClientView({ initialProfiles, currentUserId }: UsersClientV
                   {ROLES_CONFIG[createForm.role]?.description}
                 </p>
               </div>
+
+              {/* Worker Specific Fields */}
+              {createForm.role === "worker" && (
+                <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+                    <ShieldAlert className="w-4 h-4 text-amber-600" />
+                    <span>Spécificités Effectif Ouvrier / Journalier (Sans accès applicatif direct)</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Corps d&apos;État / Métier</label>
+                      <select
+                        value={createForm.trade_category}
+                        onChange={(e) => setCreateForm({ ...createForm, trade_category: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-[#8E2424]"
+                      >
+                        <option value="Manœuvre">Manœuvre</option>
+                        <option value="Coffreur">Coffreur</option>
+                        <option value="Ferrailleur">Ferrailleur</option>
+                        <option value="Maçon">Maçon</option>
+                        <option value="Électricien">Électricien</option>
+                        <option value="Soudeur">Soudeur</option>
+                        <option value="Plombier">Plombier</option>
+                        <option value="Peintre">Peintre</option>
+                        <option value="Topographe">Topographe</option>
+                        <option value="Mécanicien Engins">Mécanicien Engins</option>
+                        <option value="Chauffeur / Opérateur">Chauffeur / Opérateur</option>
+                        <option value="Polyvalent">Polyvalent</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-900 mb-1">Taux Journalier (USD / jour)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={createForm.daily_rate}
+                        onChange={(e) => setCreateForm({ ...createForm, daily_rate: parseFloat(e.target.value) || 0 })}
+                        placeholder="Ex: 15"
+                        className="w-full px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-[#8E2424]"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-amber-800 leading-tight">
+                    * Ce collaborateur n&apos;aura pas d&apos;accès direct à l&apos;ERP. Ses présences et rémunérations sont suivies via le module de pointage chantier et la réconciliation RH.
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>

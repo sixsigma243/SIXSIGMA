@@ -15,6 +15,8 @@ export interface CreateEmployeeInput {
   phone?: string;
   contract_end_date?: string;
   id_expiry_date?: string;
+  daily_rate?: number;
+  trade_category?: string;
 }
 
 const ROOT_SUPER_ADMIN_EMAIL = "elyseemudimbi@sixsigma.cd";
@@ -79,6 +81,7 @@ export async function createEmployeeAccount(data: CreateEmployeeInput) {
         full_name: `${firstName} ${lastName}`,
         role: data.role,
         sub_role: data.sub_role || null,
+        trade_category: data.trade_category || null,
       },
     });
 
@@ -91,7 +94,7 @@ export async function createEmployeeAccount(data: CreateEmployeeInput) {
 
     const newUserId = authData.user.id;
 
-    // 2. Insert or update public.profiles with compliance dates
+    // 2. Insert or update public.profiles with compliance dates and worker specifics
     const { error: profileError } = await adminClient.from("profiles").upsert({
       id: newUserId,
       first_name: firstName,
@@ -104,6 +107,8 @@ export async function createEmployeeAccount(data: CreateEmployeeInput) {
       is_active: true,
       contract_end_date: data.contract_end_date || null,
       id_expiry_date: data.id_expiry_date || null,
+      daily_rate: data.daily_rate ?? (data.role === "worker" ? 0 : null),
+      trade_category: data.trade_category?.trim() ?? (data.role === "worker" ? "Manœuvre" : null),
     });
 
     if (profileError) {

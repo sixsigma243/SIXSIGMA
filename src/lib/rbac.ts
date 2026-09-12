@@ -122,6 +122,14 @@ export const ROLES_CONFIG: Record<UserRole, RoleConfig> = {
     description: "Prospects, devis, opportunités de chantiers et catalogue des prestations.",
     testEmail: "commercial@sixsigma.cd",
   },
+  worker: {
+    id: "worker",
+    label: "Ouvrier / Employé Simple",
+    department: "Opérations Terrain & Chantiers",
+    badgeColor: "bg-slate-800 text-slate-200 border-slate-700",
+    description: "Effectifs de terrain, journaliers et exécutants sans accès direct à l'interface applicative ERP.",
+    testEmail: "ouvrier@sixsigma.cd",
+  },
 };
 
 export interface NavigationItem {
@@ -262,7 +270,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
 ];
 
 export function hasRoleAccess(userRole: UserRole | undefined | null, allowedRoles: UserRole[]): boolean {
-  if (!userRole) return false;
+  if (!userRole || userRole === "worker") return false; // Ouvrier/Journalier sans accès direct à l'interface
   if (userRole === "admin") return true; // Super admin has access to everything
   return allowedRoles.includes(userRole);
 }
