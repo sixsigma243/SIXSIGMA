@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -11,15 +12,25 @@ export async function GET() {
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ rate: 2850, default: true });
+      return NextResponse.json(
+        { rate: 2850, default: true },
+        { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } }
+      );
     }
 
     const rateVal = typeof data.value === "object" && data.value !== null ? (data.value as any).rate : 2850;
-    return NextResponse.json({
-      rate: Number(rateVal) || 2850,
-      updated_at: data.updated_at,
-      updated_by: data.updated_by,
-    });
+    return NextResponse.json(
+      {
+        rate: Number(rateVal) || 2850,
+        updated_at: data.updated_at,
+        updated_by: data.updated_by,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ rate: 2850, error: err.message }, { status: 500 });
   }
@@ -107,6 +118,10 @@ export async function POST(request: Request) {
       performed_by: user.id,
       performed_at: new Date().toISOString(),
     });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/finance");
+    revalidatePath("/attendance");
 
     return NextResponse.json({
       success: true,

@@ -96,22 +96,26 @@ export default function AttendancePage() {
       if (p) setCurrentUser(p as Profile);
     }
 
-    const { data: entData } = await supabase
-      .from("time_entries")
-      .select("*, project:project_id(*), profile:profile_id(*)")
-      .eq("entry_date", dateFilter)
-      .order("worker_name");
+    // Requêtes parallèles consolidées (élimination du waterfall)
+    const [
+      { data: entData },
+      { data: recData },
+      { data: prjData },
+    ] = await Promise.all([
+      supabase
+        .from("time_entries")
+        .select("*, project:project_id(*), profile:profile_id(*)")
+        .eq("entry_date", dateFilter)
+        .order("worker_name"),
+      supabase
+        .from("attendance_reconciliations")
+        .select("*, project:project_id(*), supervisor:supervisor_id(*)")
+        .order("created_at", { ascending: false }),
+      supabase.from("projects").select("*").order("title"),
+    ]);
 
     if (entData) setEntries(entData as TimeEntry[]);
-
-    const { data: recData } = await supabase
-      .from("attendance_reconciliations")
-      .select("*, project:project_id(*), supervisor:supervisor_id(*)")
-      .order("created_at", { ascending: false });
-
     if (recData) setReconciliations(recData as AttendanceReconciliation[]);
-
-    const { data: prjData } = await supabase.from("projects").select("*").order("title");
     if (prjData) {
       setProjects(prjData as Project[]);
       if (prjData.length > 0 && !newProjectId) setNewProjectId(prjData[0].id);

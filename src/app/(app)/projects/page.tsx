@@ -92,27 +92,28 @@ export default function ProjectsPage() {
       if (prof) setCurrentUser(prof as Profile);
     }
 
-    const { data: prjData } = await supabase
-      .from("projects")
-      .select("*, site_manager:site_manager_id(*)")
-      .order("created_at", { ascending: false });
+    // Requêtes parallèles consolidées (élimination du waterfall)
+    const [
+      { data: prjData },
+      { data: smData },
+      { data: actData },
+    ] = await Promise.all([
+      supabase
+        .from("projects")
+        .select("*, site_manager:site_manager_id(*)")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("profiles")
+        .select("*")
+        .in("role", ["site_manager", "admin"]),
+      supabase
+        .from("commercial_activities")
+        .select("*, commercial:commercial_id(*), project:project_id(*)")
+        .order("created_at", { ascending: false }),
+    ]);
 
     if (prjData) setProjects(prjData as Project[]);
-
-    // Fetch site managers for assignment
-    const { data: smData } = await supabase
-      .from("profiles")
-      .select("*")
-      .in("role", ["site_manager", "admin"]);
-
     if (smData) setSiteManagers(smData as Profile[]);
-
-    // Fetch commercial activities
-    const { data: actData } = await supabase
-      .from("commercial_activities")
-      .select("*, commercial:commercial_id(*), project:project_id(*)")
-      .order("created_at", { ascending: false });
-
     if (actData) setCommercialActivities(actData as CommercialActivity[]);
 
     setLoading(false);

@@ -80,11 +80,16 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
 
   // Edit Item Modal
   const [editingItem, setEditingItem] = useState<ExtendedPayrollItem | null>(null);
+  const [editDaysWorked, setEditDaysWorked] = useState("0");
   const [editBonuses, setEditBonuses] = useState("0");
   const [editDeductions, setEditDeductions] = useState("0");
   const [editAbsences, setEditAbsences] = useState("0");
   const [editNotes, setEditNotes] = useState("");
   const [isSavingItem, setIsSavingItem] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
 
   const canManagePayroll =
     currentUser?.role === "hr_officer" ||
@@ -285,6 +290,7 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
     setIsSavingItem(true);
     try {
       const res = await updatePayrollItemAction(editingItem.id, {
+        days_worked: Number(editDaysWorked) || 0,
         bonuses: Number(editBonuses) || 0,
         deductions: Number(editDeductions) || 0,
         absence_days: Number(editAbsences) || 0,
@@ -308,6 +314,7 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
 
   const openEditItemModal = (item: ExtendedPayrollItem) => {
     setEditingItem(item);
+    setEditDaysWorked(String(item.days_worked || 0));
     setEditBonuses(String(item.bonuses || 0));
     setEditDeductions(String(item.deductions || 0));
     setEditAbsences(String(item.absence_days || 0));
@@ -343,7 +350,7 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
       "Role",
       "Metier",
       "Mode Calcul",
-      "Jours Base",
+      "Jours Travailles",
       "Salaire Base Mensuel USD",
       "Primes USD",
       "Deductions USD",
@@ -356,8 +363,12 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
       `"${it.worker_name}"`,
       it.profile?.role || "worker",
       `"${it.profile?.trade_category || it.profile?.job_title || "Manœuvre"}"`,
-      it.calculation_mode === "monthly_allowance_26d" ? "Forfait Ouvrier 26j" : "Salaire Fixe Mensuel",
-      it.days_worked || 26,
+      it.calculation_mode === "daily_rate_worked"
+        ? "Taux Journalier × Jours Travaillés"
+        : it.calculation_mode === "monthly_allowance_26d"
+        ? "Forfait Ouvrier 26j"
+        : "Salaire Fixe Mensuel",
+      it.days_worked || (it.profile?.role === "worker" ? 0 : 26),
       it.base_salary,
       it.bonuses || 0,
       it.deductions || 0,
@@ -701,101 +712,157 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-slate-100">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                  <tr>
-                    <th className="py-3 px-4">Matricule & Agent</th>
-                    <th className="py-3 px-4">Fonction / Rôle</th>
-                    <th className="py-3 px-4">Mode de Calcul</th>
-                    <th className="py-3 px-4 text-right">Salaire Base Mensuel</th>
-                    <th className="py-3 px-4 text-right">Primes</th>
-                    <th className="py-3 px-4 text-right">Déductions (CNSS/IPR)</th>
-                    <th className="py-3 px-4 text-right">Net à Payer (USD)</th>
-                    <th className="py-3 px-4 text-right">Net CDF (2 850)</th>
-                    {canManagePayroll && <th className="py-3 px-4 text-center">Action</th>}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-[#1C1F23]">
-                  {filteredItems.map((item) => {
-                    const isWorker = item.profile?.role === "worker";
-                    const isMonthlyAllowance = item.calculation_mode === "monthly_allowance_26d";
-                    const netCdf = Math.round(Number(item.net_salary || 0) * EXCHANGE_RATE);
+              {(() => {
+                const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
+                const paginatedItems = filteredItems.slice(
+                  (currentPage - 1) * ITEMS_PER_PAGE,
+                  currentPage * ITEMS_PER_PAGE
+                );
 
-                    return (
-                      <tr key={item.id} className="hover:bg-slate-50/80 transition">
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-slate-900">{item.worker_name}</div>
-                          <div className="font-mono text-[10px] text-[#8E2424] font-semibold">
-                            {item.profile?.employee_id || "SS-RH-XXXX"}
-                          </div>
-                        </td>
+                return (
+                  <>
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="py-3 px-4">Matricule & Agent</th>
+                          <th className="py-3 px-4">Fonction / Rôle</th>
+                          <th className="py-3 px-4">Mode de Calcul</th>
+                          <th className="py-3 px-4 text-right">Salaire Base Mensuel</th>
+                          <th className="py-3 px-4 text-right">Primes</th>
+                          <th className="py-3 px-4 text-right">Déductions (CNSS/IPR)</th>
+                          <th className="py-3 px-4 text-right">Net à Payer (USD)</th>
+                          <th className="py-3 px-4 text-right">Net CDF (2 850)</th>
+                          {canManagePayroll && <th className="py-3 px-4 text-center">Action</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-[#1C1F23]">
+                        {paginatedItems.map((item) => {
+                          const isWorker = item.profile?.role === "worker" || item.calculation_mode === "daily_rate_worked";
+                          const netCdf = Math.round(Number(item.net_salary || 0) * EXCHANGE_RATE);
 
-                        <td className="py-3 px-4">
-                          <div className="font-semibold text-slate-700">
-                            {item.profile?.trade_category || item.profile?.job_title || (isWorker ? "Ouvrier" : "Cadre")}
-                          </div>
-                          <div className="text-[10px] text-slate-400 capitalize">
-                            {isWorker ? "Ouvrier de chantier" : item.profile?.role}
-                          </div>
-                        </td>
+                          return (
+                            <tr key={item.id} className="hover:bg-slate-50/80 transition">
+                              <td className="py-3 px-4">
+                                <div className="font-bold text-slate-900">{item.worker_name}</div>
+                                <div className="font-mono text-[10px] text-[#8E2424] font-semibold">
+                                  {item.profile?.employee_id || "SS-RH-XXXX"}
+                                </div>
+                              </td>
 
-                        <td className="py-3 px-4">
-                          {isMonthlyAllowance ? (
-                            <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-sky-50 text-sky-800 border border-sky-200">
-                              Forfait Mensuel (26j)
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-purple-50 text-purple-800 border border-purple-200">
-                              Salaire Fixe Mensuel
-                            </span>
-                          )}
-                          {item.absence_days && item.absence_days > 0 ? (
-                            <div className="text-[10px] text-rose-600 font-semibold mt-0.5">
-                              {item.absence_days} j. absence déduits
-                            </div>
-                          ) : null}
-                        </td>
+                              <td className="py-3 px-4">
+                                <div className="font-semibold text-slate-700">
+                                  {item.profile?.trade_category || item.profile?.job_title || (isWorker ? "Ouvrier" : "Cadre")}
+                                </div>
+                                <div className="text-[10px] text-slate-400 capitalize">
+                                  {isWorker ? "Ouvrier de chantier" : item.profile?.role}
+                                </div>
+                              </td>
 
-                        <td className="py-3 px-4 text-right font-mono font-medium text-slate-800">
-                          {Number(item.base_salary).toLocaleString("fr-FR")} USD
-                        </td>
+                              <td className="py-3 px-4">
+                                {isWorker ? (
+                                  <div>
+                                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-sky-50 text-sky-800 border border-sky-200 inline-flex items-center gap-1">
+                                      Taux Journalier × Jours Travaillés
+                                    </span>
+                                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                      {item.profile?.daily_rate || 15} USD/j × {item.days_worked || 0} j. pointés
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-purple-50 text-purple-800 border border-purple-200 inline-flex items-center gap-1">
+                                      Salaire Fixe Mensuel
+                                    </span>
+                                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                      Cadre / Staff (Base 26j)
+                                    </div>
+                                  </div>
+                                )}
+                                {item.absence_days && item.absence_days > 0 ? (
+                                  <div className="text-[10px] text-rose-600 font-semibold mt-0.5">
+                                    {item.absence_days} j. absence déduits
+                                  </div>
+                                ) : null}
+                              </td>
 
-                        <td className="py-3 px-4 text-right font-mono text-emerald-700 font-medium">
-                          +{Number(item.bonuses || 0).toLocaleString("fr-FR")} USD
-                        </td>
+                              <td className="py-3 px-4 text-right font-mono font-medium text-slate-800">
+                                {Number(item.base_salary).toLocaleString("fr-FR")} USD
+                              </td>
 
-                        <td className="py-3 px-4 text-right font-mono text-rose-700 font-medium">
-                          -{Number(item.deductions || 0).toLocaleString("fr-FR")} USD
-                        </td>
+                              <td className="py-3 px-4 text-right font-mono text-emerald-700 font-medium">
+                                +{Number(item.bonuses || 0).toLocaleString("fr-FR")} USD
+                              </td>
 
-                        <td className="py-3 px-4 text-right font-mono font-black text-emerald-800 text-sm">
-                          {Number(item.net_salary).toLocaleString("fr-FR")} USD
-                        </td>
+                              <td className="py-3 px-4 text-right font-mono text-rose-700 font-medium">
+                                -{Number(item.deductions || 0).toLocaleString("fr-FR")} USD
+                              </td>
 
-                        <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500 font-medium">
-                          {netCdf.toLocaleString("fr-FR")} CDF
-                        </td>
+                              <td className="py-3 px-4 text-right font-mono font-black text-emerald-800 text-sm">
+                                {Number(item.net_salary).toLocaleString("fr-FR")} USD
+                              </td>
 
-                        {canManagePayroll && (
-                          <td className="py-3 px-4 text-center">
-                            {selectedPeriod.status !== "transmitted_to_finance" && selectedPeriod.status !== "paid" ? (
-                              <button
-                                onClick={() => openEditItemModal(item)}
-                                className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition cursor-pointer"
-                                title="Ajuster primes ou déductions"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                            ) : (
-                              <span className="text-[10px] text-slate-400 italic">Verrouillé</span>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500 font-medium">
+                                {netCdf.toLocaleString("fr-FR")} CDF
+                              </td>
+
+                              {canManagePayroll && (
+                                <td className="py-3 px-4 text-center">
+                                  {selectedPeriod.status !== "transmitted_to_finance" && selectedPeriod.status !== "paid" ? (
+                                    <button
+                                      onClick={() => openEditItemModal(item)}
+                                      className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition cursor-pointer"
+                                      title="Ajuster primes, jours ou déductions"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  ) : (
+                                    <span className="text-[10px] text-slate-400 italic">Verrouillé</span>
+                                  )}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+
+                    {/* Pagination Bar */}
+                    {totalPages > 1 && (
+                      <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">
+                        <div className="text-[11px] text-slate-500">
+                          Affichage de <span className="font-bold text-slate-800">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> à{" "}
+                          <span className="font-bold text-slate-800">
+                            {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)}
+                          </span>{" "}
+                          sur <span className="font-bold text-slate-800">{filteredItems.length}</span> bulletins
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-semibold transition"
+                          >
+                            Précédent
+                          </button>
+
+                          <span className="px-3 py-1.5 font-mono font-bold text-xs text-slate-700 bg-white border border-slate-200 rounded-lg">
+                            Page {currentPage} / {totalPages}
+                          </span>
+
+                          <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-semibold transition"
+                          >
+                            Suivant
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -904,12 +971,43 @@ export function PayrollSection({ currentUser }: PayrollSectionProps) {
             </div>
 
             <form onSubmit={handleSaveItemAdjustments} className="space-y-4 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
-                <span className="text-slate-500 font-medium">Salaire Brut de Base (Fixe ou Forfait 26j) :</span>
-                <span className="font-mono font-bold text-slate-800">
-                  {Number(editingItem.base_salary).toLocaleString("fr-FR")} USD
-                </span>
-              </div>
+              {/* Ajustement spécifique Ouvriers : Jours réels pointés / travaillés */}
+              {(editingItem.profile?.role === "worker" || editingItem.calculation_mode === "daily_rate_worked") ? (
+                <div className="bg-sky-50/80 p-3.5 rounded-xl border border-sky-100 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-sky-950">Taux journalier contractuel :</span>
+                    <span className="font-mono font-bold text-sky-800">
+                      {editingItem.profile?.daily_rate || 15} USD / jour
+                    </span>
+                  </div>
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Nombre de Jours Réels Travaillés / Pointés
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="31"
+                    step="1"
+                    value={editDaysWorked}
+                    onChange={(e) => setEditDaysWorked(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-slate-800 font-mono focus:outline-hidden focus:ring-2 focus:ring-[#8E2424]/20 focus:border-[#8E2424] bg-white"
+                    placeholder="Ex: 18"
+                  />
+                  <div className="text-[11px] text-sky-700 flex justify-between font-mono pt-1">
+                    <span>Nouveau salaire brut calculé :</span>
+                    <span className="font-bold">
+                      {Math.round(Number(editingItem.profile?.daily_rate || 15) * Math.max(0, Number(editDaysWorked) || 0))} USD
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                  <span className="text-slate-500 font-medium">Salaire Brut Fixe Contractuel (Staff) :</span>
+                  <span className="font-mono font-bold text-slate-800">
+                    {Number(editingItem.base_salary).toLocaleString("fr-FR")} USD
+                  </span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">

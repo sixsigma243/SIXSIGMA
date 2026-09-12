@@ -151,7 +151,20 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
 
       return true;
     });
-  }, [workers, searchTerm, roleFilter, contractFilter, cutoffFilter]);
+  }, [workers, searchTerm, roleFilter, tradeCategoryFilter, contractFilter, cutoffFilter]);
+
+  // Pagination (25 agents par page pour fluidité DOM)
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, tradeCategoryFilter, contractFilter, cutoffFilter]);
+
+  const totalPages = Math.ceil(filteredWorkers.length / ITEMS_PER_PAGE) || 1;
+  const paginatedWorkers = useMemo(() => {
+    return filteredWorkers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [filteredWorkers, currentPage]);
 
   // Metrics
   const totalEmployees = workers.length;
@@ -422,7 +435,7 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredWorkers.map((w) => {
+                {paginatedWorkers.map((w) => {
                   const cutoff = getCutoffStatus(w.contract_end_date, w.contract_type === "CDI");
                   const idStat = getCutoffStatus(w.id_expiry_date);
 
@@ -548,6 +561,41 @@ export function WorkersDirectorySection({ currentUser }: WorkersDirectorySection
                 })}
               </tbody>
             </table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600">
+                <div className="text-[11px] text-slate-500">
+                  Affichage de <span className="font-bold text-slate-800">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> à{" "}
+                  <span className="font-bold text-slate-800">
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filteredWorkers.length)}
+                  </span>{" "}
+                  sur <span className="font-bold text-slate-800">{filteredWorkers.length}</span> collaborateurs
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-semibold transition"
+                  >
+                    Précédent
+                  </button>
+
+                  <span className="px-3 py-1.5 font-mono font-bold text-xs text-slate-700 bg-white border border-slate-200 rounded-lg">
+                    Page {currentPage} / {totalPages}
+                  </span>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-semibold transition"
+                  >
+                    Suivant
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

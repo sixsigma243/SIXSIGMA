@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Profile, UserRole } from "@/types/database";
 import { ROLES_CONFIG } from "@/lib/rbac";
@@ -158,6 +158,19 @@ export function UsersClientView({
       return matchSearch && matchRole && matchStatus && matchCompliance;
     });
   }, [profiles, searchTerm, roleFilter, statusFilter, complianceFilter]);
+
+  // Pagination (25 agents par page pour fluidité maximale du DOM)
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, statusFilter, complianceFilter]);
+
+  const totalPages = Math.ceil(filteredProfiles.length / ITEMS_PER_PAGE) || 1;
+  const paginatedProfiles = useMemo(() => {
+    return filteredProfiles.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [filteredProfiles, currentPage]);
 
   // KPIs
   const totalEmployees = profiles.length;
@@ -562,7 +575,7 @@ export function UsersClientView({
                   </td>
                 </tr>
               ) : (
-                filteredProfiles.map((user) => {
+                paginatedProfiles.map((user) => {
                   const roleCfg = ROLES_CONFIG[user.role] || ROLES_CONFIG.supervisor;
                   const contractStat = getComplianceStatus(user.contract_end_date);
                   const idStat = getComplianceStatus(user.id_expiry_date);
@@ -781,14 +794,39 @@ export function UsersClientView({
           </table>
         </div>
 
-        {/* Table Footer / Summary */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/40 flex items-center justify-between text-xs text-slate-500">
-          <span>
-            Affichage de <strong className="text-slate-700 font-semibold">{filteredProfiles.length}</strong> collaborateur(s) sur {profiles.length}
-          </span>
-          <span className="text-[11px] text-slate-400 font-mono">
-            Règlement SoD v2.6 • Conforme
-          </span>
+        {/* Table Footer / Pagination */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+          <div>
+            Affichage de <strong className="text-slate-800 font-semibold">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> à{" "}
+            <strong className="text-slate-800 font-semibold">
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredProfiles.length)}
+            </strong>{" "}
+            sur <strong className="text-slate-800 font-semibold">{filteredProfiles.length}</strong> collaborateur(s)
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-semibold transition"
+              >
+                Précédent
+              </button>
+
+              <span className="px-3 py-1.5 font-mono font-bold text-xs text-slate-700 bg-white border border-slate-200 rounded-lg">
+                Page {currentPage} / {totalPages}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-xs font-semibold transition"
+              >
+                Suivant
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

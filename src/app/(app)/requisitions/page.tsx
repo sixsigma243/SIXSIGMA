@@ -84,18 +84,22 @@ export default function RequisitionsPage() {
       }
     }
 
-    const { data: driData } = await supabase
-      .from("material_requisitions")
-      .select("*, project:project_id(*), requester:requested_by(*), site_manager:site_manager_id(*)")
-      .order("created_at", { ascending: false });
+    // Requêtes parallèles consolidées (élimination du waterfall)
+    const [
+      { data: driData },
+      { data: prjData },
+    ] = await Promise.all([
+      supabase
+        .from("material_requisitions")
+        .select("*, project:project_id(*), requester:requested_by(*), site_manager:site_manager_id(*)")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("projects")
+        .select("*")
+        .eq("status", "in_progress"),
+    ]);
 
     if (driData) setRequisitions(driData as MaterialRequisition[]);
-
-    const { data: prjData } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("status", "in_progress");
-
     if (prjData) {
       setProjects(prjData as Project[]);
       if (prjData.length > 0 && !selectedProjectId) {

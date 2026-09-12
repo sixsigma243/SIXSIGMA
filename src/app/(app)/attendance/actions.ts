@@ -64,8 +64,32 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       return { success: false, error: "Impossible de charger la liste des employés actifs." };
     }
 
+    // 3.5 Récupération des pointages réels 'present' sur la période
+    const { data: timeEntries } = await supabase
+      .from("time_entries")
+      .select("profile_id, worker_name, status, entry_date")
+      .gte("entry_date", period.start_date)
+      .lte("entry_date", period.end_date)
+      .eq("status", "present");
+
+    // Dénombrement des jours présents pointés par profil ou par nom d'ouvrier
+    const attendanceMap = new Map<string, number>();
+    if (timeEntries) {
+      for (const entry of timeEntries) {
+        if (entry.profile_id) {
+          attendanceMap.set(entry.profile_id, (attendanceMap.get(entry.profile_id) || 0) + 1);
+        }
+        if (entry.worker_name) {
+          const normName = entry.worker_name.toLowerCase().trim();
+          attendanceMap.set(normName, (attendanceMap.get(normName) || 0) + 1);
+        }
+      }
+    }
+
     // 4. Calcul mensuel standardisé
-    // Base légale RDC : 26 jours ouvrables mensuels pour les ouvriers / journaliers
+    // RÈGLE MÉTIER STRICTE :
+    // - Cadres / Staff : Salaire mensuel contractuel fixe (base_salary)
+    // - Ouvriers / Journaliers : daily_rate * jours_présents_pointés réels
     const itemsToUpsert = [];
     let sumGross = 0;
     let sumDeductions = 0;
@@ -75,15 +99,23 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       const isWorker = p.role === "worker";
 
       let baseSalary = 0;
+      let daysWorked = 0;
       let calculationMode = "monthly_fixed";
 
       if (isWorker) {
-        // Pour les ouvriers : conversion mensuelle sur 26 jours
-        const daily = Number(p.daily_rate) > 0 ? Number(p.daily_rate) : 12;
-        baseSalary = Math.round(daily * 26);
-        calculationMode = "monthly_allowance_26d";
+        // Dénombrement des jours réels pointés avec statut 'present'
+        const workedDays =
+          attendanceMap.get(p.id) ||
+          attendanceMap.get(p.full_name.toLowerCase().trim()) ||
+          0;
+
+        daysWorked = workedDays;
+        const daily = Number(p.daily_rate) > 0 ? Number(p.daily_rate) : 15;
+        baseSalary = Math.round(daily * workedDays);
+        calculationMode = "daily_rate_worked";
       } else {
-        // Pour le staff : base_salary direct ou salaire indicatif de grade
+        // Pour le staff & cadres : base_salary direct ou salaire indicatif contractuel
+        daysWorked = 26;
         const base = Number(p.base_salary);
         if (base > 0) {
           baseSalary = base;
@@ -126,7 +158,7 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       const deductions = Math.round(baseSalary * 0.13);
       const bonuses = 0;
       const overtimePay = 0;
-      const netSalary = baseSalary + bonuses + overtimePay - deductions;
+      const netSalary = Math.max(0, baseSalary + bonuses + overtimePay - deductions);
 
       sumGross += baseSalary;
       sumDeductions += deductions;
@@ -136,7 +168,7 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
         period_id: periodId,
         profile_id: p.id,
         worker_name: p.full_name,
-        days_worked: 26, // Base mensuelle unifiée
+        days_worked: daysWorked,
         base_salary: baseSalary,
         overtime_pay: overtimePay,
         bonuses: bonuses,
@@ -203,7 +235,7 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
 }
 
 /**
- * Ajustement manuel d'une ligne de paie (primes, déductions pour absence) par le RH
+ * Ajustement manuel d'une ligne de paie (jours prestés, primes, déductions pour absence) par le RH
  */
 export async function updatePayrollItemAction(
   itemId: string,
@@ -211,6 +243,7 @@ export async function updatePayrollItemAction(
     bonuses?: number;
     deductions?: number;
     absence_days?: number;
+    days_worked?: number;
     notes?: string;
   }
 ) {
@@ -223,20 +256,29 @@ export async function updatePayrollItemAction(
 
     if (!user) return { success: false, error: "Non authentifié" };
 
-    // 1. Récupérer l'élément actuel
+    // 1. Récupérer l'élément actuel avec son profil
     const { data: item, error: itemErr } = await supabase
       .from("payroll_items")
-      .select("*, period:period_id(*)")
+      .select("*, period:period_id(*), profile:profile_id(*)")
       .eq("id", itemId)
       .single();
 
     if (itemErr || !item) return { success: false, error: "Ligne de paie introuvable" };
 
+    const isWorker = item.profile?.role === "worker" || item.calculation_mode === "daily_rate_worked";
+    let newDaysWorked = data.days_worked !== undefined ? Number(data.days_worked) : Number(item.days_worked || 0);
+    let baseSalary = Number(item.base_salary);
+
+    // Si les jours prestés sont modifiés pour un ouvrier, recalculer le salaire de base
+    if (isWorker && data.days_worked !== undefined) {
+      const dailyRate = Number(item.profile?.daily_rate) > 0 ? Number(item.profile?.daily_rate) : 15;
+      baseSalary = Math.round(dailyRate * Math.max(0, newDaysWorked));
+    }
+
     const newBonuses = data.bonuses !== undefined ? Number(data.bonuses) : Number(item.bonuses);
     const newDeductions = data.deductions !== undefined ? Number(data.deductions) : Number(item.deductions);
     const newAbsenceDays = data.absence_days !== undefined ? Number(data.absence_days) : Number(item.absence_days || 0);
 
-    const baseSalary = Number(item.base_salary);
     const overtimePay = Number(item.overtime_pay || 0);
     const newNetSalary = Math.max(0, baseSalary + overtimePay + newBonuses - newDeductions);
 
@@ -244,6 +286,8 @@ export async function updatePayrollItemAction(
     const { error: updateErr } = await supabase
       .from("payroll_items")
       .update({
+        days_worked: newDaysWorked,
+        base_salary: baseSalary,
         bonuses: newBonuses,
         deductions: newDeductions,
         absence_days: newAbsenceDays,
