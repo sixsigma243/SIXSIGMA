@@ -6,6 +6,7 @@ export type UserRole =
   | 'team_leader'
   | 'hr_officer'
   | 'accountant'
+  | 'treasury_officer'
   | 'buyer'
   | 'warehouse_keeper'
   | 'stewardship'
@@ -17,7 +18,20 @@ export type UserRole =
 
 export type CurrencyCode = 'USD' | 'CDF';
 export type ProjectStatus = 'draft' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
-export type RequisitionStatus = 'draft' | 'submitted' | 'approved' | 'site_manager_approved' | 'rejected' | 'delivered' | 'fulfilled';
+export type RequisitionStatus =
+  | 'draft'
+  | 'submitted'
+  | 'pending_admin'
+  | 'admin_approved'
+  | 'approved'
+  | 'site_manager_approved'
+  | 'rejected'
+  | 'cancelled'
+  | 'disbursed'
+  | 'purchased'
+  | 'delivered'
+  | 'received'
+  | 'fulfilled';
 export type VehicleStatus = 'available' | 'in_mission' | 'under_maintenance' | 'out_of_service';
 export type PresenceStatus = 'present' | 'late' | 'absent' | 'leave';
 export type ReportStatus = 'draft' | 'submitted' | 'validated' | 'rejected';
@@ -175,19 +189,50 @@ export interface MaterialRequisition {
   urgent: boolean;
   supervisor_comment: string | null;
   validation_comment: string | null;
+
+  // ── Étape 2 : Validation Admin ──────────────────────────────────────────
+  admin_validated_by?: string | null;
+  admin_validated_at?: string | null;
+  admin_comment?: string | null;
+  estimated_amount?: number | null;
+
+  // ── Étape 3 : Décaissement Caisse (treasury_officer) ────────────────────
+  disbursed_by?: string | null;
+  disbursed_at?: string | null;
+  disbursement_amount?: number | null;
+  disbursement_ref?: string | null;
+  disbursement_currency?: string | null;
+
+  // ── Étape 4 : Achat Fournisseur (buyer) ─────────────────────────────────
   po_number?: string | null;
   supplier_name?: string | null;
   po_amount?: number | null;
   supplier_quotes?: SupplierQuote[] | null;
-  approved_at: string | null;
+  purchased_by?: string | null;
+  purchased_at?: string | null;
+  final_amount?: number | null;
+
+  // ── Réception Terrain (warehouse_keeper / site_manager) ─────────────────
+  received_by?: string | null;
+  received_at?: string | null;
+  reception_notes?: string | null;
+
+  // ── Legacy fields ────────────────────────────────────────────────────────
+  approved_at?: string | null;
   delivered_by?: string | null;
   delivered_at?: string | null;
-  fulfilled_at: string | null;
+  fulfilled_at?: string | null;
   created_at: string;
   updated_at: string;
+
+  // ── Relations ────────────────────────────────────────────────────────────
   project?: Project;
   requester?: Profile;
   site_manager?: Profile;
+  admin_validator?: Profile;
+  disburser?: Profile;
+  purchaser?: Profile;
+  receiver?: Profile;
 }
 
 export interface AttendanceReconciliation {

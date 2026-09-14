@@ -29,7 +29,7 @@ import {
 export default function FinancePage() {
   const supabase = createClient();
 
-  const [activeTab, setActiveTab] = useState<"transactions" | "budgets">("transactions");
+  const [activeTab, setActiveTab] = useState<"transactions" | "budgets" | "miroir">("transactions");
   const [transactions, setTransactions] = useState<CashboxTransaction[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
@@ -400,11 +400,53 @@ export default function FinancePage() {
   const canCreateTransaction = [
     "admin",
     "accountant",
+    "treasury_officer",
     "site_manager",
     "company_management",
   ].includes(currentUser?.role || "");
 
   const isAdmin = currentUser?.role === "admin";
+
+  /**
+   * Calcul Marge Réelle par Chantier (Miroir Bancaire)
+   * Marge = Encaissements Chantier - (Dépenses Caisse + Décaissements DRI)
+   */
+  const projectProfitability = useMemo(() => {
+    return projects.map((p) => {
+      // Encaissements sur ce chantier
+      const revenues = transactions
+        .filter((t) => t.project_id === p.id && t.transaction_type === "INCOME" && t.status !== "rejected")
+        .reduce((acc, t) => {
+          const amt = Number(t.amount) || 0;
+          return acc + (t.currency === "USD" ? amt : amt / exchangeRate);
+        }, 0);
+
+      // Dépenses directes (caisse)
+      const expenses = transactions
+        .filter((t) => t.project_id === p.id && t.transaction_type === "EXPENSE" && t.status !== "rejected")
+        .reduce((acc, t) => {
+          const amt = Number(t.amount) || 0;
+          return acc + (t.currency === "USD" ? amt : amt / exchangeRate);
+        }, 0);
+
+      const budget = Number(p.budget_allocated_usd) || Number(p.budget) || 0;
+      const margin = revenues - expenses;
+      const marginRate = revenues > 0 ? Math.round((margin / revenues) * 100) : 0;
+      const consumptionRate = budget > 0 ? Math.round((expenses / budget) * 100) : 0;
+
+      return { project: p, revenues, expenses, budget, margin, marginRate, consumptionRate };
+    }).sort((a, b) => b.revenues - a.revenues);
+  }, [projects, transactions, exchangeRate]);
+
+  // Totaux miroir bancaire global
+  const mirrorTotals = useMemo(() => {
+    const totalRevenues = projectProfitability.reduce((acc, p) => acc + p.revenues, 0);
+    const totalExpenses = projectProfitability.reduce((acc, p) => acc + p.expenses, 0);
+    const totalBudget = projectProfitability.reduce((acc, p) => acc + p.budget, 0);
+    const globalMargin = totalRevenues - totalExpenses;
+    const globalMarginRate = totalRevenues > 0 ? Math.round((globalMargin / totalRevenues) * 100) : 0;
+    return { totalRevenues, totalExpenses, totalBudget, globalMargin, globalMarginRate };
+  }, [projectProfitability]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">
@@ -440,17 +482,17 @@ export default function FinancePage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("transactions")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
             activeTab === "transactions"
               ? "bg-[#8E2424]/10 text-[#8E2424] border border-[#8E2424]/30"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
           <Coins className="w-4 h-4" />
-          <span>Mouvements de Caisse & Flux</span>
+          <span>Mouvements de Caisse</span>
           <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-bold">
             {transactions.length}
           </span>
@@ -458,16 +500,33 @@ export default function FinancePage() {
 
         <button
           onClick={() => setActiveTab("budgets")}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
             activeTab === "budgets"
               ? "bg-[#7BA238]/10 text-[#7BA238] border border-[#7BA238]/30"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
           <PieChart className="w-4 h-4 text-[#7BA238]" />
-          <span>Budgets & Engagements Chantiers</span>
+          <span>Budgets Chantiers</span>
           <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-bold">
             {projects.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("miroir")}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "miroir"
+              ? "bg-indigo-50 text-indigo-700 border border-indigo-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <TrendingUp className="w-4 h-4 text-indigo-600" />
+          <span>Miroir Bancaire & Marge</span>
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+            mirrorTotals.globalMargin >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+          }`}>
+            {mirrorTotals.globalMargin >= 0 ? "+" : ""}{Math.round(mirrorTotals.globalMargin).toLocaleString()} $
           </span>
         </button>
       </div>
@@ -696,7 +755,7 @@ export default function FinancePage() {
             </div>
           )}
         </div>
-      ) : (
+      ) : activeTab === "budgets" ? (
         /* BUDGETS CHANTIERS TAB - VRAI EXPERT COMPTABLE ET FINANCIER INTÉGRÉ */
         <div className="space-y-6">
           {/* 4 Executive Accounting & Financial Expert Cards */}
@@ -959,6 +1018,253 @@ export default function FinancePage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      ) : (
+        /* MIROIR BANCAIRE & MARGE PAR CHANTIER TAB */
+        <div className="space-y-6">
+          {/* 4 Executive Mirror & Profitability Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Card 1: Total Encaissements */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  ENCAISSEMENTS CHANTIERS
+                </span>
+                <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                  <ArrowUpRight className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-emerald-700 tracking-tight">
+                {formatUSD(mirrorTotals.totalRevenues)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <span>Éq. Francs Congolais</span>
+                <span className="font-mono font-medium">{formatCDF(mirrorTotals.totalRevenues * exchangeRate)}</span>
+              </div>
+            </div>
+
+            {/* Card 2: Total Décaissements Consommés */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  DÉPENSES DIRECTES CHANTIERS
+                </span>
+                <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-[#8E2424]">
+                  <ArrowDownLeft className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#8E2424] tracking-tight">
+                {formatUSD(mirrorTotals.totalExpenses)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <span>Éq. Francs Congolais</span>
+                <span className="font-mono font-medium">{formatCDF(mirrorTotals.totalExpenses * exchangeRate)}</span>
+              </div>
+            </div>
+
+            {/* Card 3: Marge Brute Globale */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  MARGE OPÉRATIONNELLE NETTE
+                </span>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  mirrorTotals.globalMargin >= 0 ? "bg-emerald-50 text-[#7BA238]" : "bg-rose-50 text-rose-600"
+                }`}>
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div className={`mt-3 text-2xl lg:text-3xl font-bold tracking-tight ${
+                mirrorTotals.globalMargin >= 0 ? "text-[#7BA238]" : "text-rose-600"
+              }`}>
+                {mirrorTotals.globalMargin >= 0 ? "+" : ""}{formatUSD(mirrorTotals.globalMargin)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <span>Taux de Marge Global</span>
+                <span className={`font-bold ${mirrorTotals.globalMargin >= 0 ? "text-[#7BA238]" : "text-rose-600"}`}>
+                  {mirrorTotals.globalMarginRate}%
+                </span>
+              </div>
+            </div>
+
+            {/* Card 4: Taux d'Absorption Budget Global */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.07)] transition">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  BUDGET GLOBAL ALLOUÉ
+                </span>
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-700">
+                  <PieChart className="w-4 h-4 text-[#8E2424]" />
+                </div>
+              </div>
+              <div className="mt-3 text-2xl lg:text-3xl font-bold text-[#1C1F23] tracking-tight">
+                {formatUSD(mirrorTotals.totalBudget)}
+              </div>
+              <div className="mt-3 text-[11px] text-slate-500 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <span>Consommation globale</span>
+                <span className="font-bold text-slate-800">{portfolioBurnRate}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tableau Analytique de Rentabilité & Marge par Chantier */}
+          <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-[#1C1F23] flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-indigo-600" />
+                  <span>Compte d&apos;Exploitation Analytique par Chantier (P&amp;L Chantier)</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Comparaison en temps réel des encaissements facturés, des dépenses directes engagées et de la marge brute générée.
+                </p>
+              </div>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {projectProfitability.length} Chantier(s) audité(s)
+              </span>
+            </div>
+
+            {projectProfitability.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-xs">
+                Aucun projet enregistré pour le calcul du miroir bancaire.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50/70 text-slate-500 uppercase tracking-wider text-[10px] font-bold border-b border-slate-100">
+                    <tr>
+                      <th className="py-3 px-4">Chantier / Client</th>
+                      <th className="py-3 px-4 text-right">Budget Alloué</th>
+                      <th className="py-3 px-4 text-right">Recettes Encaissées</th>
+                      <th className="py-3 px-4 text-right">Dépenses Directes</th>
+                      <th className="py-3 px-4 text-right">Marge Brute ($)</th>
+                      <th className="py-3 px-4 text-center">Taux de Marge</th>
+                      <th className="py-3 px-4">Absorption Budget</th>
+                      <th className="py-3 px-4 text-center">Statut Rentabilité</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {projectProfitability.map((item) => {
+                      const isProfitable = item.margin >= 0;
+                      return (
+                        <tr key={item.project.id} className="hover:bg-slate-50/80 transition">
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
+                                <Building2 className="w-4 h-4 text-[#8E2424]" />
+                              </div>
+                              <div>
+                                <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                  <span>{item.project.title}</span>
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 text-slate-600">
+                                    {item.project.code}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500">
+                                  {item.project.client_name || "Client standard"} • {item.project.location || "Kinshasa"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-700">
+                            {item.budget > 0 ? formatUSD(item.budget) : <span className="text-slate-400">Non défini</span>}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-700">
+                            {formatUSD(item.revenues)}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right font-mono font-bold text-[#8E2424]">
+                            {formatUSD(item.expenses)}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-right font-mono font-bold">
+                            <span className={isProfitable ? "text-[#7BA238]" : "text-rose-600"}>
+                              {isProfitable ? "+" : ""}{formatUSD(item.margin)}
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-center">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                              item.marginRate >= 25
+                                ? "bg-emerald-100 text-emerald-800"
+                                : item.marginRate >= 10
+                                ? "bg-teal-50 text-teal-700 border border-teal-200"
+                                : item.marginRate >= 0
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-rose-100 text-rose-700"
+                            }`}>
+                              {item.marginRate}%
+                            </span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            <div className="w-32 space-y-1">
+                              <div className="flex justify-between text-[10px] font-semibold text-slate-600">
+                                <span>{item.consumptionRate}%</span>
+                                <span>{item.budget > 0 ? formatUSD(item.budget) : "-"}</span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    item.consumptionRate > 100
+                                      ? "bg-rose-600"
+                                      : item.consumptionRate >= 80
+                                      ? "bg-amber-500"
+                                      : "bg-[#7BA238]"
+                                  }`}
+                                  style={{ width: `${Math.min(item.consumptionRate, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 px-4 text-center">
+                            {item.marginRate >= 25 ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#5A7C22] border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3" /> Très Rentable
+                              </span>
+                            ) : item.marginRate >= 10 ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                                <CheckCircle2 className="w-3 h-3" /> Rentable
+                              </span>
+                            ) : item.marginRate >= 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                <AlertTriangle className="w-3 h-3" /> Marge Faible
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <AlertTriangle className="w-3 h-3" /> Déficitaire
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Rapprochement Trésorerie & Séparation des Fonctions */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 to-[#1C1F23] text-white space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#7BA238]" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Gouvernance Financière & Traçabilité SoD
+                </h4>
+              </div>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Instance Supabase RDC • tulxrodafhodmxcftpfr
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Le miroir bancaire SIX SIGMA isole les flux d&apos;encaissements clients et les flux de décaissements par chantier. Conformément à la règle stricte de <strong>Séparation des Fonctions (SoD)</strong>, l&apos;Administrateur système ne valide pas les dépenses directes, réservées exclusivement à la Direction Générale (&gt; 5 000 USD) et à la Trésorerie/Comptabilité.
+            </p>
           </div>
         </div>
       )}

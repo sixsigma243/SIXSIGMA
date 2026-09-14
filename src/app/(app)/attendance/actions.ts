@@ -4,7 +4,32 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 /**
- * Calcul unifié de la paie mensuelle pour tous les agents (Staff + Ouvriers 26j)
+ * Calcule le nombre de jours ouvrés (lundi → samedi) dans une période.
+ * Utilisé pour le prorata temporis des salariés mensuels.
+ */
+function countWorkingDays(startDate: string, endDate: string): number {
+  let count = 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const current = new Date(start);
+
+  while (current <= end) {
+    const dayOfWeek = current.getDay(); // 0=Dim, 1=Lun, ..., 6=Sam
+    if (dayOfWeek !== 0) {
+      // Lundi–Samedi = jours ouvrés SIX SIGMA (6 jours/semaine)
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+}
+
+/**
+ * Calcul unifié de la paie mensuelle pour tous les agents (Staff + Ouvriers)
+ * RÈGLE MÉTIER MISE À JOUR :
+ * - Cadres / Staff : prorata temporis = (base_salary / jours_ouvrés_théoriques) × jours_présents_réels
+ * - Ouvriers / Journaliers : daily_rate × jours_présents_pointés réels
  */
 export async function calculateMonthlyPayrollAction(periodId: string) {
   try {
@@ -50,7 +75,7 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       return { success: false, error: "Cette période de paie est clôturée et ne peut plus être recalculée." };
     }
 
-    // 3. Récupération de l'ensemble des agents actifs (Staff + 126 Ouvriers)
+    // 3. Récupération de l'ensemble des agents actifs (Staff + Ouvriers)
     const { data: activeProfiles, error: profilesError } = await supabase
       .from("profiles")
       .select(
@@ -64,13 +89,16 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       return { success: false, error: "Impossible de charger la liste des employés actifs." };
     }
 
-    // 3.5 Récupération des pointages réels 'present' sur la période
+    // 3.5 Calcul des jours ouvrés théoriques de la période (lundi → samedi)
+    const theoreticalWorkingDays = countWorkingDays(period.start_date, period.end_date);
+
+    // 3.6 Récupération des pointages réels 'present' sur la période
     const { data: timeEntries } = await supabase
       .from("time_entries")
       .select("profile_id, worker_name, status, entry_date")
       .gte("entry_date", period.start_date)
       .lte("entry_date", period.end_date)
-      .eq("status", "present");
+      .in("status", ["present", "late"]); // présent + retard comptent comme jours travaillés
 
     // Dénombrement des jours présents pointés par profil ou par nom d'ouvrier
     const attendanceMap = new Map<string, number>();
@@ -86,10 +114,14 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       }
     }
 
-    // 4. Calcul mensuel standardisé
+    // 4. Calcul mensuel — Prorata Temporis pour Staff, Journalier pour Ouvriers
+    // ─────────────────────────────────────────────────────────────────────────
     // RÈGLE MÉTIER STRICTE :
-    // - Cadres / Staff : Salaire mensuel contractuel fixe (base_salary)
-    // - Ouvriers / Journaliers : daily_rate * jours_présents_pointés réels
+    // ► Cadres / Staff : (base_salary / jours_ouvrés_théoriques) × jours_présents_réels
+    //   → Pas de paiement pour les jours absents non justifiés
+    //   → Si aucun pointage trouvé = salaire plein (cadres sans pointer = présumés présents)
+    // ► Ouvriers / Journaliers (role = 'worker') : daily_rate × jours_présents_pointés
+    //   → Paiement strictement basé sur pointages réels
     const itemsToUpsert = [];
     let sumGross = 0;
     let sumDeductions = 0;
@@ -103,55 +135,58 @@ export async function calculateMonthlyPayrollAction(periodId: string) {
       let calculationMode = "monthly_fixed";
 
       if (isWorker) {
-        // Dénombrement des jours réels pointés avec statut 'present'
+        // OUVRIER : daily_rate × jours présents réels
         const workedDays =
           attendanceMap.get(p.id) ||
           attendanceMap.get(p.full_name.toLowerCase().trim()) ||
           0;
-
         daysWorked = workedDays;
         const daily = Number(p.daily_rate) > 0 ? Number(p.daily_rate) : 15;
         baseSalary = Math.round(daily * workedDays);
         calculationMode = "daily_rate_worked";
       } else {
-        // Pour le staff & cadres : base_salary direct ou salaire indicatif contractuel
-        daysWorked = 26;
-        const base = Number(p.base_salary);
-        if (base > 0) {
-          baseSalary = base;
+        // STAFF / CADRE : prorata temporis sur jours ouvrés réels de la période
+        const contractBase = Number(p.base_salary);
+        let monthlyBase = 0;
+
+        if (contractBase > 0) {
+          monthlyBase = contractBase;
         } else if (Number(p.daily_rate) > 0) {
-          baseSalary = Math.round(Number(p.daily_rate) * 26);
+          // Si pas de salaire mensuel, reconstituer depuis daily_rate × 26j théoriques
+          monthlyBase = Math.round(Number(p.daily_rate) * 26);
         } else {
-          // Grille salariale standard SIX SIGMA par poste d'encadrement si non spécifié
+          // Grille salariale standard SIX SIGMA par rôle
           switch (p.role) {
             case "admin":
-            case "company_management":
-              baseSalary = 2500;
-              break;
-            case "site_manager":
-              baseSalary = 1800;
-              break;
-            case "supervisor":
-              baseSalary = 1200;
-              break;
-            case "team_leader":
-              baseSalary = 650;
-              break;
+            case "company_management": monthlyBase = 2500; break;
+            case "site_manager": monthlyBase = 1800; break;
+            case "supervisor": monthlyBase = 1200; break;
+            case "team_leader": monthlyBase = 650; break;
             case "hr_officer":
             case "accountant":
-              baseSalary = 1100;
-              break;
+            case "treasury_officer": monthlyBase = 1100; break;
             case "buyer":
             case "warehouse_keeper":
-            case "safety_officer":
-              baseSalary = 800;
-              break;
-            default:
-              baseSalary = 500;
-              break;
+            case "safety_officer": monthlyBase = 800; break;
+            default: monthlyBase = 500; break;
           }
         }
-        calculationMode = "monthly_fixed";
+
+        // Récupérer les jours présents du staff
+        const staffPresentDays =
+          attendanceMap.get(p.id) ||
+          attendanceMap.get(p.full_name.toLowerCase().trim());
+
+        if (staffPresentDays !== undefined && theoreticalWorkingDays > 0) {
+          // Prorata réel : on connaît les jours présents
+          daysWorked = staffPresentDays;
+          baseSalary = Math.round((monthlyBase / theoreticalWorkingDays) * staffPresentDays);
+        } else {
+          // Pas de pointage trouvé → salaire mensuel plein (cadres présumés présents)
+          daysWorked = theoreticalWorkingDays;
+          baseSalary = monthlyBase;
+        }
+        calculationMode = "prorata_working_days";
       }
 
       // Cotisations sociales CNSS (5%) + IPR fiscal RDC (~8%) consolidés à ~13%

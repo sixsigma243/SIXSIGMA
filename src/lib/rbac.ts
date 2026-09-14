@@ -66,6 +66,14 @@ export const ROLES_CONFIG: Record<UserRole, RoleConfig> = {
     description: "Trésorerie, facturation, caisses de chantier et banques multi-devises USD / CDF.",
     testEmail: "compta@sixsigma.cd",
   },
+  treasury_officer: {
+    id: "treasury_officer",
+    label: "Trésorier / Gestionnaire Caisse",
+    department: "Finance & Trésorerie",
+    badgeColor: "bg-teal-900/60 text-teal-200 border-teal-700",
+    description: "Décaissements des réquisitions approuvées, gestion des caisses chantiers et centrale.",
+    testEmail: "tresorerie@sixsigma.cd",
+  },
   buyer: {
     id: "buyer",
     label: "Acheteur / Relations Fournisseurs",
@@ -153,6 +161,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
       "team_leader",
       "hr_officer",
       "accountant",
+      "treasury_officer",
       "buyer",
       "warehouse_keeper",
       "stewardship",
@@ -213,6 +222,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
       "buyer",
       "warehouse_keeper",
       "accountant",
+      "treasury_officer",
     ],
   },
   {
@@ -238,6 +248,7 @@ export const NAVIGATION_ITEMS: NavigationItem[] = [
       "company_management",
       "site_manager",
       "accountant",
+      "treasury_officer",
     ],
   },
   {
